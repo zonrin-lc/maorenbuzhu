@@ -1,0 +1,13 @@
+level_id,chapter,three_paw_target_s,first_clear_min_s,first_clear_max_s,core_focus,primary_tuning_lever,primary_risk,adjustment_priority
+L01,Chapter01,60,55,85,先观察与提前处理,EventPoint距离,玩家等忍者走到危险才行动,KEEP
+L02,Chapter01,55,55,80,连续赶场,事件间净空时间,无脑Shift,KEEP
+L03,Chapter01,65,65,90,怀疑与卖萌,怀疑累积速率,把被看见误判为失败,HIGH
+L04,Chapter01,70,70,100,事件排序,WorldState依赖,随机试顺序,HIGH
+L05,Chapter02,80,85,115,Q搬运,搬运距离,只觉得猫变慢,HIGH
+L06,Chapter02,90,90,130,Dog/Guard联动,联动窗口,Dog只是障碍,HIGH
+L07,Chapter02,100,105,145,换岗因果,换岗延迟,看不懂因果,HIGH
+L08,Chapter02,115,125,170,三线程规划,并发窗口重叠率,随机救火,CRITICAL
+L09,Chapter03,100,110,150,高压节奏,事件间距与信息遮挡,L08后难度回落,CRITICAL
+L10,Chapter03,105,115,160,连锁预测,爆炸触发窗口,只学会禁碰,HIGH
+L11,Chapter03,125,140,190,多线程管理,并发窗口重叠率,全靠无脑跑,HIGH
+L12,Chapter03,150,170,230,Boss综合,Phase2蒺藜窗口,Boss开始后变看戏,CRITICAL

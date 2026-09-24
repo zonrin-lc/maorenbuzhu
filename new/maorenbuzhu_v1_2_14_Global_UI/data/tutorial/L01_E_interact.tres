@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TutorialData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/tutorial/tutorial_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tutorial_id = "TUTORIAL_E_INTERACT"
+trigger_event = "L01_E01_TRIPWIRE"
+input_action = "interact"
+title = "咬断它"
+body = "看到可处理的机关时，靠近后按 E。"
+icon = "interact"
+duration = 2.5
+once_only = true

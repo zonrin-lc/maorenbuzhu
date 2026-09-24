@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="LevelData" load_steps=8 format=3]
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1"]
+[ext_resource type="Resource" path="res://data/routes/L10_Ninja_Main.tres" id="2"]
+[ext_resource type="Resource" path="res://data/events/L10_E01_DYNAMITE_A.tres" id="3"]
+[ext_resource type="Resource" path="res://data/events/L10_E02_GUARD_A.tres" id="4"]
+[ext_resource type="Resource" path="res://data/events/L10_E03_DOG.tres" id="5"]
+[ext_resource type="Resource" path="res://data/events/L10_E04_DYNAMITE_B.tres" id="6"]
+[ext_resource type="Resource" path="res://data/events/L10_E05_POISON.tres" id="7"]
+[resource]
+script = ExtResource("1")
+level_id = &"L10"
+chapter_id = &"CH03"
+display_name = "炸药不能乱碰"
+scene_path = "res://scenes/levels/L10_dont_touch_dynamite.tscn"
+next_scene_path = "res://scenes/levels/L11_getting_busier.tscn"
+intro_time = 10.0
+target_time = 72.0
+ninja_route = ExtResource("2")
+events = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")]
+score_rules = null

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LevelData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1"]
+[ext_resource type="Resource" path="res://data/routes/L01_Ninja_Main.tres" id="2"]
+[ext_resource type="Resource" path="res://data/events/L01_E01_TRIPWIRE.tres" id="3"]
+[ext_resource type="Resource" path="res://data/events/L01_E02_GUARD.tres" id="4"]
+[ext_resource type="Resource" path="res://data/events/L01_E03_WATERGAP.tres" id="5"]
+[ext_resource type="Resource" path="res://data/score/L01_Score.tres" id="6"]
+
+[resource]
+script = ExtResource("1")
+level_id = &"L01"
+chapter_id = &"CH01"
+display_name = "第一份差事"
+scene_path = "res://scenes/levels/L01_first_job.tscn"
+next_scene_path = "res://scenes/levels/L02_same_old_trap.tscn"
+intro_time = 10.0
+target_time = 60.0
+ninja_route = ExtResource("2")
+events = [ExtResource("3"), ExtResource("4"), ExtResource("5")]
+score_rules = ExtResource("6")

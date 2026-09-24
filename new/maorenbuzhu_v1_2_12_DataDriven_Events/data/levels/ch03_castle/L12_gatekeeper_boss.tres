@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LevelData" load_steps=7 format=3]
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1"]
+[ext_resource type="Resource" path="res://data/routes/L12_Ninja_Main.tres" id="2"]
+[ext_resource type="Resource" path="res://data/events/L12_E01_DYNAMITE.tres" id="3"]
+[ext_resource type="Resource" path="res://data/events/L12_E02_BOSS_CRANE.tres" id="4"]
+[ext_resource type="Resource" path="res://data/events/L12_E03_BOSS_GOURD.tres" id="5"]
+[ext_resource type="Resource" path="res://data/events/L12_E04_BOSS_CALTROP.tres" id="6"]
+[resource]
+script = ExtResource("1")
+level_id = &"L12"
+chapter_id = &"CH03"
+display_name = "守门武士"
+scene_path = "res://scenes/levels/L12_gatekeeper_boss.tscn"
+next_scene_path = "res://scenes/levels/Chapter03_Clear.tscn"
+intro_time = 10.0
+target_time = 82.0
+ninja_route = ExtResource("2")
+events = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")]
+score_rules = null

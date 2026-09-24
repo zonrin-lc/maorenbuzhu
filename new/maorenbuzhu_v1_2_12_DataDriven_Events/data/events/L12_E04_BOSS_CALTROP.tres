@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="EventPointData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/event_point_data.gd" id="1"]
+
+[ext_resource type="Resource" path="res://data/event_effects/boss_caltrop_damage.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+event_id = &"L12_E04_BOSS_CALTROP"
+event_type = &"BOSS_CALTROP"
+display_name = "战中蒺藜"
+classification = &"CRITICAL"
+actor_id = &"NINJA_BLUE"
+route_index = 4
+trigger_radius = 34.0
+hesitation_time = 1.5
+timeout = 0.0
+interaction_time = 0.8
+fail_code = &"FAIL_BOSS_FINISHER"
+success_flags = [&"boss_caltrop_ready"]
+failure_flags = []
+caused_event_ids = []
+risk_level = &"RISKY"
+high_risk = true
+allow_standard_solution = true
+allow_risky_solution = true
+required_action = &"INTERACT"
+banter_tags = [&"BOSS_CALTROP"]
+
+event_group = &"BOSS_COMBAT"
+activation_phase = 2
+non_blocking = true
+
+success_effects = [ExtResource("2")]

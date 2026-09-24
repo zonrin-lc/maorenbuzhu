@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LevelData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1"]
+[ext_resource type="Resource" path="res://data/routes/L05_Ninja_Main.tres" id="2"]
+[ext_resource type="Resource" path="res://data/events/L05_E01_GUARD_A.tres" id="3"]
+[ext_resource type="Resource" path="res://data/events/L05_E02_DOG.tres" id="4"]
+[ext_resource type="Resource" path="res://data/events/L05_E03_BRIDGE.tres" id="5"]
+[ext_resource type="Resource" path="res://data/score/L05_Score.tres" id="7"]
+
+[resource]
+script = ExtResource("1")
+level_id = &"L05"
+chapter_id = &"CH02"
+display_name = "月夜码头"
+scene_path = "res://scenes/levels/L05_moonlit_dock.tscn"
+next_scene_path = "res://scenes/levels/L06_moonlit_dock_dog.tscn"
+intro_time = 10.0
+target_time = 62.0
+ninja_route = ExtResource("2")
+events = [ExtResource("3"), ExtResource("4"), ExtResource("5")]
+score_rules = ExtResource("7")

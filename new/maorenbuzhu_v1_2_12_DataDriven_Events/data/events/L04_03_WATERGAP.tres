@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EventPointData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/event_point_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+event_id = &"L04_E03_WATERGAP"
+event_type = &"WATERGAP"
+display_name = "倒塌木桥"
+classification = &"CRITICAL"
+actor_id = &"NINJA_BLUE"
+route_index = 3
+trigger_radius = 34.0
+hesitation_time = 3.0
+timeout = 1.8
+interaction_time = 0.8
+fail_code = &"FAIL_TOO_LATE"
+success_flags = [&"L04_WATERGAP_SAFE"]
+risk_level = &"SAFE"
+high_risk = false
+allow_standard_solution = true
+allow_risky_solution = false
+required_action = &"INTERACT"
+banter_tags = [&"WATERGAP", &"L04"]
+
+success_effects = []

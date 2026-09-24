@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ScoreRuleData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/score_rule_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+target_time = 50.0
+ninja_hp_min_for_paw3 = 2
+max_suspicion_for_paw2 = 80.0
+max_suspicion_for_paw3 = 50.0

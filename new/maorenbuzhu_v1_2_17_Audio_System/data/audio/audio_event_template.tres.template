@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script="res://scripts/audio/audio_data.gd"]
+
+[resource]
+audio_id = "EVENT_ID"
+bus = "SFX"
+volume_db = 0.0
+pitch = 1.0
+loop = false
+priority = 50

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="MetaConfig" load_steps=2 format=3]
+
+[ext_resource path="res://data/meta/meta_config.gd" type="Script" id="1_meta"]
+
+[resource]
+script = ExtResource("1_meta")
+skin_ids = ["BLACK", "ORANGE", "WHITE", "GRAY", "CYCLOP"]
+level_order = ["L01", "L02", "L03", "L04", "L05", "L06", "L07", "L08", "L09", "L10", "L11", "L12"]
+fish_per_level = 3

@@ -1,0 +1,12 @@
+AudioID,Kind,Bus,Source,Required,Status
+MUSIC_VILLAGE,Music,Music,Musics/23 - Road.ogg,Yes,Ready
+MUSIC_VILLAGE_ALT,Music,Music,Musics/26 - Lost Village.ogg,No,Ready
+MUSIC_DOCK,Music,Music,Musics/18 - Aquatic.ogg,Yes,Ready
+MUSIC_CASTLE,Music,Music,Musics/10 - Dark Castle.ogg,Yes,Ready
+MUSIC_BOSS,Music,Music,Musics/28 - Tension.ogg,Yes,Ready
+VOICE_NINJA,Voice,Voice,Audio/Sounds/Voice/Voice1~10.wav,Yes,Ready
+SFX_DOG,Event,SFX,Audio/Sounds/Creature/Dog.wav,Yes,Ready
+SFX_SUCCESS,UI,UI,Audio/Jingles/Success1~4.wav,Yes,Ready
+SFX_MEOW,Action,SFX,External Original Meow,Yes,Missing
+SFX_THUNDER,Environment,Ambient,FX/Elemental/Thunder,Yes,Ready
+SFX_RAIN,Environment,Ambient,FX/Particle/Rain.png,Yes,Visual-Only

@@ -1,0 +1,13 @@
+level_id,title,chapter,lesson,critical_count,standard_count,optional_count,main_route,shortcut,primary_risk,variant_b
+L01,第一份差事,CH1,提前赶场,3,0,1,Tripwire>Guard>Watergap,屋檐捷径,怀疑,A
+L02,他总是踩同一个坑,CH1,连续赶场,2,2,1,Tripwire>Guard>Tripwire>Watergap,围栏捷径,时间,B
+L03,谁在看猫,CH1,怀疑规则,2,1,1,Guard>Expose>Watergap,草丛绕行,怀疑,B
+L04,村口大事故,CH1,事件顺序,3,2,1,Guard>Tripwire>Crate>Watergap,屋檐捷径,顺序,B
+L05,月夜码头,CH2,搬运,3,1,1,Guard>Dog>Bridge>Poison,货箱通道,资源运输,B
+L06,狗也能当队友,CH2,NPC联动,3,1,1,Dog>Guard>Bridge>Goal,水边捷径,狗的时序,B
+L07,谁先走,CH2,顺序依赖,4,1,1,GuardA>Dog>GuardB>Bridge>Poison,栈桥近路,状态切换,B
+L08,最后一班船,CH2,多线程规划,4,2,1,Guard>Dog>Carry>Bridge>Poison,船尾通道,多线程,B
+L09,雷雨夜,CH3,高压环境,3,2,1,Dynamite>Guard>Dog>Goal,城墙缺口,时间,B
+L10,炸药不能乱碰,CH3,连锁事故,4,1,1,Dynamite>Guard>Dog>Poison,雨水沟,连锁,B
+L11,越靠近城门越忙,CH3,多线程压力,4,2,1,GuardA>Dog>Poison>Caltrop>GuardB,城墙捷径,多线程,B
+L12,守门武士,CH3,Boss综合,4,1,0,BossPrep>Phase1>Phase2Caltrop>Phase3,侧门抢位,Boss窗口,B

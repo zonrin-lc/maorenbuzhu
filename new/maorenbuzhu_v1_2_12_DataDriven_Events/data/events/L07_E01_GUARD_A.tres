@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="EventPointData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/event_point_data.gd" id="1"]
+
+[ext_resource type="Resource" path="res://data/event_effects/guard_distract.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+event_id = &"L07_E01_GUARD_A"
+event_type = &"GUARD"
+display_name = "守卫 A 换岗"
+classification = &"CRITICAL"
+actor_id = &"NINJA_BLUE"
+route_index = 1
+trigger_radius = 34.0
+hesitation_time = 3.0
+timeout = 3.0
+interaction_time = 0.8
+fail_code = &"FAIL_WRONG_ORDER"
+success_flags = [&"L07_GUARD_A_DEPART"]
+risk_level = &"SAFE"
+high_risk = false
+allow_standard_solution = true
+allow_risky_solution = true
+required_action = &"INTERACT"
+banter_tags = [&"L07", &"GUARD"]
+
+success_effects = [ExtResource("2")]
