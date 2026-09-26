@@ -1,4 +1,4 @@
-# 《猫忍不住》游戏设计文档 · 整合版 v1.3.1
+# 《猫忍不住》游戏设计文档 · 整合版 v1.4
 
 > **副标题：忍者在明处，猫在幕后。**
 >
@@ -17,12 +17,32 @@
 > | v1_2_6_Vertical_Slice_Spec | v1.2.6 | L01 垂直切片 |
 > | v1_2_7_L01_Implementation_Spec | v1.2.7 | L01 教学关实施 |
 > | v1_2_8_Chapter01_Integration_Spec | v1.2.8 | 第一章连续试玩集成 |
+> | v1_2_9_Chapter02_Integration_Spec | v1.2.9 | 第二章连续试玩链 + L05–L08 白盒 Gate |
+> | v1_2_10_Chapter03_Integration_Spec | v1.2.10 | 第三章连续试玩链 + L12 Boss / Emergency 白盒 Gate |
+> | v1_2_11_Unified_Event_Architecture | v1.2.11 | 统一事件架构：UnifiedLevelManager / EventBehaviorRegistry / EventGroup |
+> | v1_2_12_DataDriven_Event_Authoring（含实现包） | v1.2.12 | EventBehaviorData / EventEffectData，事件完全数据化（46 事件 / 11 类型） |
+> | v1_2_13_L01-L12_Production_Cards / Level_Production_Template | v1.2.13 | 12 关生产卡 + 关卡生产管线方法论 |
+> | v1_2_14_Global_UI_HUD_Spec（含实现包） | v1.2.14 | GlobalUI 组件树 / 怀疑猫眼映射 / 失败诊断 / 暂停 / 无障碍 |
+> | maorenbuzhu_v1_2_15_Meta_Progress | v1.2.15 | 存档 schema、解锁规则、猫技艺阈值、Meta 页面数据源 |
+> | v1_2_16_Izakaya_Settlement_Spec（含实现包） | v1.2.16 | 结算状态机 / BoastGenerator / Banter Schema |
+> | maorenbuzhu_v1_2_17_Audio_System | v1.2.17 | GlobalAudioManager / BGM 状态机 / 动态音乐 / 猫叫变体 |
+> | v1_2_18_Input_System_Spec（含实现包） | v1.2.18 | Input Action 层 / 手柄默认映射 / 重绑定 / 设备切换 |
+> | v1_2_19_Settings_Spec（含实现包） | v1.2.19 | 设置系统五页 / settings.cfg 与 save.cfg 分离 |
+> | maorenbuzhu_v1_2_20_Main_Flow | v1.2.20 | 主流程：Boot → 主菜单 → 章节/关卡选择，Continue 规则 |
+> | maorenbuzhu_v1_2_21_Result_Flow | v1.2.21 | 结算回写链「先存档再结算」+ 结算页四出口 |
+> | v1_2_22_Debug_QA_Spec（含实现包） | v1.2.22 | Debug Console / Overlay、LevelValidator 12 条合同、QA 自动化 |
+> | v1_2_23_Playtest_Balance_Matrix | v1.2.23 | 12 关时长基线 / 单关平衡卡 / 采样字段 / 冻结门槛 |
+> | v1_2_24_Balance_Sheet_v1 | v1.2.24 | 纸面平衡修正（L08→L09 断层）/ 逐关调参杠杆 / 8 人 × 3 轮协议 |
+> | v1_2_25_ThreeRoute_Playtest_Spec | v1.2.25 | SAFE / BALANCED / RISKY 三路线验收 / 调参决策树 |
+> | v1_2_26_Playtest_Tracker_Pack + summarize_playtest.py | v1.2.26 | 试玩采集管线（xlsx 8 表 + 自动统计脚本） |
 >
 > **冲突仲裁原则：版本新者优先（v1.2.x > v1.1 > v1.0 > v0.3）；同版本冲突在本文 §15.2 记录裁定。** 原始文件保留作历史归档，不再单独维护。
 >
 > **素材约束：美术与音频严格限于 Ninja Adventure Asset Pack（唯一缺口：猫叫声效，见 §9.3）。**
 >
 > v1.3.1 修订（2026-09-24）：按《GDD_v1.3_审查报告》修复 P0×3 / P1×5 / P2×4，详见审查报告与 §15.2。
+>
+> v1.4 修订（2026-09-26）：整合 v1.2.9–v1.2.26 全部新文档与实现包——第二/三章连续集成、统一事件架构、数据驱动事件 Authoring、关卡生产管线、GlobalUI、Meta 进度、居酒屋结算管线、音频系统、输入系统、设置系统、主流程、结果流、Debug/QA 合同、试玩平衡体系（Matrix/Balance Sheet/三路线/采集管线）。修订 §2/§5/§7/§8/§9/§11/§12/§13，新增冲突仲裁见 §15.2。
 
 ---
 
@@ -117,7 +137,7 @@
 | 前段 | 20–40 秒 | 单点威胁，建立信心与笑点 |
 | 中段 | 30–50 秒 | 威胁联动，排序解题，首次紧张峰值 |
 | 尾段 | 15–30 秒 | 忍者"状态绝佳"走路加快，玩家疲于奔命（喜剧高潮） |
-| 结算 | ~30 秒（重复挑战压缩至 8–12 秒） | 吹牛 + 评分，情绪释放 |
+| 结算 | 首次通关 15–25 秒（v1.2.16）；重复挑战压缩至 8–12 秒 | 吹牛 + 评分，情绪释放 |
 
 **失败条件：**
 - 忍者死亡（坠崖直接死；陷阱/守卫/中毒累计扣 3 颗心）→ 任务失败
@@ -127,19 +147,36 @@
 
 **失败诊断文案原则（v1.0 §32）：** 告诉玩家"错在哪里"，不告诉"唯一正确答案"。示例：L01"你晚了一步。"／换岗关"换岗已经发生，你还在这里。"／L12"Boss 已进入终结节奏，而你的救场机关还没准备。"这些属于诊断，不属于攻略。
 
+**统一失败码（FAIL_CODE，v1.2.14 / v1.2.22 冻结，全 7 枚）：** 玩家看自然语言诊断，Debug 显示 Code。
+
+| FAIL_CODE | 含义 | 诊断文案方向 |
+|---|---|---|
+| FAIL_TOO_LATE | 未在窗口内赶到/完成 | 可更早赶到事件点 |
+| FAIL_WRONG_ORDER | 处理顺序改变了后续世界状态 | 事件状态改变了后续路线（仅作诊断/日志码，不作"顺序错了"直接弹窗——玩家应从后果推断，见 §15.2 仲裁） |
+| FAIL_SUSPICION | 怀疑值满 100 | 动作被忍者看到 |
+| FAIL_NINJA_DEATH | 忍者死亡 | 事件前未保护忍者 |
+| FAIL_BOSS_FINISHER | Boss 终结动作未化解 | Boss 终结动作未化解 |
+| FAIL_ROUTE_BLOCKED | 关键空间状态未打开 | 关键空间状态未打开 |
+| FAIL_TIMEOUT | 超时间窗口 | 未在时间窗口内完成 |
+
 ## 2.2 玩家能力（猫）
 
-| 能力 | 按键 | 说明 |
-|---|---|---|
-| 移动 | WASD / 左摇杆 | 四方向移动 |
-| 疾跑 | Shift | 短时间加速，消耗体力，有残影 |
-| 跳跃/攀爬 | Space（关卡内）/ JumpPoint | 跳上屋顶、树、箱子——立体机动是核心优势 |
-| 互动（咬/推/拍） | E | 情境交互：咬断绳、推箱子/桶、拍飞小物件；咬绳 0.8s 进度条，可被打断 |
-| 叼取/放置 | Q | 叼起小道具（解毒药、鱼肉），放到指定位置；叼取移速 ×0.85 |
-| 喵叫 | F | 引开守卫/动物（对忍者无效——他只会说"哪来的猫"）；不产生怀疑 |
-| 卖萌 | Ctrl | 原地躺下翻肚皮：怀疑值清零，冷却 20s |
-| 重开 | R | 失败/完成后重载场景 |
-| 下一关/回首关 | Space / Enter | 通关后 Space 进下一关；章节结算后 Enter 回 L01。**结算画面首 1 秒屏蔽输入**，防止关卡内跳跃惯性误跳结算演出 |
+**输入铁律（v1.2.18）：** Gameplay/UI/教学只读取 Input Action，禁止直接读物理键码；物理键只存在于 InputMap/重绑定层。键鼠与手柄首发同步支持（关闭 §15.1 待决策 #1），全部 Action 可重绑（confirm/cancel 保安全默认键除外）。
+
+| 能力 | Action | 键鼠 | 手柄 | 说明 |
+|---|---|---|---|---|
+| 移动 | `move_up/down/left/right` | WASD | 左摇杆 | 四方向移动 |
+| 疾跑 | `sprint` | Shift | RT | 短时间加速，消耗体力，有残影 |
+| 跳跃/攀爬 | `jump` | Space | LB | 跳上屋顶、树、箱子（关卡内）/ JumpPoint——立体机动是核心优势 |
+| 互动（咬/推/拍） | `interact` | E | A | 情境交互：咬断绳、推箱子/桶、拍飞小物件；咬绳 0.8s 进度条，可被打断 |
+| 叼取/放置 | `carry` | Q | X | 叼起小道具（解毒药、鱼肉），放到指定位置；叼取移速 ×0.85 |
+| 喵叫 | `meow` | F | B | 引开守卫/动物（对忍者无效——他只会说"哪来的猫"）；不产生怀疑 |
+| 卖萌 | `emote` | Ctrl | Y | 原地躺下翻肚皮：怀疑值清零，冷却 20s |
+| 暂停 | `pause` | Esc | Start | 完全冻结 Gameplay（见 §8.5） |
+| 重开 | `retry` | R | Select | 失败/完成后重载场景 |
+| 确认 / 取消 | `confirm` / `cancel` | Enter / Esc | A / B | UI 层；**结算画面"下一关"走 `confirm`**（v1.2.18 起 Space 固定为跳跃，见 §15.2 仲裁）；章节结算后 Enter 回 L01。**结算画面首 1 秒屏蔽输入**，防止关卡内跳跃惯性误跳结算演出 |
+
+**输入优先级栈：** `System Modal > Pause > Settlement/Dialog > Tutorial Modal > Gameplay`。Esc 同时是 `pause` 与 `cancel` 的默认键——Pause 层级优先消费，属有意的层级区分。
 
 **设计要点：**
 - **猫不能战斗。** 只能"做手脚"——保住"忍者的功劳簿上不能有伤口"的喜剧前提。视觉语言：无攻击锁定 UI，动作全是拍/推/咬/拨。
@@ -418,14 +455,15 @@ Ctrl 卖萌             = 清除已有怀疑（20s 冷却，须在他视线内�
 
 ## 5.2 初始时间基线（首轮调平起点，8 人试玩后冻结）
 
-> 以下取 v1.2.5 DataResource 配置表（较新）为当前基线；v1.2 Level Bible 给出的数值部分关卡高 5–15s（L01/L05/L08 两表持平），两者都非最终冻结值。
+> 当前基线取 **v1.2.24 Balance Sheet 纸面平衡修正版**（取代 v1.2.5 表，修正了 L08→L09 的难度回落断层；仲裁见 §15.2）。仍非最终冻结值——由首轮 8 人试玩（§13.8/§13.9 管线）冻结后回填。
 
 | 关卡 | L01 | L02 | L03 | L04 | L05 | L06 | L07 | L08 | L09 | L10 | L11 | L12 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 事件数 | 3 | 3 | 4 | 4 | 6 | 5 | 5 | 6 | 4 | 4 | 7 | 3+Boss |
-| Target | 60s | 55s | 65s | 70s | 85s | 80s | 95s | 110s | 90s | 100s | 120s | 125s |
+| Target（三爪目标 ≤） | 60s | 55s | 65s | 70s | 80s | 90s | 100s | 115s | 100s | 105s | 125s | 150s |
+| 首通预期 | 55–85 | 55–80 | 65–90 | 70–100 | 85–115 | 90–130 | 105–145 | 125–170 | 110–150 | 115–160 | 140–190 | 170–230 |
 
-口径：事件数不含 Goal，为白盒基线（以 §6 详设为准）；制作中调整事件数必须同步更新 LevelData 与本表。
+口径：事件数不含 Goal，为白盒基线（以 §6 详设为准）；制作中调整事件数必须同步更新 LevelData 与本表。L09 压力靠"雷雨 + 忍者 +10% 速度 + 事件间距缩短"实现——**压力形态变化，不是难度倒退**。每关只允许 1 个"第一调参变量"（逐关杠杆表见 §13.8）。
 
 ## 5.3 Variant B 规范
 
@@ -630,7 +668,7 @@ Hard Mode 参数（LevelModifier）：`Ninja +10% / 犹豫 -0.5s / Boss Prepare 
 → 表现标签（Risk Style）→ 下一关（Space）/ 重玩（R）
 ```
 
-**重复挑战压缩规则：** 默认压缩为"吹牛一句 → 猫舔爪 → 猫爪"，长度 8–12 秒；玩家可主动展开完整结算。
+**重复挑战压缩规则：** 默认压缩为"吹牛一句 → 猫舔爪 → 猫爪"，长度 8–12 秒；玩家可主动展开完整结算。首次通关完整演出 15–25 秒（v1.2.16）。结算状态机、Banter 数据格式与存档回写纪律见 §7.5。
 
 **品牌记忆点：** 第三章（最终关）结算固定一句——**"他还是不知道。"**
 
@@ -688,6 +726,40 @@ G = boss_mechanics_success >= 2        （仅 L12）
 
 条件图例照抄 §7.4 的 A–G 定义。
 
+**三猫爪验收补充（v1.2.25）：** 每关须记录 SAFE / BALANCED / RISKY 三种风格的满评价路径，且三种均须真实可复现；每关 ≥2 种不同的 3 猫爪路线。
+
+## 7.5 结算管线实现规范（v1.2.16 / v1.2.21）
+
+**结算状态机：**
+
+```text
+SETTLEMENT_ENTER → BOAST_ANALYZE → BOAST_LINE_01 → (BOAST_LINE_02 可选)
+→ CAT_REACTION → PAW_REVEAL → META_COMMIT → EXIT
+重复挑战：跳过 LINE_02 与 CAT_REACTION（8–12s 压缩版）
+```
+
+**BoastGenerator 纪律（硬性禁止：随机选句 / 引用未发生事件 / 结算阶段重算猫爪）：**
+
+- Importance 优先级：`EMERGENCY > NEAR_DEATH > BOSS > CHAIN > ROUTE_CHANGE > STANDARD_SUCCESS`；首句取最高，次句 Tag 不重复。
+- **标准 Tag（18 个）：** `TRIPWIRE / GUARD / DOG / POISON / BRIDGE / CALTROP / DYNAMITE / BOSS_CRANE / BOSS_GOURD / BOSS_CALTROP / EMERGENCY / NEAR_DEATH / CHAIN / ROUTE_CHANGE / HIGH_RISK / SHORTCUT / ZERO_SUSPICION / NO_DAMAGE`（结算吹牛链推荐 8 个高级 Tags：`last_second / high_risk / chain / shortcut / npc_link / boss / near_death / clean_clear`，v1.2.13）。
+- **Banter 模板字段（BanterData）：** `banter_id / priority / required_tags / forbidden_tags / level_scope / difficulty_scope / text_template / cat_response / voice_id / weight`（weight 只用于兼容模板间轮换；§7.2 的"连续三次不重复"约束仍为目标，需在轮换逻辑中落实）。
+- **猫反应四档：** NORMAL 舔爪 / GOOD 抬眼一次 / RIDICULOUS 停顿 0.5s 后舔爪 / EMERGENCY 先喘气再舔爪。
+- 老板娘捧场/拆台台词池保留（§7.2，品牌记忆点）；v1.2.16 实现包暂未包含，待补（§15.2 仲裁）。
+
+**存档回写纪律（v1.2.21，"先存档、再结算"）：**
+
+```text
+Gameplay → ScoreResult → AppFlow.complete_level() → SaveManager.mark_level_complete()
+→ ResultFlow.pending_result（一次性消费）→ Result Scene
+```
+
+- 失败不写完成，只走 Retry 诊断；Retry 用当前 level_id 重开，**不得复用上一局 ScoreResult**。
+- 结算页四出口（按钮制）：重玩本关 / 下一关 / 关卡选择 / 主菜单。Next 线性 L01→L12，须 `can_start()` 已解锁才直进，否则跳关卡选择；L12 后进第三章完成态，**不生成 L13**。
+- **防重复提交：** 一次结算只调一次 `complete_level()`；重玩只刷新最佳成绩、不改解锁；Save 失败显示"本次进度未保存"，不阻塞流程。
+- **Meta 提交顺序：** ScoreSystem finalize → BoastGenerator snapshot → ResultPanel show → ProgressManager commit → SaveManager save。
+- **ResultPanel 只读：** 只展示 ScoreResult 九字段（paws / mission_complete / ninja_hp / max_suspicion / elapsed_time / 4 项风格指标），禁止重算；解锁展示只列本次新增（猫爪/鱼干/皮肤/猫技艺/Hard/Hard+）；详细 EventLog 只进 Debug/Meta。
+- 结算场景分工：`izakaya_settlement.tscn`（居酒屋演出，v1.2.16）为皮，`scenes/flow/result.tscn`（流程壳，v1.2.21）为骨；§12.3 旧名 `IzakayaResult.tscn` 以实现为准对齐（§15.2）。
+
 ---
 
 # 第八部分 · UI / HUD 与教学
@@ -712,6 +784,20 @@ G = boss_mechanics_success >= 2        （仅 L12）
 
 **HUD 禁令（HUD 告诉事实，不告诉答案）：** 禁止"建议先处理 / 请前往 / 正确解法 / 危险排序提示"。
 
+**GlobalUI 实现规范（v1.2.14）：** 统一全局 UI 层 `global_ui.tscn`：`TopBar / SuspicionEye / NinjaLocator / BottomBar / InteractionPrompt / TutorialDirector / FailureDiagnostic / ResultPanel / PauseOverlay`。架构铁律：关卡只能通过 UIState/Signal/Data 驱动 UI（LevelManager → Signals → UIManager），**禁止关卡脚本直接操作 Control 节点**。
+
+**SuspicionEye 五段映射（不显示数字，阈值与 §2.3 一致）：**
+
+| 怀疑值 | 状态 | 表现 |
+|---|---|---|
+| 0–24 | Normal | 瞳孔放松 |
+| 25–49 | Notice | 轻收缩 + 小问号 |
+| 50–79 | Alert | 明显收缩 + 回头提示 |
+| 80–99 | High | 强收缩 + 搜索波纹 |
+| 100 | Broken | 闭眼 / 警报演出 |
+
+**NinjaLocator：** 屏幕边缘箭头距离只分 Near / Mid / Far 三档；情绪改**箭头动画节奏**而非颜色（颜色仅作辅助，无障碍要求，§15.2 仲裁）。交互提示仅在操作对当前目标合法时出现，按键图标必须调 `InputDisplay.get_binding_label()` 动态显示当前绑定（v1.2.18）。
+
 ## 8.2 反馈层级制（信息重要性 = 反馈强度）
 
 - **一级（危机）：** 忍者濒死 / Boss Finish / 怀疑 80+ / Emergency
@@ -729,6 +815,34 @@ G = boss_mechanics_success >= 2        （仅 L12）
 - 第一次结算不先显示数字，先告诉玩家：**"他以为是自己做的。"** 再显示猫爪
 - **不做传统教程菜单。** 所有教学都通过：情境 + 单句提示 + 实际操作完成。第 1 章教完全部猫能力（咬/叫/推/卖萌），第 2 章教叼取，第 3 章不教新东西只加压力
 
+**TutorialDirector（v1.2.14）：** 教学排期 L01 教 E/F/推、L03 教怀疑/Ctrl、L05 教 Q/搬运，其后不加新按钮只减文字；每个 `tutorial_id` 只显示一次并写入 SaveData（`tutorial_seen`）。`TutorialData` 字段：`tutorial_id / trigger_event / input_action / title / body / icon / duration(3.0) / once_only(true)`。
+
+## 8.4 失败诊断与暂停规范（v1.2.14 / v1.2.18）
+
+- **FailureDiagnostic：** 按 §2.1 统一 FAIL_CODE 表出自然语言诊断——告诉"错在哪里"，不告诉"唯一正确答案"。
+- **Pause：** `get_tree().paused = true`；Gameplay 节点默认 `Pausable`，Pause UI 用 `When Paused`；暂停时忍者/猫/事件/怀疑/Boss 计时全停，音频不强制停；暂停中开设置，退出恢复原暂停态。
+- **输入优先级栈：** `System Modal > Pause > Settlement/Dialog > Tutorial Modal > Gameplay`（见 §2.2）。
+
+## 8.5 输入系统（v1.2.18）
+
+- **Action 层铁律：** Gameplay/UI/教学只读 Input Action；物理键只在 InputMap/重绑层（Action 表见 §2.2）。
+- **重绑规则：** 保存前检查同设备同键冲突、Action 被清空、删最后一个移动方向、删 pause；冲突弹确认（替换/取消），不静默覆盖。
+- **设备检测：** `KEYBOARD_MOUSE / GAMEPAD / TOUCH`，UI 图标组随最近输入设备切换，切换不重置 Action；移动端虚拟键预留兼容接口。
+- **QA Gate：** 10 项通用 + 三关专项（L01 E/F/Ctrl、L05 Q、L09–L12 Sprint/Jump/Pause、Boss Phase 2 不被 UI 输入阻塞）。
+
+## 8.6 主流程与选关（v1.2.20 / v1.2.21）
+
+```text
+Boot → Settings Load → Save Load → Main Menu
+  { Continue | Chapter Select → Level Select | Settings }
+```
+
+- **Continue 规则：** 无进度 → L01；当前关已完成 → 下一关；未完成 → 继续当前关；L12 完成后回章节完成态，**不自动循环**（依赖 `last_level_id`）。
+- **解锁规则：** 章节 Ch01 默认开放，Ch02 需完成 L04，Ch03 需完成 L08；关卡 L01 默认开放，L02–L12 完成前一关解锁；Level Select **禁止绕过锁定直接启动**（`can_start()` 双保险）。
+- **Level Select 展示：** 每关至少显示 LevelID、中文名、当前 Normal 最佳猫爪、锁定状态；**禁止显示"正确解法"**。
+- **设置边界：** 主流程只跳转设置页，修改权归 SettingsManager（§12.12）；设置与存档互不影响。
+- **QA：** Fresh Save（首启 Continue → L01）/ 递进解锁 / Save Isolation / Navigation（全部页面可返回、Locked 不可进、Continue 与章节选择一致）。
+
 ---
 
 # 第九部分 · 音频设计
@@ -737,14 +851,16 @@ G = boss_mechanics_success >= 2        （仅 L12）
 
 ```text
 Master
-├─ BGM
+├─ Music     （原 BGM，v1.2.17 起改名）
 ├─ SFX
 ├─ Voice
 ├─ UI
-└─ Environment
+└─ Ambient   （原 Environment）
 ```
 
-优先级：`MISSION FAIL > CRITICAL WARNING > NINJA HURT > SUSPICION > EVENT SUCCESS > VOICE > ENVIRONMENT`
+五组 Bus 均可在设置页独立调音量（键名 `music/sfx/voice/ui/ambient_volume` + `mute_all`，见 §12.12）。
+
+抢占优先级（v1.2.17）：`System Error > Mission Fail > Boss Phase > High Risk / Near Miss > Event Success > NPC Voice > Ambient`；Voice 不得被 UI 音打断。
 
 ## 9.2 曲目与音效指派（全部素材包现成）
 
@@ -770,7 +886,29 @@ Master
 
 ## 9.3 唯一素材缺口
 
-**猫叫声效（F 喵叫）。** 包内 Creature 只有 Bird/Dog/Duck/Wings。选项：freesound 免费音效外补 / 录音合成 / `Voice*.wav` 变调凑合（最省钱但效果存疑）。见 §15.1 待决策。
+**猫叫声效（F 喵叫）。** 包内 Creature 只有 Bird/Dog/Duck/Wings。选项：freesound 免费音效外补 / 录音合成 / `Voice*.wav` 变调凑合（最省钱但效果存疑）。见 §15.1 待决策。v1.2.17 起方向定为**外部原创**（manifest 标记 `SFX_MEOW: Missing`），播放器与变体规则已就位（§9.6），音源到位即接入。
+
+## 9.4 音频运行时架构（v1.2.17）
+
+- **唯一入口 `GlobalAudioManager`（Autoload）：** Gameplay 只发事实信号，音频系统自行决定表现；**禁止关卡脚本直接 `play_music()`**。
+- **事实信号：** `level_started / suspicion_state_changed / ninja_hp_changed / boss_phase_changed / event_high_risk / mission_completed / mission_failed`。
+- **接口：** `set_music_state(state) / play_event_sfx(key) / play_ninja_voice(tag) / play_cat_meow()` + 信号 `music_state_changed`；Save/Load 不保存正在播放的音频状态。
+- **AudioData Resource：** `audio_id / bus / volume_db / pitch / loop / priority`（并入 §12.4 Resource 规范）。
+
+## 9.5 BGM 状态机与动态音乐
+
+- **村庄/码头：** 各 `CALM + TENSION` 两态；**城堡七态：** `CASTLE_CALM / CASTLE_TENSION → BOSS_PREPARE → PHASE_1 → PHASE_2 → PHASE_3 → BOSS_DEFEAT`。
+- **动态规则：** 怀疑 Notice = 高频打击层淡入 → Alert 加层 → High 封顶不加新旋律；忍者受伤只发短 SFX 不换 BGM；`RISK_WINDOW` 降 BGM 低频 + 提节奏层。
+
+## 9.6 猫叫 / 忍者 Voice / 事件反馈音
+
+- **猫叫：** 3 变体 `cat_meow_01~03`，最短间隔 **0.35s**，同关同一变体不连续 >2 次，走 SFX Bus。
+- **忍者语气音六类标签：** `CONFIDENT / CONFUSED / SURPRISED / PROUD / PANIC / SETTLEMENT`，不替代字幕。
+- **事件反馈音分档：** 每类事件至少 `PREPARED / SUCCESS / FAIL / NEAR_MISS / RESET`；CRITICAL 必含 SUCCESS + FAIL + NEAR_MISS。
+
+## 9.7 音频无障碍与混音起点
+
+关键玩法声音必须有视觉对应；Boss Phase 切换不得只发声音；一键静音不暂停游戏。混音起点（原型参考，非发布值）：Music 0dB / SFX -3 / Voice -2 / UI -6 / Ambient -8。
 
 ---
 
@@ -820,7 +958,15 @@ Master
 
 ## 11.1 皮肤与收集
 
-- **皮肤 5 套，数值完全相同：** 黑/橘/白/灰/独眼猫（CatCyclop）。独眼猫 = Hard+ 解锁（§15.2 仲裁）。
+- **皮肤 5 套，数值完全相同，纯外观 + 彩蛋台词（v1.2.15 冻结解锁条件）：**
+
+| 皮肤 | 解锁条件 |
+|---|---|
+| 黑猫（默认） | 初始开放 |
+| 橘猫 | 完成 L04 |
+| 白猫 | 完成 L08 |
+| 灰猫 | 完成 L12 |
+| 独眼猫（CatCyclop） | Hard+ 解锁（Normal 全 12 关 3 猫爪，§15.2 仲裁） |
 - **收集品：小鱼干**（`Items/Food/Fish.png`）——每关藏 3 条，共 36 条（§15.2 仲裁），藏在只有猫能钻的洞里；纯装饰成就，不影响通关。
 - **彩蛋：** 特定皮肤过关触发忍者隐藏台词。
 
@@ -834,12 +980,16 @@ Master
 
 **与章节挑战（§5.4）的关系：** 章节挑战 = 章节级一次性称号；猫技艺 = 跨关累计的个人操作履历。两者行为相似但统计口径不同，奖励互不冲突。
 
-- **极限拆绳**——累计 3 次在最后 1 秒内完成绊绳
-- **借狗之势**——累计 5 次使用 Dog → Bark → Guard 联动
-- **不留痕迹**——三章最高怀疑都 < 20
-- **猫步**——累计 3 关疾跑时间为 0（跨关累计，区别于 CH1《不慌》的整章一次性挑战）
-- **幕后操盘**——通过至少 3 层因果链完成任务
-- **最后一秒**——完成 1 次 Emergency Rescue
+**阈值表（v1.2.15 冻结，EventLog 聚合，关卡脚本不直接写解锁；与旧口径的仲裁见 §15.2）：**
+
+| 猫技艺 | 阈值 |
+|---|---|
+| 极限拆绳 | 累计 3 次 `late_success_window ≤ 1.0s` 完成绊绳 |
+| 借狗之势 | 累计 5 次 Dog → Bark → Guard 联动成功 |
+| 不留痕迹 | 3 个不同关卡 `max_suspicion < 20` |
+| 猫步 | 1 关完成且 `sprint_time = 0`（区别于 CH1《不慌》的整章一次性挑战） |
+| 幕后操盘 | 累计 3 次 `dependency_depth ≥ 3` 完成任务 |
+| 最后一秒 | 完成 1 次 Emergency Rescue |
 
 ## 11.4 Risk Style（只影响结算文案，不影响基础奖励）
 
@@ -849,21 +999,37 @@ Master
 
 用途：结算台词、成就统计、猫技艺记录、Replay 选择。
 
-## 11.5 存档结构（SaveData v1.2，`user://`）
+## 11.5 存档结构（SaveData schema_version=1，`user://save.cfg`，v1.2.15 / v1.2.20 / v1.2.21 冻结）
 
 ```gdscript
-levels_completed: Array[String]
-level_results: Dictionary
-chapter_results: Dictionary
-hard_mode_unlocked: bool
-hard_plus_unlocked: bool
-unlocked_cat_skins: Array[String]
-fish_collected: Dictionary
-achievements: Array[String]
-cat_skills: Dictionary
-settings: Dictionary
-input_bindings: Dictionary
+# 进度存档 user://save.cfg（JSON，tmp + backup 原子写）
+schema_version: int = 1
+selected_skin: String           # 当前皮肤
+selected_difficulty: String     # NORMAL / HARD / HARD_PLUS
+completed_levels: Array         # 已完成关卡（L01 永久开放，完成 Lxx 解锁下一关）
+best_paws: Dictionary           # 键 "难度:关卡"，分难度独立记录
+best_time_ms: Dictionary
+best_max_suspicion: Dictionary
+fish_collected: Dictionary      # 每关 3 条 bitmask，共 36，去重即时写入
+unlocked_skins: Array
+unlocked_talents: Array         # 猫技艺（§11.3）
+talent_counters: Dictionary     # 技艺计数（EventLog 聚合）
+tutorial_seen: Array            # 教程已读（§8.3 TutorialDirector）
+hard_mode_unlocked: bool        # 12 关全部完成
+hard_plus_unlocked: bool        # Normal 全 12 关 3 猫爪
+last_level_id: String = "L01"   # Continue 依据（§8.6）
 ```
+
+**不保存：** 关卡瞬时 Runtime 状态（忍者位置、事件状态等）、正在播放的音频状态、任何 `player_should_do_X`。**成就**（§11.2）以 `unlocked_talents` + 计数体系承载；旧 schema 的 `settings / input_bindings` 字段移出进度存档，归入 `user://settings.cfg`（v1.2.19，见 §12.12；仲裁见 §15.2）。
+
+## 11.6 存档工程规则（v1.2.15 / v1.2.21）
+
+- **写入仅限 6 个时机：** Level Complete / Fish / Skin / Talent / Tutorial / Difficulty Unlock；禁止每帧写盘；一次结算只调一次 `complete_level()`。
+- **原子保存：** `save.tmp → flush → rename → save.cfg`，失败不覆盖旧档；Save 失败显示"本次进度未保存"，不阻塞结算。
+- **Migration：** 高版本存档拒绝写入并保留文件；低版本内存迁移后按新 schema 保存。
+- **职责：** `SaveManager`（Autoload，唯一写盘入口）→ `ProgressManager`（只消费 SaveData，不写文件）→ `TalentTracker`（EventLog 聚合）；关卡脚本不得直接访问 UI 或自行决定皮肤/Hard 解锁。
+- **数据流：** `ResultPanel → ProgressManager.on_level_result() → TalentTracker.ingest_event() → SaveManager.mark_level_complete() → 刷新 UI`。
+- 玩家统计只列事实，不给单一综合评分。
 
 ---
 
@@ -911,7 +1077,17 @@ res://
 | 怀疑 / 评分 | Core 节点 | `suspicion_system.gd` / `score_system.gd` | `suspicion_profile` / `score_rule_data` |
 | EventLog | Core Service | `event_log.gd` | schema only |
 | Boss | `BossArena.tscn` | `boss_controller.gd` + `crane/gourd/caltrop/emergency` 四 mechanic | `boss_data.tres` |
-| 结算 | `IzakayaResult.tscn` | `settlement_controller.gd` | `boast_template_data.tres` |
+| 结算 | `izakaya_settlement.tscn`（演出）+ `scenes/flow/result.tscn`（流程壳） | `result_flow.gd` + `boast_generator.gd` | `banter_data.tres` + `settlement_flow_data.tres` |
+| 关卡运行单入口（v1.2.11） | 12 关统一 Scene | `unified_level_manager.gd` + `unified_event_point.gd` + `event_behavior_registry.gd` | LevelData 全套（§12.4）；旧 `level_manager / dock_* / castle_*` 为兼容 shim |
+| 全局 UI（v1.2.14） | `global_ui.tscn` | `ui_manager / suspicion_eye / ninja_locator / interaction_prompt / failure_diagnostic / result_panel / tutorial_director.gd` | `TutorialData` |
+| 音频（v1.2.17） | — | `global_audio_manager.gd`（Autoload）+ `cat_meow_player.gd` | `AudioData` + `audio_manifest.csv` |
+| 输入（v1.2.18） | `rebind_panel.tscn` | `input_manager / rebind_manager / pause_controller / input_display.gd` | 键位 manifest CSV + 默认绑定 JSON |
+| 设置（v1.2.19） | `settings_menu.tscn` | `settings_manager.gd` | `settings_data.gd` → `user://settings.cfg` |
+| 主流程 / 结果流（v1.2.20/21） | `scenes/flow/` main_menu / chapter_select / level_select / settings_menu / result | `app_flow.gd` + `save_manager / progress_manager / settings_manager.gd` | `level_catalog` + SaveData |
+| Meta（v1.2.15） | ChapterSelect / Collection / DifficultySelect | `save_manager / progress_manager / talent_tracker.gd` | `save_data / skin_data / meta_config.tres` |
+| Debug / QA（v1.2.22） | `scripts/debug/` + demo 场景 | Debug Console / Overlay / `qa_test_runner` | `qa_contract.json` + `qa_matrix.csv` |
+
+> 上表 Level / EventPoint 行的 `level_controller.gd / event_point.gd` 命名已被 v1.2.11 统一入口取代（见 §12.10 与 §15.2 仲裁）。
 
 ## 12.4 Data Resource 规范（要点）
 
@@ -921,7 +1097,12 @@ res://
 
 - **LevelData：** `level_id / chapter_id / display_name / scene_path / intro_time / target_time / ninja_route / events[] / shortcuts[] / world_flags[] / score_rules / variant / audio_map_id / banter_set_id / difficulty_modifier / validator_rules`
 - **RouteData：** `route_id / actor_id / waypoints[] / loop / move_speed / stop_points[] / branch_rules[] / return_delay / variant_routes[]`（每关唯一 route_id；Variant B 通过不同 RouteData/BranchRule 实现，不复制 NinjaController）
-- **EventPointData：** `event_id / event_type / classification(CRITICAL/STANDARD/OPTIONAL) / actor_id / trigger_radius / hesitation_time / timeout / interaction_time / required_item / fail_code / success_flags[] / failure_flags[] / caused_event_ids[] / risk_level / high_risk / allow_standard_solution / allow_risky_solution / banter_tags[] / validator_rules[]`
+- **EventPointData（v1.2.11/12 扩展，以实现为准）：** `event_id / event_type / event_group(MAIN/BOSS_PREP/BOSS_COMBAT/OPTIONAL) / classification(CRITICAL/STANDARD/OPTIONAL) / actor_id / trigger_radius / hesitation_time / timeout / interaction_time / interaction_radius / interaction_action / block_ninja / ninja_reaction / activation_phase / activation_flag / non_blocking / consume_carry_item / fail_code / success_flags[] / success_effects[] / failure_flags[] / caused_event_ids[] / risk_level / high_risk / allow_standard_solution / allow_risky_solution / banter_tags[]`（旧 `required_item` 语义由 `consume_carry_item` 取代；禁写 `player_should_do_X / correct_answer / hint_solution`）
+- **EventBehaviorData（v1.2.12 新增）：** `event_type / default_action / suspicion(默认 10.0) / default_interaction_time(0.8) / default_event_group / default_non_blocking`——事件行为与默认操作的数据化，新增事件类型只增 Resource 不加脚本（§12.11）
+- **EventEffectData（v1.2.12 新增）：** `effect_type / amount / phase_required / flag / item_id / toast`——标准 effect：`GUARD_DISTRACT / DOG_LURE / BOSS_PREPARE_DAMAGE(crane=40) / BOSS_COMBAT_DAMAGE(caltrop=30, phase_required=2)`
+- **TutorialData（v1.2.14）：** `tutorial_id / trigger_event / input_action / title / body / icon / duration(3.0) / once_only(true)`
+- **AudioData（v1.2.17）：** `audio_id / bus / volume_db / pitch / loop / priority`
+- **SettingsData（v1.2.19）：** @export Resource，五页设置键（§12.12）
 - **ShortcutData：** `shortcut_id / entrance_marker / exit_marker / required_ability / time_saving / visibility_risk / usable_when[] / mastery_tag`
 - **WorldFlagData：** `flag_id / default_value / reset_on_retry / persistent / debug_label`
 - **ScoreRuleData：** `target_time / paw2_hp_min / paw2_suspicion_max / paw3_base_hp_min / paw3_required_count / condition_ids[] / boss_condition_ids[]`
@@ -1006,6 +1187,49 @@ Debug Overlay 显示：`[Route] 锚点 / [Events] / [WorldState] flags / [Timing
 
 两者是先后关系：先按 v1.2.6 跑通不含 Q/F/Ctrl 的最小切片（Gate A–E），再由 v1.2.7 补全三事件教学闭环（含喵叫/卖萌）。L01 完整教学关（v1.2.7）追加：E01 咬绳 0.8s（48px 内）/ E02 喵叫立即解决 / E03 推箱至锚点（推距折算约 1.2s） / 怀疑近似判定（≤120px 且朝向）/ 卖萌 150px 内清零 / QA Smoke Test 7 步。第一章集成（v1.2.8）：L01→L04 Space 串联 + Chapter01_Clear 结算场景 + Enter 回 L01；QA Gate：切场不失效、R 重置、LevelValidator 四关 0 错误。
 
+## 12.10 统一事件架构（v1.2.11）
+
+全部 12 关收敛为单一运行栈：`UnifiedLevelManager → UnifiedEventPoint → EventBehaviorRegistry → EventPointData → WorldState / EventLog / ScoreSystem`。**单一入口：** 全部关卡场景引用 `res://scripts/gameplay/unified_level_manager.gd`；旧 `level_manager / dock_level_manager / castle_level_manager.gd` 降级为兼容 shim，保留 2 个版本周期、禁加新逻辑，smoke test 后删除（迁移 Phase A 改引用 → B shim 冻结 → C 删除）。
+
+**EventGroup 四类：**
+
+| Group | 语义 | L12 映射 |
+|---|---|---|
+| MAIN | 阻挡忍者的主线事件 | DYNAMITE |
+| BOSS_PREP | 不阻挡，Boss 战前准备 | BOSS_CRANE / BOSS_GOURD |
+| BOSS_COMBAT | 不阻挡，Boss 战中实时（不参与普通路线阻挡） | BOSS_CALTROP（Phase 2） |
+| OPTIONAL | 收集/彩蛋 | 鱼干等 |
+
+**职责切分：** UnifiedEventPoint＝激活/交互距离/E 进度/MAIN 超时/成败 signal；EventBehaviorRegistry＝event_type → 默认 action、怀疑增量、Boss/Combat 判定；UnifiedLevelManager＝节点发现/路线/事件生成/WorldState/怀疑/副作用/评分/章节流转/Boss/Emergency。
+
+## 12.11 数据驱动事件 Authoring（v1.2.12）
+
+事件行为与副作用彻底数据化：**新增事件只复制 `.tres`，不新增脚本或章节 Manager**。三层结构 `EventBehaviorData → EventPointData → EventEffectData[]`，落盘 `WorldState / EventLog / ScoreSystem`。
+
+**12 种行为 → 默认操作：** TRIPWIRE→BITE / GUARD→MEOW / WATERGAP·BRIDGE→PUSH / DOG→FEED / POISON→PLACE_ANTIDOTE / CALTROP→CLEAR_CALTROP / DYNAMITE→PUSH_TO_WATER / CLIFF→PUSH_CRATE / BOSS_CRANE→CUT_CRANE / BOSS_GOURD→DRUG_GOURD / BOSS_CALTROP→CALTROP_DURING_PHASE2。
+
+**配置约定：** Dog 事件 `consume_carry_item=FISH`；Poison 事件 `=ANTIDOTE`；新增 effect 只扩展 `EventEffectData + _apply_effect()`。**新事件 7 步流程：** 复制行为 tres → 建 EventPointData → 配 group/phase/flag → 配 success_flags/effects → 挂 LevelData.events[] → 静态审计（`audit_events.py`）→ runtime smoke test。当前实现包静态审计 46 events / 11 types / 0 errors；**runtime smoke test 未执行**（v1.2.11 Phase C 前置条件，记入 §13.5 Gate）。
+
+**禁止：** UnifiedLevelManager 按 event_type 堆分支 / 为单关复制 LevelManager / 把"玩家应该怎么做"写进 WorldState / UI 提示写进 Flag。
+
+## 12.12 设置系统（v1.2.19）
+
+- **双文件铁律：** 玩家偏好存 `user://settings.cfg`，游戏进度存 `user://save.cfg`；恢复设置默认绝不动存档，清存档须二次确认且不动设置。
+- **五页：** Input / Audio / Accessibility / Display / Data Management。所有读写经 `SettingsManager`，UI 不直接碰 ConfigFile；菜单禁触 EventLog/WorldState/ScoreSystem/LevelData。
+- **默认值：** music/ambient=0.8，其余音量=1.0；subtitles=true；vsync=true；fullscreen=false；其余 false。
+- **启动序：** `Boot → load() → Apply Display → Audio → Input → UI a11y → Load SaveData → Main Menu`。
+- **无障碍键（Release Gate 落地项）：** `subtitles_enabled / reduce_flashing / reduce_screen_shake / large_ui / high_contrast_ui`；只改呈现不改事件规则，危险信息不得只靠颜色。
+- **保存策略：** 修改即时应用；关页/切页时 save()；关键项改后立即存盘。
+
+## 12.13 Debug / QA 合同（v1.2.22，扩充 §12.7）
+
+- **Debug Console 命令：** `help / level L01 / win / fail <CODE> / hp 1 / suspicion 80 / world <flag> <v> / boss PHASE_2 / event <id> / validate / pause_sim / resume_sim / reset`。
+- **Overlay 必显：** Level ID、Ninja HP、Suspicion、Boss Phase、WorldState Flags、最近 EventLog、当前 Fail Code；一键 Reset / Restart Event / Force Success·Failure / Teleport（后四项 `debug_only`）。
+- **LevelValidator P0 合同（12 条）：** LevelData/RouteData/EventPointData 存在、required EventBehavior、Start/Goal、Route 非空、WorldState 默认值、ScoreRule、ResultFlow 合法、Boss Phase 迁移规则、Emergency Rescue 仅 HP≤1、Debug 不入 SaveData；硬指标 `levels=12, expected_events=46`（工程合同值，见 §15.2）。
+- **Boss 阶段枚举**以 §6.3 全枚举（`BOSS_INTRO → BOSS_PREPARE → PHASE_1 → PHASE_2 → PHASE_3 → DEFEATED / RETREAT`）为准，`qa_contract.json` 的 `NONE/PREPARE/…/DEFEAT` 作兼容映射（§15.2）。
+- **Release 剥离 5 条：** Console/QARunner disabled、Overlay 缺失、作弊输入缺失、Debug 存档字段缺失；Debug 层不进入正式玩家系统、不写正式 SaveData。
+- **机器可读合同：** `qa_contract.json` + `qa_matrix.csv`（24 条用例：每个 CRITICAL 事件 7 态；Boss 机关组合 8 态）。
+
 ---
 
 # 第十三部分 · 生产计划与 QA
@@ -1073,7 +1297,57 @@ Experience [ ] 玩家能解释失败 [ ] 无无意义等待 [ ] 猫始终有下�
 [ ] L12 Boss Active Gate 通过（Boss 战中仍有实时操作）
 [ ] Accessibility 基础项完成
 [ ] P0 = 0 / P1 已收敛
+[ ] 统一事件架构 runtime smoke test 通过（v1.2.11 Phase C 前置）
 ```
+
+## 13.6 章节连续集成 Gate（v1.2.9 / v1.2.10）
+
+**运行链：** L01–L04 → `Chapter01_Clear` → L05–L08 → `Chapter02_Unlock` → L09–L12 → `Chapter03_Clear`（节点命名以实现为准；每关由 `LevelData / RouteData / EventPointData[] / ScoreRuleData` 驱动）。
+
+**第二章白盒 Gate（WorldState 最小集 5 键：`guard_a_departed / guard_b_active / dog_fed / bridge_open / poison_route_safe`；全量以 §6.2 的 13 词表为准）：**
+
+| 关 | Gate |
+|---|---|
+| L05 | 一章正常切入；Q/F/E 均有可观察结果；事件后 Ninja Route 不丢失 |
+| L06 | 完整喂狗 ≥1 次；道具消耗后 `carry_item` 回空；R 恢复初始状态（风险解"猫当诱饵"白盒只保状态接口，不加追逐物理） |
+| L07 | Guard A/B 状态可被 Debug HUD 观察；错误顺序产生明确后果并记录 `FAIL_WRONG_ORDER`（仅诊断码，见 §15.2 仲裁） |
+| L08 | ≥2 个 WorldState 同时变化；完成后进 `Chapter02_Unlock` |
+
+**第三章 / Boss QA Gate（v1.2.10，9 条）：** 事件顺序可重复 / 吊车·酒葫芦可结算 / 蒺藜不可提前解决 / Boss 启动后玩家必须有移动任务 / 无操作不得判正常胜利 / 全不做可进 Emergency / Emergency 只产 1 爪 / R 重开清 Boss 状态 / Space 仅通关后进下一场景。Emergency 触发点 `EMERGENCY_POS=(930,290)`，按 E 触发；`BOSS_CALTROP` 从普通 `event_nodes` 分离（EventGroup=BOSS_COMBAT，§12.10）。工程修复记录：v1.2.9 修复 v1.2.8 中 L04 `scene_path` 文件名重复 `L` 的问题。
+
+## 13.7 关卡生产管线（v1.2.13）
+
+**9 步生产链：** Level Brief → 事件图 → 路线 → 白盒 Scene → Data Resource → 双解法 → 失败/Reset → Validator → Art Lock。**事件预算：** CRITICAL 2–4 / STANDARD 1–3 / OPTIONAL 0–2，单关总 EventPoint 4–8（教学关可 <4，Boss 关可略高）。**数据最小集合：** LevelData / RouteData / EventPointData[] / WorldFlagData[] / ShortcutData[] / ScoreRuleData / VariantData（可选）/ BanterSet / AudioMap / ValidationRules（模板与 `validate_level_authoring.py` 见 v1.2.13 实现包）。
+
+**高风险解五类形态：** 更晚窗口 / 更远路线 / 暴露操作 / NPC 联动 / 放弃资源位。**节奏红线：** 连续 2+ 事件原地等待 >2 秒需复查。**验收门槛：** 内容（≥1 新决策 / ≥1 旧机制重组 / ≥1 高风险解 / ≥2 新笑点）+ 技术（Validator 0 error 等 6 条）+ 体验 4 条。**跨关能力递进基线：** L01 理解规则 → … → L12 综合考试（逐关生产卡见 v1.2.13 Production Cards）。L13+ 快速创建：复制模板 → 走同一管线，不绕过验收门槛。
+
+## 13.8 试玩平衡基线（v1.2.23 / v1.2.24）
+
+- **时长基线：** 见 §5.2（v1.2.24 修正版）；每关"主失败类型"指定：L01/L02/L05/L09=`FAIL_TOO_LATE`，L03=`FAIL_SUSPICION`，L04/L06–L08/L10/L11=`FAIL_WRONG_ORDER`，L12=`FAIL_BOSS_FINISHER`。
+- **逐关调参杠杆（节选）：** L03=怀疑累积速率 / L05=搬运距离（搬运有效速度 90×0.85=76.5 px/s，首轮不提 `CARRY_SPEED_MULT`）/ L07=守卫 8s 巡逻·6s 回岗的可读节奏 / L08=三线程空间距离 / L12=Phase 2 蒺藜操作窗口。失败率过高先改主杠杆，不同时改 3 个以上变量；多处明示"不动猫移速 / 不加新机制"。
+- **单关平衡卡：** 教学目标 + 过难/过易信号 + 主失败类型（v1.2.23 全表）。
+- **试玩协议：** 8 名无经验玩家 × 3 轮（自然首通 → 重玩 → 追三爪），分离"看不懂 / 不熟 / 优化不出"三类问题；第二轮可加 4 名熟练玩家（v1.2.25）。
+- **设计 Gate（v1.2.24 §9）：** 失败后能说出修改行为 ≥80%；重玩明显提速 ≥60%；同关 ≥2 种成功路线 ≥50%；L06 识别狗联动 / L07 识别换岗因果 / L08 描述三线程 / L12 Phase 2 主动处理蒺藜各 ≥50%。
+- **冻结门槛（10 条）：** 12 关各有目标时长/主失败类型/首通 Gate、三章 Blind Gate 通过、Boss 主动操作 Gate、采样字段完整、三 Risk Style 各出一次满评价等（v1.2.23 checklist）。
+- **风险排名：** L08 多线程过密 > L12 Boss 看戏 > L07 因果可读性 > L03 怀疑反馈 > L09 环境遮挡 > L05 搬运只剩慢 > L10 炸药只剩禁碰 > L04 双路线差异不足。
+
+## 13.9 三路线试玩与采集管线（v1.2.25 / v1.2.26）
+
+**三路线验收（每关，8 名新玩家 + 4 名熟练玩家）：**
+
+| 验收项 | 标准 |
+|---|---|
+| 理解 Gate | ≥6/8 能说出主决策 |
+| 行为 Gate | ≥5/8 第二次主动改策略 |
+| 多解 Gate | ≥3/8 无提示找到第二解 |
+| 失败 Gate | 抽 5 次失败，≥4/5 能说出下一步改变 |
+| SAFE 成立 | ≥6/8 新玩家完成 |
+| BALANCED 成立 | ≥4/8 自然产生（0–1 人 = 反馈不足） |
+| RISKY 成立 | 熟练玩家 ≥2/4 主动尝试 |
+
+**调参决策树：** 看不懂→修视觉/反馈；来不及→调时间杠杆；只会一解→加状态依赖/Shortcut；三爪只奖安全解→修 ScoreRule；**禁止"失败→加时间"作为第一反应**（与 §14 五层顺序互补：试玩归因用本决策树，改什么用五层）。
+
+**采集管线（v1.2.26）：** xlsx 8 表（README / Run_Log / Event_Log / Level_Summary / Failure_Summary / Route_Summary / Dashboard / Post_Test_Feedback）+ `summarize_playtest.py` 自动统计。Run Log 21 字段、Event Log 19 字段；规模 8 人 × 12 关 = 96 条主记录，重试追加 AttemptNo 不覆盖。路线编码 SAFE / BALANCED / RISKY / **UNKNOWN**（无法判断必填 UNKNOWN，不许猜）。**采集伦理：** 不提前告知三路线存在；只记录实际行为；不使用虚构玩家数据。**5 条复核信号：** Clear%<50% 先查可读性 / 中位时长超首通上界查路线与等待 / RouteObserved 长期单一查三路线差异 / ChangedStrategy 低+Retry 高 = 知失败不知改法 / UnderstoodCore 低回查教程。**最终美术锁定 10 项清单**（v1.2.25 §10）并入 §13.5 Release Gate 前置。
 
 ---
 
@@ -1104,10 +1378,10 @@ Experience [ ] 玩家能解释失败 [ ] 无无意义等待 [ ] 猫始终有下�
 
 ## 15.1 待决策事项
 
-1. **操作设备：** 键鼠优先，手柄映射同键位（`Ui/Input/Gamepad` 图标现成）——待确认是否首发同步适配。
+1. ~~**操作设备：** 键鼠优先，手柄映射同键位——待确认是否首发同步适配。~~ **已裁定（v1.2.18）：** 键鼠 + 手柄首发同步支持，默认映射见 §2.2，重绑系统兜底单手负担。
 2. **卖萌冷却：** 20s 初值，垂直切片实测调整。
-3. **吹牛台词生成：** 已定纯模板拼接，不接 LLM。
-4. **猫叫声效（唯一素材缺口）：** freesound 外补 / 录音合成 / Voice*.wav 变调凑合——三选一。
+3. **吹牛台词生成：** 已定纯模板拼接，不接 LLM（v1.2.16 重申：禁止随机选句）。
+4. **猫叫声效（唯一素材缺口）：** 方向定为**外部原创**（v1.2.17 manifest 标记 Missing）；备选仍是录音合成 / `Voice*.wav` 变调凑合。播放器与变体规则已就位（§9.6），音源到位即接入。
 5. **第四章及以后：** 换忍者人格（NinjaRed 自负 / NinjaGreen 胆小，素材现成）做"蠢法"变体——RC 之后根据试玩反馈定。
 
 ## 15.2 整合冲突仲裁记录
@@ -1122,6 +1396,25 @@ Experience [ ] 玩家能解释失败 [ ] 无无意义等待 [ ] 猫始终有下�
 | 场景/资源命名 | 各文档 `chapter_01_village/L01_FirstJob.tscn`、`ch01_village/L01_first_job.tres`、`scenes/levels/L01_first_job.tscn` 混用 | **统一 snake_case：** `scenes/levels/ch01_village/L01_first_job.tscn`、`data/levels/ch01_village/L01_first_job.tres`；英文名统一：L01 first_job / L02 same_old_trap / L03 who_is_watching / L04 village_accident / L05 moonlit_dock / L06 dog_ally / L07 who_goes_first / L08 last_boat / L09 storm_night / L10 dont_touch_dynamite / L11 busy_gate / L12 gatekeeper_boss |
 | 禅问：Emergency Rescue 是否算第四机关 | v1.1 review | **否**——它是 Fail-safe，不给额外资源，固定 1 猫爪 |
 | 酒葫芦机制 | v0.3"-30% 血 + 离席 10s" vs v1.2.5 BossData"仅 gourd_delay=10.0" | **仅延迟、无伤害**（BossData 无 gourd_damage 字段；Boss HP 数学 100-40-30=30 恰达 Phase 3 收尾阈值，依赖此口径） |
+| 酒葫芦伤害（二次冲突） | v1.2.10"开战 -30 HP" vs 上条既有仲裁 | **维持既有仲裁：仅延迟、无伤害**；v1.2.10 相关表述作废 |
+| Boss 阶段枚举 | §6.3 `BOSS_INTRO…BOSS_RETREAT` vs v1.2.22 qa_contract `NONE/PREPARE/…/DEFEAT` | 以 §6.3 全枚举为准，Validator 兼容映射 |
+| 关卡运行入口命名 | §12.3 `level_controller.gd / event_point.gd` vs v1.2.11 `unified_level_manager.gd / unified_event_point.gd` | **以 v1.2.11 为准**；旧章节 Manager 为兼容 shim，2 个版本周期后删除 |
+| EventPointData 字段 | §12.4 旧字段 `required_item / validator_rules[]` vs v1.2.12 `consume_carry_item / success_effects[]` | **以 v1.2.12 实现为准**（§12.4 已更新字段清单） |
+| 怀疑数值口径 | §2.4 视锥判定（边缘 +30/次、中心 60/s）vs v1.2.12 `EventBehaviorData.suspicion`（默认 10.0、guard 15.0） | 视锥判定为玩家可见语义不变；`suspicion` 为行为级默认增量的实现参数，垂直切片近似期使用，生产版回归视锥口径 |
+| 存档结构与存储位置 | §11.5 旧单文件（含 settings/input_bindings）vs v1.2.15/19/20/21 双文件 | **双文件**：进度 `save.cfg` + 设置 `settings.cfg`；§11.5 已重写 |
+| 关卡场景路径 | §15.2 既有仲裁 `scenes/levels/ch01_village/L01_first_job.tscn` vs v1.2.20/21 实现 `res://scenes/levels/L01.tscn` | **维持 snake_case 章节目录仲裁**，实现侧 LevelCatalog 需修正 |
+| L09/L11 场景命名 | v1.2.10 `thunder_night / getting_busier` vs 既有仲裁 `storm_night / busy_gate` | 维持既有仲裁命名 |
+| L07 依赖链 | §6.2 Guard A→B→Dog→Bridge→Poison vs v1.2.9 Guard A→B→Poison→Bridge（无 Dog） | 以 §6.2 为准；v1.2.9 为白盒简化链 |
+| L07 错误顺序处理 | §6.2"不弹顺序错了，世界产生后果" vs v1.2.9 Gate 要求明确 `FAIL_WRONG_ORDER` | `FAIL_WRONG_ORDER` 仅作诊断/日志码，不作直接失败弹窗；玩家从后果推断 |
+| L05 教学定位 | §6.2"L05 首次正式学 Q" vs v1.2.9 L05 观察链（Q 移入 L06） | 维持 GDD：L05 教 Q（§8.3 TutorialDirector 排期同为 L05） |
+| 结算时长 | §2.1 旧"~30 秒" vs v1.2.16 首次 15–25s | **首次 15–25s / 重复 8–12s**（§2.1 已更新） |
+| 老板娘角色 | §7.1/§7.2 有老板娘 vs v1.2.16 实现包无 | **保留老板娘**（品牌记忆点），实现包待补 |
+| 箭头情绪表达 | §8.1"颜色随心情变化" vs v1.2.14"动画节奏 + 无障碍" | 以动画节奏为主、颜色仅辅助 |
+| 猫技艺阈值 | §11.3 旧口径（三章<20 / 3 关零疾跑 / 单次 3 层因果）vs v1.2.15（3 关<20 / 1 关零疾跑 / 累计 3 次） | **以 v1.2.15 阈值表为准**（§11.3 已更新） |
+| target_time 基线 | v1.2.5 表 vs v1.2.24 纸面平衡修正（L05 80 / L06 90 / L07 100 / L08 115 / L09 100 / L10 105 / L11 125 / L12 150） | **以 v1.2.24 为当前基线**（§5.2 已更新），仍待首轮 8 人试玩冻结 |
+| 调参顺序表述 | §14 五层（空间→时间→操作→认知→内容）vs v1.2.23/26 四层（可读性→时间→风险→表现） | 二者互补：试玩归因用四层决策树，"改什么"用五层顺序；首查可读性 |
+| Space/Enter 职责 | §2.2 旧"Space 进下一关" vs v1.2.18 Space=`jump`、Enter=`confirm` | Space 固定为跳跃；结算"下一关"走 `confirm`；结算首 1 秒屏蔽输入仍成立 |
+| 事件总数合同 | GDD 无出处 vs v1.2.22 `expected_events=46` | 采纳为工程合同值（12 关 46 事件，LevelValidator 硬指标） |
 
 ---
 
