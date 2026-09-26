@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://vdhfxwt6d7mc"
+
+[deps]
+
+files=["res://data/input/input_action_manifest.category.translation", "res://data/input/input_action_manifest.rebindable.translation", "res://data/input/input_action_manifest.keyboard.translation", "res://data/input/input_action_manifest.gamepad.translation", "res://data/input/input_action_manifest.ui.translation"]
+
+source_file="res://data/input/input_action_manifest.csv"
+dest_files=["res://data/input/input_action_manifest.category.translation", "res://data/input/input_action_manifest.rebindable.translation", "res://data/input/input_action_manifest.keyboard.translation", "res://data/input/input_action_manifest.gamepad.translation", "res://data/input/input_action_manifest.ui.translation"]
+
+[params]
+
+compress=true
+delimiter=0

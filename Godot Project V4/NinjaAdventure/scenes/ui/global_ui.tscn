@@ -1,0 +1,195 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/ui_manager.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/suspicion_eye.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/ninja_locator.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/ui/interaction_prompt.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/ui/tutorial_director.gd" id="5"]
+
+[node name="GlobalUI" type="CanvasLayer"]
+script = ExtResource("1")
+
+[node name="HUD" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="TopBar" type="Control" parent="HUD"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 96.0
+
+[node name="SuspicionEye" type="Control" parent="HUD/TopBar"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 88.0
+offset_bottom = 84.0
+script = ExtResource("2")
+
+[node name="NinjaMoodBubble" type="Label" parent="HUD/TopBar"]
+layout_mode = 0
+offset_left = 110.0
+offset_top = 24.0
+offset_right = 420.0
+offset_bottom = 72.0
+text = "😏"
+theme_override_font_sizes/font_size = 26
+
+[node name="NinjaLocator" type="Control" parent="HUD"]
+layout_mode = 0
+offset_right = 48.0
+offset_bottom = 48.0
+script = ExtResource("3")
+
+[node name="BottomBar" type="Control" parent="HUD"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -128.0
+
+[node name="Stamina" type="ProgressBar" parent="HUD/BottomBar"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 260.0
+offset_bottom = 52.0
+max_value = 100.0
+value = 100.0
+
+[node name="CarryItem" type="Label" parent="HUD/BottomBar"]
+layout_mode = 0
+offset_left = 280.0
+offset_top = 22.0
+offset_right = 520.0
+offset_bottom = 56.0
+text = "空爪"
+
+[node name="ActionButtons" type="HBoxContainer" parent="HUD/BottomBar"]
+layout_mode = 0
+offset_right = 420.0
+offset_top = 64.0
+offset_bottom = 112.0
+
+[node name="MeowButton" type="Button" parent="HUD/BottomBar/ActionButtons"]
+text = "F 喵叫"
+
+[node name="EmoteButton" type="Button" parent="HUD/BottomBar/ActionButtons"]
+text = "Ctrl 卖萌"
+
+[node name="InteractPrompt" type="Control" parent="HUD/BottomBar"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = -48.0
+offset_right = 420.0
+offset_bottom = 12.0
+script = ExtResource("4")
+visible = false
+
+[node name="ActionLabel" type="Label" parent="HUD/BottomBar/InteractPrompt"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "E 互动"
+
+[node name="TutorialDirector" type="Node" parent="."]
+script = ExtResource("5")
+
+[node name="FailureDiagnostic" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+visible = false
+
+[node name="FailureCard" type="Panel" parent="FailureDiagnostic"]
+layout_mode = 0
+offset_left = 96.0
+offset_top = 180.0
+offset_right = 1120.0
+offset_bottom = 540.0
+
+[node name="FailureTitle" type="Label" parent="FailureDiagnostic/FailureCard"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 32.0
+offset_top = 28.0
+offset_right = 900.0
+offset_bottom = 84.0
+text = "任务失败"
+theme_override_font_sizes/font_size = 28
+
+[node name="FailureBody" type="Label" parent="FailureDiagnostic/FailureCard"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 32.0
+offset_top = 112.0
+offset_right = 900.0
+offset_bottom = 220.0
+text = "下一次换一种处理顺序试试。"
+
+[node name="ResultPanel" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+visible = false
+
+[node name="ResultCard" type="Panel" parent="ResultPanel"]
+layout_mode = 0
+offset_left = 96.0
+offset_top = 160.0
+offset_right = 1120.0
+offset_bottom = 600.0
+
+[node name="PawLabel" type="Label" parent="ResultPanel/ResultCard"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 32.0
+offset_top = 32.0
+offset_right = 900.0
+offset_bottom = 96.0
+text = "🐾"
+theme_override_font_sizes/font_size = 36
+
+[node name="StatsLabel" type="Label" parent="ResultPanel/ResultCard"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 32.0
+offset_top = 120.0
+offset_right = 900.0
+offset_bottom = 180.0
+text = "时间 0.0s   怀疑峰值 0   BALANCED"
+
+[node name="BoastLabel" type="Label" parent="ResultPanel/ResultCard"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 32.0
+offset_top = 220.0
+offset_right = 900.0
+offset_bottom = 320.0
+text = "今天的任务顺利得出奇。"
+
+[node name="PauseOverlay" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+visible = false
+mouse_filter = 1
+
+[node name="PauseTitle" type="Label" parent="PauseOverlay"]
+layout_mode = 0
+offset_left = 470.0
+offset_top = 240.0
+offset_right = 820.0
+offset_bottom = 300.0
+text = "暂停"
+theme_override_font_sizes/font_size = 32

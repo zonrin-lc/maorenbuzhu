@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://baxqik5t0jkos"
+
+[deps]
+
+files=["res://data/qa/qa_matrix.Case.translation", "res://data/qa/qa_matrix.Precondition.translation", "res://data/qa/qa_matrix.Action.translation", "res://data/qa/qa_matrix.Expected.translation", "res://data/qa/qa_matrix.Priority.translation"]
+
+source_file="res://data/qa/qa_matrix.csv"
+dest_files=["res://data/qa/qa_matrix.Case.translation", "res://data/qa/qa_matrix.Precondition.translation", "res://data/qa/qa_matrix.Action.translation", "res://data/qa/qa_matrix.Expected.translation", "res://data/qa/qa_matrix.Priority.translation"]
+
+[params]
+
+compress=true
+delimiter=0

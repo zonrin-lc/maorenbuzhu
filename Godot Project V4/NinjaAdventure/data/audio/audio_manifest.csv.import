@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dfv7woha2d2a0"
+
+[deps]
+
+files=["res://data/audio/audio_manifest.Kind.translation", "res://data/audio/audio_manifest.Bus.translation", "res://data/audio/audio_manifest.Source.translation", "res://data/audio/audio_manifest.Required.translation", "res://data/audio/audio_manifest.Status.translation"]
+
+source_file="res://data/audio/audio_manifest.csv"
+dest_files=["res://data/audio/audio_manifest.Kind.translation", "res://data/audio/audio_manifest.Bus.translation", "res://data/audio/audio_manifest.Source.translation", "res://data/audio/audio_manifest.Required.translation", "res://data/audio/audio_manifest.Status.translation"]
+
+[params]
+
+compress=true
+delimiter=0

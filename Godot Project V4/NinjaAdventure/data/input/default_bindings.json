@@ -1,0 +1,16 @@
+{
+  "move_up": ["W"],
+  "move_down": ["S"],
+  "move_left": ["A"],
+  "move_right": ["D"],
+  "sprint": ["Shift"],
+  "interact": ["E"],
+  "carry": ["Q"],
+  "meow": ["F"],
+  "emote": ["Ctrl"],
+  "jump": ["Space"],
+  "pause": ["Esc"],
+  "retry": ["R"],
+  "confirm": ["Enter"],
+  "cancel": ["Esc"]
+}

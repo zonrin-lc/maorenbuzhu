@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TutorialData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/tutorial/tutorial_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tutorial_id = "TUTORIAL_Q_CARRY"
+trigger_event = "L05_FIRST_CARRY"
+input_action = "carry"
+title = "叼住，送过去"
+body = "靠近可搬运物品按 Q，移动到目标位置再按 Q 放下。"
+icon = "carry"
+duration = 3.5
+once_only = true

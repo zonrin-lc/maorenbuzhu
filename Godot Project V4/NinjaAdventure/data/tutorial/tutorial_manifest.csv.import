@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cb8f8hsl5sr7l"
+
+[deps]
+
+files=["res://data/tutorial/tutorial_manifest.level.translation", "res://data/tutorial/tutorial_manifest.trigger.translation", "res://data/tutorial/tutorial_manifest.input.translation", "res://data/tutorial/tutorial_manifest.once.translation"]
+
+source_file="res://data/tutorial/tutorial_manifest.csv"
+dest_files=["res://data/tutorial/tutorial_manifest.level.translation", "res://data/tutorial/tutorial_manifest.trigger.translation", "res://data/tutorial/tutorial_manifest.input.translation", "res://data/tutorial/tutorial_manifest.once.translation"]
+
+[params]
+
+compress=true
+delimiter=0

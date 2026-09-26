@@ -1,0 +1,3 @@
+《猫忍不住》v1.2.16 static audit
+required_files=8
+errors=0

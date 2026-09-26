@@ -1,0 +1,29 @@
+{
+  "version": "v1.2.22",
+  "level_count": 12,
+  "expected_event_count": 46,
+  "fail_codes": [
+    "FAIL_TOO_LATE",
+    "FAIL_WRONG_ORDER",
+    "FAIL_SUSPICION",
+    "FAIL_NINJA_DEATH",
+    "FAIL_BOSS_FINISHER",
+    "FAIL_ROUTE_BLOCKED",
+    "FAIL_TIMEOUT"
+  ],
+  "boss_phases": ["NONE", "PREPARE", "PHASE_1", "PHASE_2", "PHASE_3", "DEFEAT"],
+  "required_checks": [
+    "level_data_load",
+    "event_data_load",
+    "route_data_load",
+    "world_state_reset",
+    "score_result",
+    "save_write",
+    "result_flow",
+    "input_map",
+    "audio_bus",
+    "settings_load",
+    "boss_phase_transition",
+    "emergency_rescue_gate"
+  ]
+}

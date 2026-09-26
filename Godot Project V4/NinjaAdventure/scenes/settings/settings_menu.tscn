@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/flow/settings_menu.gd" id="1_settings_menu"]
+
+[node name="SettingsMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_settings_menu")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="Panel"]
+text = "设置"
+
+[node name="Categories" type="VBoxContainer" parent="Panel"]
+
+[node name="Input" type="Button" parent="Panel/Categories"]
+text = "输入"
+
+[node name="Audio" type="Button" parent="Panel/Categories"]
+text = "音频"
+
+[node name="Accessibility" type="Button" parent="Panel/Categories"]
+text = "辅助功能"
+
+[node name="Display" type="Button" parent="Panel/Categories"]
+text = "显示"
+
+[node name="Data" type="Button" parent="Panel/Categories"]
+text = "数据管理"
+
+[node name="Content" type="VBoxContainer" parent="Panel"]
+
+[node name="ResetSettings" type="Button" parent="Panel"]
+text = "恢复设置默认"
+
+[node name="Close" type="Button" parent="Panel"]
+text = "返回"
