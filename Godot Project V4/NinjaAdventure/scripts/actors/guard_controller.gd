@@ -13,6 +13,12 @@ var direction := 1.0
 var distract_timer := 0.0
 var rest_position := Vector2.ZERO
 var meow_position := Vector2.ZERO
+var facing := Vector2.RIGHT
+var sprite: Sprite2D
+var anim_time := 0.0
+
+func _ready() -> void:
+    sprite = SpriteAnimator.attach_character(self, load("res://assets/actors/samurai_red/sprite_sheet.png"))
 
 func setup(center: Vector2) -> void:
     position = center
@@ -28,28 +34,31 @@ func distract(source_position: Vector2) -> void:
     queue_redraw()
 
 func _process(delta: float) -> void:
+    var moving := false
     if not active:
         if meow_position != Vector2.ZERO:
+            facing = (meow_position - position).normalized()
+            moving = true
             position = position.move_toward(meow_position, patrol_speed * 2.0 * delta)
         distract_timer -= delta
         if distract_timer <= 0.0:
             position = rest_position
             active = true
             meow_position = Vector2.ZERO
-        queue_redraw()
-        return
-    var left := rest_position + patrol_left
-    var right := rest_position + patrol_right
-    position.x += direction * patrol_speed * delta
-    if position.x >= right.x:
-        direction = -1.0
-    elif position.x <= left.x:
-        direction = 1.0
+    else:
+        var left := rest_position + patrol_left
+        var right := rest_position + patrol_right
+        position.x += direction * patrol_speed * delta
+        facing = Vector2(direction, 0.0)
+        moving = true
+        if position.x >= right.x:
+            direction = -1.0
+        elif position.x <= left.x:
+            direction = 1.0
+    sprite.modulate = Color.WHITE if active else Color(0.6, 0.6, 0.7)
+    anim_time += delta
+    SpriteAnimator.update_character(sprite, facing, moving, anim_time)
     queue_redraw()
 
 func _draw() -> void:
-    var c := Color("#b91c1c") if active else Color("#64748b")
-    draw_circle(Vector2.ZERO, 17.0, c)
-    draw_rect(Rect2(-8, -4, 16, 8), Color("#fca5a5") if active else Color("#cbd5e1"))
-    draw_circle(Vector2(-5, -5), 1.6, Color.BLACK)
-    draw_circle(Vector2(5, -5), 1.6, Color.BLACK)
+    pass

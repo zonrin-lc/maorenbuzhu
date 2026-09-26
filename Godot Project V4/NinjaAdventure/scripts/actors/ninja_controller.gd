@@ -11,6 +11,11 @@ var level_manager: Node
 var hp := 3
 var waiting_for_event := false
 var facing := Vector2.RIGHT
+var sprite: Sprite2D
+var anim_time := 0.0
+
+func _ready() -> void:
+    sprite = SpriteAnimator.attach_character(self, load("res://assets/actors/ninja_blue/sprite_sheet.png"))
 
 func setup(route_data: RouteData, manager: Node) -> void:
     route = route_data
@@ -43,6 +48,10 @@ func _physics_process(_delta: float) -> void:
     move_and_slide()
     queue_redraw()
 
+func _process(delta: float) -> void:
+    anim_time += delta
+    SpriteAnimator.update_character(sprite, facing, velocity.length() > 1.0, anim_time)
+
 func release_event() -> void:
     waiting_for_event = false
 
@@ -57,8 +66,4 @@ func is_facing_point(point: Vector2) -> bool:
     return facing.dot(to_point) >= 0.0
 
 func _draw() -> void:
-    draw_circle(Vector2.ZERO, 17.0, Color("#2563eb"))
-    draw_circle(Vector2(0, -2), 9.0, Color("#93c5fd"))
-    draw_circle(Vector2(-3, 0), 1.5, Color.BLACK)
-    draw_circle(Vector2(3, 0), 1.5, Color.BLACK)
-    draw_line(Vector2.ZERO, facing * 22.0, Color("#fde68a"), 2.0)
+    pass

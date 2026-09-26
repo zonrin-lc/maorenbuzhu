@@ -13,6 +13,12 @@ var direction := 1.0
 var state: StringName = &"ACTIVE"
 var timer := 0.0
 var lure_position := Vector2.ZERO
+var facing := Vector2.RIGHT
+var sprite: Sprite2D
+var anim_time := 0.0
+
+func _ready() -> void:
+    sprite = SpriteAnimator.attach_character(self, load("res://assets/actors/samurai_blue/sprite_sheet.png"))
 
 func setup(center: Vector2) -> void:
     position = center
@@ -29,9 +35,12 @@ func depart(target: Vector2, duration: float = return_delay) -> void:
     state_changed.emit(state)
 
 func _process(delta: float) -> void:
+    var moving := false
     match state:
         &"ACTIVE":
             position.x += direction * patrol_speed * delta
+            facing = Vector2(direction, 0.0)
+            moving = true
             var left := rest_position + patrol_left
             var right := rest_position + patrol_right
             if position.x >= right.x:
@@ -39,17 +48,18 @@ func _process(delta: float) -> void:
             elif position.x <= left.x:
                 direction = 1.0
         &"DISTRACTED":
+            facing = (lure_position - position).normalized()
+            moving = true
             position = position.move_toward(lure_position, patrol_speed * 2.0 * delta)
             timer -= delta
             if timer <= 0.0:
                 position = rest_position
                 state = &"ACTIVE"
                 state_changed.emit(state)
+    sprite.modulate = Color.WHITE if state == &"ACTIVE" else Color(0.6, 0.6, 0.7)
+    anim_time += delta
+    SpriteAnimator.update_character(sprite, facing, moving, anim_time)
     queue_redraw()
 
 func _draw() -> void:
-    var c := Color("#dc2626") if state == &"ACTIVE" else Color("#64748b")
-    draw_circle(Vector2.ZERO, 17.0, c)
-    draw_rect(Rect2(-8, -4, 16, 8), Color("#fecaca") if state == &"ACTIVE" else Color("#cbd5e1"))
-    draw_circle(Vector2(-5, -5), 1.6, Color.BLACK)
-    draw_circle(Vector2(5, -5), 1.6, Color.BLACK)
+    pass

@@ -21,6 +21,13 @@ var meow_cooldown := 0.0
 var facing := Vector2.RIGHT
 var meow_was_down := false
 var emote_was_down := false
+var sprite: Sprite2D
+var anim_time := 0.0
+
+@export var skin := "cat_black"
+
+func _ready() -> void:
+    sprite = SpriteAnimator.attach_animal(self, load("res://assets/actors/%s/sprite_sheet.png" % skin))
 
 func _physics_process(delta: float) -> void:
     meow_cooldown = max(0.0, meow_cooldown - delta)
@@ -55,6 +62,8 @@ func _physics_process(delta: float) -> void:
         meow_cooldown = emote_cooldown
         emote_triggered.emit()
     emote_was_down = emote_down
+    anim_time += delta
+    SpriteAnimator.update_animal(sprite, facing, velocity.length() > 1.0, anim_time)
     queue_redraw()
 
 func start_action(new_action: StringName, duration: float) -> bool:
@@ -66,11 +75,5 @@ func start_action(new_action: StringName, duration: float) -> bool:
     return true
 
 func _draw() -> void:
-    draw_circle(Vector2.ZERO, 18.0, Color("#202020"))
-    draw_circle(Vector2(-6, -4), 2.5, Color.WHITE)
-    draw_circle(Vector2(6, -4), 2.5, Color.WHITE)
-    draw_circle(Vector2(-6, -4), 1.2, Color.BLACK)
-    draw_circle(Vector2(6, -4), 1.2, Color.BLACK)
-    draw_line(Vector2.ZERO, facing * 22.0, Color("#e2e8f0"), 2.0)
     if action_remaining > 0.0:
         draw_arc(Vector2.ZERO, 24.0, -PI * 0.9, -PI * 0.1, 18, Color("#fbbf24"), 3.0)

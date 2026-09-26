@@ -13,6 +13,12 @@ var charge_timer := 0.0
 var charge_window := 2.0
 var prepared_damage := 0
 var manager: Node
+var sprite: Sprite2D
+var anim_time := 0.0
+
+func _ready() -> void:
+    sprite = SpriteAnimator.attach_boss(self, load("res://assets/actors/boss_giant_blue_samurai/idle.png"))
+    sprite.modulate = Color(0.55, 0.55, 0.6)
 
 func setup(owner: Node) -> void:
     manager = owner
@@ -62,7 +68,11 @@ func _sync_phase_from_hp() -> void:
     phase_changed.emit(phase)
 
 func _process(delta: float) -> void:
+    sprite.modulate = Color.WHITE if active else Color(0.55, 0.55, 0.6)
+    anim_time += delta
+    SpriteAnimator.update_boss(sprite, anim_time)
     if not active:
+        queue_redraw()
         return
     timer += delta
     if phase == 1 and timer >= 3.0:
@@ -84,11 +94,5 @@ func is_in_charge_window() -> bool:
     return active and phase == 2 and charge_timer <= charge_window
 
 func _draw() -> void:
-    var body := Color("#7c2d12") if active else Color("#57534e")
-    draw_circle(Vector2.ZERO, 26.0, body)
-    draw_circle(Vector2(-7, -5), 3.0, Color("#fef3c7"))
-    draw_circle(Vector2(7, -5), 3.0, Color("#fef3c7"))
-    draw_circle(Vector2(-7, -5), 1.3, Color.BLACK)
-    draw_circle(Vector2(7, -5), 1.3, Color.BLACK)
     if active:
         draw_arc(Vector2.ZERO, 34.0, 0.0, TAU * float(hp) / 100.0, 36, Color("#ef4444"), 4.0)
