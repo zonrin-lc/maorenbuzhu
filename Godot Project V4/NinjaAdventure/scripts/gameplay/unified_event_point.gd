@@ -94,10 +94,10 @@ func _process(delta: float) -> void:
 
 func _action_pressed(action_id: StringName) -> bool:
     match action_id:
-        &"FEED": return Input.is_key_pressed(KEY_E) and level_manager.cat.carry_item == &"FISH"
-        &"PLACE_ANTIDOTE": return Input.is_key_pressed(KEY_E) and level_manager.cat.carry_item == &"ANTIDOTE"
-        &"CALTROP_DURING_PHASE2": return Input.is_key_pressed(KEY_E)
-        _: return Input.is_key_pressed(KEY_E)
+        &"FEED": return Input.is_action_pressed("interact") and level_manager.cat.carry_item == &"FISH"
+        &"PLACE_ANTIDOTE": return Input.is_action_pressed("interact") and level_manager.cat.carry_item == &"ANTIDOTE"
+        &"CALTROP_DURING_PHASE2": return Input.is_action_pressed("interact")
+        _: return Input.is_action_pressed("interact")
 
 func resolve(action_id: StringName) -> void:
     if resolved_state:

@@ -41,8 +41,8 @@ func _physics_process(delta: float) -> void:
         queue_redraw()
         return
 
-    var input_vec := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-    var sprinting := Input.is_key_pressed(KEY_SHIFT) and input_vec.length() > 0.0 and stamina > 0.0
+    var input_vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+    var sprinting := Input.is_action_pressed("sprint") and input_vec.length() > 0.0 and stamina > 0.0
     var move_speed := sprint_speed if sprinting else speed
     if sprinting:
         stamina = max(0.0, stamina - sprint_cost * delta)
@@ -52,12 +52,12 @@ func _physics_process(delta: float) -> void:
         facing = input_vec.normalized()
     velocity = input_vec.normalized() * move_speed
     move_and_slide()
-    var meow_down := Input.is_key_pressed(KEY_F)
+    var meow_down := Input.is_action_pressed("meow")
     if meow_down and not meow_was_down:
         meow_triggered.emit()
     meow_was_down = meow_down
 
-    var emote_down := Input.is_key_pressed(KEY_CTRL)
+    var emote_down := Input.is_action_pressed("emote")
     if emote_down and not emote_was_down and meow_cooldown <= 0.0:
         meow_cooldown = emote_cooldown
         emote_triggered.emit()

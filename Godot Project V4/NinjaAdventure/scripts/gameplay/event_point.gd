@@ -36,7 +36,7 @@ func _process(delta: float) -> void:
         queue_redraw()
         return
 
-    if global_position.distance_to(cat.global_position) <= 48.0 and Input.is_key_pressed(KEY_E):
+    if global_position.distance_to(cat.global_position) <= 48.0 and Input.is_action_pressed("interact"):
         if not interacting:
             interacting = true
             interaction_progress = 0.0

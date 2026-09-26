@@ -16,13 +16,13 @@ func _process(delta: float) -> void:
 
     if data.event_type == &"BOSS_CALTROP":
         if level_manager.boss and level_manager.boss.is_in_charge_window() and global_position.distance_to(cat.global_position) <= 60.0:
-            if Input.is_key_pressed(KEY_E):
+            if Input.is_action_pressed("interact"):
                 resolve(&"CALTROP_DURING_PHASE2")
                 return
         queue_redraw()
         return
 
-    if global_position.distance_to(cat.global_position) <= 56.0 and Input.is_key_pressed(KEY_E):
+    if global_position.distance_to(cat.global_position) <= 56.0 and Input.is_action_pressed("interact"):
         resolve(_action_for_type())
         return
 

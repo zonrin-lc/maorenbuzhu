@@ -74,7 +74,7 @@ func _ready() -> void:
     _build_events()
     _place_guards_and_dog()
     _set_label(status_label, "%s · %s" % [String(level_data.chapter_id), level_data.display_name])
-    _set_label(help_label, "WASD移动 / Shift疾跑 / E互动 / Q叼取放置 / F喵叫 / Ctrl卖萌 / R重开")
+    _set_label(help_label, "移动 / 疾跑 / 互动 / 叼取放置 / 喵叫 / 卖萌 / 重开")
     _show_toast("先观察，再让事情按你的顺序发生。")
     _play_chapter_music()
     GlobalAudioManager.play_event_sfx("read_map")
@@ -95,6 +95,7 @@ func _setup_global_ui() -> void:
     ui.tutorial_director = ui.get_node_or_null("TutorialDirector")
     ui.bind_level(self)
     ui.bind_ninja(ninja)
+    add_child(TouchControls.new())
 
 func _play_chapter_music() -> void:
     match String(level_data.chapter_id):
@@ -374,7 +375,7 @@ func can_boss_finish() -> bool:
 func _try_emergency() -> void:
     if not emergency_available or emergency_used or boss == null:
         return
-    if cat.global_position.distance_to(EMERGENCY_POS) <= 60.0 and Input.is_key_pressed(KEY_E):
+    if cat.global_position.distance_to(EMERGENCY_POS) <= 60.0 and Input.is_action_pressed("interact"):
         emergency_used = true
         emergency_available = false
         if ninja:
@@ -419,11 +420,11 @@ func _process(_delta: float) -> void:
         _set_label(suspicion_label, _suspicion_text())
         _update_hud()
     elif level_finished:
-        if Input.is_key_pressed(KEY_R):
+        if Input.is_action_pressed("retry"):
             get_tree().reload_current_scene()
-        elif Input.is_key_pressed(KEY_SPACE) and not level_data.next_scene_path.is_empty():
+        elif Input.is_action_pressed("confirm") and not level_data.next_scene_path.is_empty():
             get_tree().change_scene_to_file(level_data.next_scene_path)
-    elif level_failed and Input.is_key_pressed(KEY_R):
+    elif level_failed and Input.is_action_pressed("retry"):
         get_tree().reload_current_scene()
 
 func _suspicion_text() -> String:
