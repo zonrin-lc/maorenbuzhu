@@ -4,6 +4,14 @@ extends Control
 var ninja: Node2D
 @export var edge_padding: float = 28.0
 
+func _ready() -> void:
+    var arrow := TextureRect.new()
+    arrow.texture = load("res://assets/ui/arrow.png")
+    arrow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+    arrow.set_anchors_preset(Control.PRESET_FULL_RECT)
+    arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    add_child(arrow)
+
 func bind_ninja(target: Node2D) -> void:
     ninja = target
 

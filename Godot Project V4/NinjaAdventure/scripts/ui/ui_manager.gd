@@ -19,6 +19,8 @@ func bind_level(level_manager: Node) -> void:
         level_manager.event_failed.connect(_on_event_failed)
     if level_manager.has_signal("level_completed"):
         level_manager.level_completed.connect(_on_level_completed)
+    if level_manager.has_signal("suspicion_changed"):
+        level_manager.suspicion_changed.connect(_on_suspicion_changed)
 
 func bind_cat(cat: Node) -> void:
     if cat == null:

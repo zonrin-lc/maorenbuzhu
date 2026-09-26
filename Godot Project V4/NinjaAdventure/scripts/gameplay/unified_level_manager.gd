@@ -1,6 +1,10 @@
 class_name UnifiedLevelManager
 extends Node2D
 
+signal level_completed(payload: Dictionary)
+signal event_failed(fail_code: StringName)
+signal suspicion_changed(value: float)
+
 @export var level_data: LevelData
 
 var cat: CatController
@@ -50,6 +54,7 @@ const EMERGENCY_POS := Vector2(930, 290)
 
 func _ready() -> void:
     _cache_nodes()
+    _setup_floor()
     var errors := validator.validate_level(level_data)
     if not errors.is_empty():
         _set_label(status_label, "VALIDATION ERROR: " + ", ".join(errors))
@@ -71,8 +76,53 @@ func _ready() -> void:
     _set_label(status_label, "%s · %s" % [String(level_data.chapter_id), level_data.display_name])
     _set_label(help_label, "WASD移动 / Shift疾跑 / E互动 / Q叼取放置 / F喵叫 / Ctrl卖萌 / R重开")
     _show_toast("先观察，再让事情按你的顺序发生。")
+    _play_chapter_music()
+    GlobalAudioManager.play_event_sfx("read_map")
+    if dog != null and not dog.barked.is_connected(_on_dog_barked):
+        dog.barked.connect(_on_dog_barked)
+    _setup_global_ui()
     _update_hud()
     queue_redraw()
+
+func _setup_global_ui() -> void:
+    var ui: UIManager = preload("res://scenes/ui/global_ui.tscn").instantiate()
+    add_child(ui)
+    ui.suspicion_eye = ui.get_node_or_null("HUD/TopBar/SuspicionEye")
+    ui.ninja_locator = ui.get_node_or_null("HUD/NinjaLocator")
+    ui.interaction_prompt = ui.get_node_or_null("HUD/BottomBar/InteractPrompt")
+    ui.failure_panel = ui.get_node_or_null("FailureDiagnostic")
+    ui.result_panel = ui.get_node_or_null("ResultPanel")
+    ui.tutorial_director = ui.get_node_or_null("TutorialDirector")
+    ui.bind_level(self)
+    ui.bind_ninja(ninja)
+
+func _play_chapter_music() -> void:
+    match String(level_data.chapter_id):
+        "CH01": GlobalAudioManager.set_music_state("VILLAGE_CALM")
+        "CH02": GlobalAudioManager.set_music_state("DOCK_CALM")
+        "CH03": GlobalAudioManager.set_music_state("CASTLE_CALM")
+
+func _on_dog_barked() -> void:
+    GlobalAudioManager.play_event_sfx("dog")
+
+func _setup_floor() -> void:
+    # 章节主题地面：村庄草地 / 码头泥土 / 城堡暗石板（素材包切块平铺）
+    var floor_rect := TextureRect.new()
+    floor_rect.name = "Floor"
+    floor_rect.stretch_mode = TextureRect.STRETCH_TILE
+    floor_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    floor_rect.position = Vector2.ZERO
+    floor_rect.size = Vector2(1100, 680)
+    floor_rect.z_index = -100
+    match String(level_data.chapter_id):
+        "CH02":
+            floor_rect.texture = load("res://assets/tilesets/ground_dock.png")
+        "CH03":
+            floor_rect.texture = load("res://assets/tilesets/ground_castle.png")
+            floor_rect.modulate = Color(0.38, 0.4, 0.52)
+        _:
+            floor_rect.texture = load("res://assets/tilesets/ground_village.png")
+    add_child(floor_rect)
 
 func _cache_nodes() -> void:
     cat = get_node_or_null("Cat") as CatController
@@ -108,7 +158,7 @@ func _build_events() -> void:
         point.position = level_data.ninja_route.waypoints[idx]
         point.setup(data, self)
         point.resolved.connect(event_resolved)
-        point.failed.connect(event_failed)
+        point.failed.connect(_on_event_failed)
         event_root.add_child(point)
         event_nodes.append(point)
 
@@ -175,6 +225,7 @@ func _on_cat_emote() -> void:
         var before := suspicion
         suspicion = 0.0
         event_log.append_event({"event_id": &"CAT_EMOTE", "action": &"EMOTE", "success": true, "suspicion_before": before, "suspicion_after": suspicion})
+        GlobalAudioManager.play_event_sfx("emote")
         _show_toast("卖萌成功，怀疑清零。")
 
 func _apply_suspicion(amount: float, source: StringName) -> void:
@@ -182,8 +233,10 @@ func _apply_suspicion(amount: float, source: StringName) -> void:
     suspicion = clamp(suspicion + amount, 0.0, 100.0)
     max_suspicion = max(max_suspicion, suspicion)
     event_log.append_event({"event_id": &"SUSPICION", "action": source, "success": true, "suspicion_before": before, "suspicion_after": suspicion})
+    suspicion_changed.emit(suspicion)
     if suspicion >= 100.0:
         level_failed = true
+        event_failed.emit(&"FAIL_SUSPICION")
         _set_label(status_label, "任务失败：被忍者发现你在搞事情。R 重开")
 
 func event_resolved(data: EventPointData, action_id: StringName) -> void:
@@ -204,6 +257,7 @@ func event_resolved(data: EventPointData, action_id: StringName) -> void:
         active_main_event_index += 1
         if ninja:
             ninja.release_event()
+    GlobalAudioManager.play_event_sfx("success")
     _show_toast("处理成功：%s" % data.display_name)
 
 func _apply_event_side_effect(data: EventPointData, action_id: StringName) -> void:
@@ -241,7 +295,7 @@ func _apply_effect(effect: EventEffectData) -> void:
         _:
             pass
 
-func event_failed(data: EventPointData, code: StringName) -> void:
+func _on_event_failed(data: EventPointData, code: StringName) -> void:
     if level_failed or level_finished:
         return
     level_failed = true
@@ -250,6 +304,8 @@ func event_failed(data: EventPointData, code: StringName) -> void:
     for flag in data.failure_flags:
         world_state.set_flag(flag)
     event_log.append_event({"event_id": data.event_id, "action": &"FAIL", "success": false, "fail_code": code})
+    GlobalAudioManager.play_event_sfx("fail")
+    event_failed.emit(code)
     _set_label(status_label, "任务失败：%s    R 重开" % String(code))
     _show_toast(_fail_reason(code))
 
@@ -287,12 +343,15 @@ func _start_boss_sequence() -> void:
         return
     boss_started = true
     world_state.set_flag(&"boss_started")
+    GlobalAudioManager.set_music_state("BOSS_PREPARE")
     boss.start_boss()
     _show_toast("Boss 出现！战场还没有结束。")
     event_log.append_event({"event_id": &"BOSS_START", "action": &"START", "success": true})
 
 func _on_boss_phase(phase: int) -> void:
     world_state.set_flag(&"boss_phase_%d" % phase)
+    if phase >= 1 and phase <= 3:
+        GlobalAudioManager.set_music_state("BOSS_PHASE_%d" % phase)
     if phase == 2:
         _show_toast("Boss 开始冲锋！现在处理蒺藜。")
     elif phase == 3:
@@ -302,6 +361,7 @@ func _on_boss_phase(phase: int) -> void:
 
 func _on_boss_defeated() -> void:
     boss_started = false
+    GlobalAudioManager.set_music_state("BOSS_DEFEAT")
     _complete_level(false)
 
 func _on_boss_retreat() -> void:
@@ -334,6 +394,17 @@ func _complete_level(emergency: bool) -> void:
     _set_label(status_label, "任务完成！忍者：‘果然是我实力超群。’")
     _show_toast("按 Space 进入下一关。" if not level_data.next_scene_path.is_empty() else "第一章的真相：都是你干的。")
     event_log.append_event({"event_id": &"GOAL", "action": &"COMPLETE", "success": true, "paws": paws, "emergency": emergency})
+    level_completed.emit({
+        "level_id": String(level_data.level_id),
+        "paws": paws,
+        "mission_complete": true,
+        "ninja_hp": ninja.hp if ninja else 0,
+        "max_suspicion": max_suspicion,
+        "elapsed_time": elapsed,
+        "high_risk_rescue": high_risk_rescue,
+        "chain_rescue": chain_rescue,
+        "emergency": emergency,
+    })
 
 func on_ninja_dead() -> void:
     level_failed = true
@@ -391,8 +462,9 @@ func _main_event_count() -> int:
     return n
 
 func _draw() -> void:
-    draw_rect(Rect2(0, 0, 1100, 680), Color("#07111f"))
-    draw_rect(Rect2(40, 115, 1020, 500), Color("#132238"))
+    # 外框压暗 + 游玩区域描边（地面纹理由 Floor 节点平铺）
+    draw_rect(Rect2(40, 115, 1020, 500), Color(0, 0, 0, 0.18))
+    draw_rect(Rect2(40, 115, 1020, 500), Color(1, 1, 1, 0.12), false, 2.0)
     if boss_started:
         draw_circle(EMERGENCY_POS, 24.0, Color(0.9, 0.2, 0.2, 0.15))
         draw_arc(EMERGENCY_POS, 28.0, 0.0, TAU, 32, Color("#f87171"), 2.0)

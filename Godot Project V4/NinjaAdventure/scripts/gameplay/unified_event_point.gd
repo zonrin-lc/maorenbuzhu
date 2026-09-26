@@ -4,17 +4,46 @@ extends Area2D
 signal resolved(data: EventPointData, action_id: StringName)
 signal failed(data: EventPointData, fail_code: StringName)
 
+const PROP_TEXTURES := {
+    &"TRIPWIRE": "res://assets/props/fish_net.png",
+    &"WATERGAP": "res://assets/props/crate.png",
+    &"BRIDGE": "res://assets/props/crate.png",
+    &"CLIFF": "res://assets/props/crate.png",
+    &"DOG": "res://assets/props/fish.png",
+    &"POISON": "res://assets/props/life_pot.png",
+    &"CALTROP": "res://assets/props/caltrop.png",
+    &"DYNAMITE": "res://assets/props/dynamite_crate.png",
+    &"BOSS_CRANE": "res://assets/props/crane.png",
+    &"BOSS_GOURD": "res://assets/props/gourd.png",
+    &"BOSS_CALTROP": "res://assets/props/caltrop.png",
+}
+
 var data: EventPointData
 var level_manager: UnifiedLevelManager
 var resolved_state := false
 var timer := 0.0
 var interaction_progress := 0.0
 var interacting := false
+var prop_sprite: Sprite2D
 
 func setup(event_data: EventPointData, manager: UnifiedLevelManager) -> void:
     data = event_data
     level_manager = manager
+    _attach_prop()
     queue_redraw()
+
+func _attach_prop() -> void:
+    if not PROP_TEXTURES.has(data.event_type):
+        return
+    var tex: Texture2D = load(PROP_TEXTURES[data.event_type])
+    if tex == null:
+        return
+    prop_sprite = Sprite2D.new()
+    prop_sprite.name = "Prop"
+    prop_sprite.texture = tex
+    var s: float = 32.0 / maxf(tex.get_width(), tex.get_height())
+    prop_sprite.scale = Vector2(s, s)
+    add_child(prop_sprite)
 
 func _process(delta: float) -> void:
     if data == null or level_manager == null or resolved_state:
@@ -95,8 +124,16 @@ func _draw() -> void:
     if data == null:
         return
     var active := level_manager != null and level_manager.is_event_active(data)
-    var base := Color("#22c55e") if resolved_state else (Color("#ef4444") if active else Color("#64748b"))
-    draw_circle(Vector2.ZERO, 13.0, base)
+    if prop_sprite != null:
+        if resolved_state:
+            prop_sprite.modulate = Color(0.5, 1.0, 0.6)
+        elif not active:
+            prop_sprite.modulate = Color(0.55, 0.55, 0.6)
+        else:
+            prop_sprite.modulate = Color.WHITE
+    else:
+        var base := Color("#22c55e") if resolved_state else (Color("#ef4444") if active else Color("#64748b"))
+        draw_circle(Vector2.ZERO, 13.0, base)
     if active and not resolved_state:
         draw_circle(Vector2.ZERO, data.trigger_radius, Color(1, 1, 1, 0.04))
     var font := ThemeDB.fallback_font
