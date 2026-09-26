@@ -10,8 +10,8 @@ config_version=5
 
 [application]
 
-config/name="NinjaAdventure"
-run/main_scene="res://main.tscn"
+config/name="猫忍不住"
+run/main_scene="res://scenes/levels/ch01_village/L01_first_job.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
 run/max_fps=60
 config/icon="res://icon.png"

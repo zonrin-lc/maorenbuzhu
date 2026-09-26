@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="EventPointData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/event_point_data.gd" id="1"]
+
+[ext_resource type="Resource" path="res://data/event_effects/boss_gourd_prepare.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+event_id = &"L12_E03_BOSS_GOURD"
+event_type = &"BOSS_GOURD"
+display_name = "酒葫芦机关"
+classification = &"CRITICAL"
+actor_id = &"NINJA_BLUE"
+route_index = 3
+trigger_radius = 34.0
+hesitation_time = 1.5
+timeout = 0.0
+interaction_time = 0.8
+fail_code = &"FAIL_TIMEOUT"
+success_flags = [&"boss_gourd_ready"]
+failure_flags = []
+caused_event_ids = []
+risk_level = &"SAFE"
+high_risk = false
+allow_standard_solution = true
+allow_risky_solution = true
+required_action = &"INTERACT"
+banter_tags = [&"BOSS_GOURD"]
+
+event_group = &"BOSS_PREP"
+non_blocking = true
+
+success_effects = [ExtResource("2")]
