@@ -55,6 +55,7 @@ const EMERGENCY_POS := Vector2(930, 290)
 func _ready() -> void:
     _cache_nodes()
     _setup_floor()
+    _setup_decorations()
     var errors := validator.validate_level(level_data)
     if not errors.is_empty():
         _set_label(status_label, "VALIDATION ERROR: " + ", ".join(errors))
@@ -105,6 +106,85 @@ func _play_chapter_music() -> void:
 
 func _on_dog_barked() -> void:
     GlobalAudioManager.play_event_sfx("dog")
+
+# 装饰层（GDD §8.2 四级装饰：永不抢玩法反馈）——确定性散布（种子=level_id），非随机地图
+const NATURE_SHEET := "res://assets/tilesets/nature.png"
+const DECOR_REGIONS := {
+    &"tree_round": Rect2(0, 0, 32, 32),
+    &"tree_big": Rect2(44, 288, 56, 48),
+    &"cherry": Rect2(0, 280, 64, 56),
+    &"dead_tree": Rect2(64, 0, 32, 32),
+    &"rock_gray": Rect2(288, 256, 64, 48),
+    &"sunflower": Rect2(16, 176, 16, 16),
+    &"daisy": Rect2(96, 176, 16, 16),
+    &"tuft": Rect2(48, 160, 16, 16),
+    &"tuft2": Rect2(144, 160, 16, 16),
+    &"mushroom": Rect2(192, 176, 16, 16),
+}
+const PLAY_RECT := Rect2(40, 115, 1020, 500)
+
+func _setup_decorations() -> void:
+    var layer := Node2D.new()
+    layer.name = "Decorations"
+    layer.z_index = -50
+    add_child(layer)
+    var rng := RandomNumberGenerator.new()
+    rng.seed = hash(String(level_data.level_id))
+    var chapter := String(level_data.chapter_id)
+    var is_castle := chapter == "CH03"
+    var tint := Color(0.5, 0.5, 0.62) if is_castle else Color.WHITE
+    var border_items: Array[StringName]
+    var floor_items: Array[StringName]
+    match chapter:
+        "CH02":
+            border_items = [&"rock_gray", &"tree_round"]
+            floor_items = [&"tuft", &"tuft2", &"mushroom"]
+        "CH03":
+            border_items = [&"dead_tree", &"rock_gray"]
+            floor_items = [&"mushroom", &"tuft2"]
+        _:
+            border_items = [&"tree_round", &"tree_big", &"cherry"]
+            floor_items = [&"tuft", &"tuft2", &"sunflower", &"daisy", &"mushroom"]
+    # 上边界：大树排（村庄混樱花/绿树；城堡枯树+灰岩）
+    var x := 60.0
+    while x < 1060.0:
+        var item: StringName = border_items[rng.randi() % border_items.size()]
+        _add_decor(layer, item, Vector2(x, 88.0 + rng.randf_range(-8.0, 8.0)), 2.0, tint)
+        x += rng.randf_range(90.0, 150.0)
+    # 下边界与两侧
+    x = 80.0
+    while x < 1040.0:
+        _add_decor(layer, border_items[rng.randi() % border_items.size()], Vector2(x, 648.0 + rng.randf_range(-6.0, 6.0)), 1.4, tint)
+        x += rng.randf_range(110.0, 190.0)
+    for side in [16.0, 1084.0]:
+        var y := 150.0
+        while y < 620.0:
+            _add_decor(layer, border_items[rng.randi() % border_items.size()], Vector2(side + rng.randf_range(-4.0, 4.0), y), 1.2, tint)
+            y += rng.randf_range(120.0, 200.0)
+    # 场内细节：稀疏、半透、不遮挡事件点
+    for i in 14:
+        var pos := Vector2(rng.randf_range(PLAY_RECT.position.x + 30, PLAY_RECT.end.x - 30), rng.randf_range(PLAY_RECT.position.y + 30, PLAY_RECT.end.y - 30))
+        _add_decor(layer, floor_items[rng.randi() % floor_items.size()], pos, 1.4, Color(tint.r, tint.g, tint.b, 0.85))
+    # 码头章节追加：木箱与陶罐堆场
+    if chapter == "CH02":
+        for i in 5:
+            _add_decor_tex(layer, load("res://assets/props/crate.png"), Vector2(rng.randf_range(60, 1040), rng.randf_range(620, 660)), 2.0)
+        for i in 3:
+            _add_decor_tex(layer, load("res://content/destroyable/pot.png"), Vector2(rng.randf_range(1064, 1090), rng.randf_range(160, 600)), 1.6)
+
+func _add_decor(layer: Node2D, item: StringName, pos: Vector2, decor_scale: float, tint: Color) -> void:
+    var tex := AtlasTexture.new()
+    tex.atlas = load(NATURE_SHEET)
+    tex.region = DECOR_REGIONS[item]
+    _add_decor_tex(layer, tex, pos, decor_scale, tint)
+
+func _add_decor_tex(layer: Node2D, tex: Texture2D, pos: Vector2, decor_scale: float, tint: Color = Color.WHITE) -> void:
+    var s := Sprite2D.new()
+    s.texture = tex
+    s.position = pos
+    s.scale = Vector2(decor_scale, decor_scale)
+    s.modulate = tint
+    layer.add_child(s)
 
 func _setup_floor() -> void:
     # 章节主题地面：村庄草地 / 码头泥土 / 城堡暗石板（素材包切块平铺）
