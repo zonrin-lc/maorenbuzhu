@@ -20,6 +20,7 @@ config/icon="res://icon.png"
 
 SettingsManager="*res://scripts/flow/settings_manager.gd"
 GlobalAudioManager="*res://scripts/audio/global_audio_manager.gd"
+SettlementContext="*res://scripts/settlement/settlement_context.gd"
 DebugConsole="*res://scripts/debug/debug_console.gd"
 QATestRunner="*res://scripts/qa/qa_test_runner.gd"
 

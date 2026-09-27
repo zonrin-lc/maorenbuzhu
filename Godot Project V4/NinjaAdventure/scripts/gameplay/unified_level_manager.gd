@@ -56,6 +56,8 @@ func _ready() -> void:
     _cache_nodes()
     save_manager = SaveManagerClass.new()
     add_child(save_manager)
+    talent_tracker = TalentTrackerClass.new()
+    add_child(talent_tracker)
     _setup_floor()
     _setup_decorations()
     var errors := validator.validate_level(level_data)
@@ -124,6 +126,7 @@ var reading_phase := false
 var _tour_tween: Tween
 var _cam: Camera2D
 var save_manager: SaveManagerClass
+var talent_tracker: TalentTrackerClass
 
 func _start_reading_tour() -> void:
     reading_phase = true
@@ -348,7 +351,7 @@ func _build_events() -> void:
         var idx := clampi(data.route_index, 0, level_data.ninja_route.waypoints.size() - 1)
         point.position = level_data.ninja_route.waypoints[idx]
         point.setup(data, self)
-        point.resolved.connect(event_resolved)
+        point.resolved.connect(event_resolved.bind(point))
         point.failed.connect(_on_event_failed)
         event_root.add_child(point)
         event_nodes.append(point)
@@ -442,13 +445,16 @@ func _apply_suspicion(amount: float, source: StringName) -> void:
         event_failed.emit(&"FAIL_SUSPICION")
         _set_label(status_label, "任务失败：被忍者发现你在搞事情。R 重开")
 
-func event_resolved(data: EventPointData, action_id: StringName) -> void:
+func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedEventPoint = null) -> void:
     if level_failed or level_finished:
         return
     for flag in data.success_flags:
         world_state.set_flag(flag)
     _apply_event_side_effect(data, action_id)
-    event_log.append_event({"event_id": data.event_id, "action": action_id, "success": true, "risk_level": data.risk_level, "high_risk": data.high_risk, "tags": data.banter_tags})
+    var late_window := 99.0
+    if point != null and data.timeout > 0.0:
+        late_window = max(0.0, data.timeout - point.timer)
+    event_log.append_event({"event_id": data.event_id, "event_type": data.event_type, "action": action_id, "success": true, "risk_level": data.risk_level, "high_risk": data.high_risk, "tags": data.banter_tags, "late_success_window": late_window})
     if previous_event_id != &"":
         chain_rescue += 1
     previous_event_id = data.event_id
@@ -603,11 +609,27 @@ func _complete_level(emergency: bool) -> void:
         paws = score_system.evaluate(true, ninja.hp, max_suspicion, elapsed, high_risk_rescue, chain_rescue, shortcut_mastery, level_data.score_rules)
     _set_label(paw_label, "猫爪：%d / 3" % paws)
     _set_label(status_label, "任务完成！忍者：‘果然是我实力超群。’")
-    _show_toast("按 Space 进入下一关。" if not level_data.next_scene_path.is_empty() else "第一章的真相：都是你干的。")
-    event_log.append_event({"event_id": &"GOAL", "action": &"COMPLETE", "success": true, "paws": paws, "emergency": emergency})
-    save_manager.mark_level_complete(String(level_data.level_id), paws, int(elapsed * 1000.0), int(max_suspicion))
-    level_completed.emit({
-        "level_id": String(level_data.level_id),
+    _show_toast("结算中……")
+    event_log.append_event({"event_id": &"GOAL", "event_type": &"GOAL", "action": &"COMPLETE", "success": true, "paws": paws, "emergency": emergency})
+    var level_id := String(level_data.level_id)
+    var first_clear := not save_manager.data.completed_levels.has(level_id)
+    save_manager.mark_level_complete(level_id, paws, int(elapsed * 1000.0), int(max_suspicion))
+    # 猫技艺计数（GDD §11.3）：事件级 + 关级摘要
+    var unlocked: Array[String] = []
+    for e in event_log.entries:
+        unlocked.append_array(talent_tracker.ingest_event(e, save_manager.data))
+    unlocked.append_array(talent_tracker.ingest_event({
+        "event_type": "LEVEL",
+        "level_clean": true,
+        "max_suspicion": max_suspicion,
+        "no_sprint": cat != null and cat.sprint_time <= 0.0,
+        "dependency_depth": chain_rescue,
+        "emergency_rescue": emergency,
+    }, save_manager.data))
+    if not unlocked.is_empty():
+        save_manager.save_game()
+    var result := {
+        "level_id": level_id,
         "paws": paws,
         "mission_complete": true,
         "ninja_hp": ninja.hp if ninja else 0,
@@ -616,7 +638,13 @@ func _complete_level(emergency: bool) -> void:
         "high_risk_rescue": high_risk_rescue,
         "chain_rescue": chain_rescue,
         "emergency": emergency,
-    })
+        "unlocked_talents": unlocked,
+    }
+    SettlementContext.set_pending(result, event_log.entries, level_data.next_scene_path, level_data.scene_path, first_clear)
+    level_completed.emit(result)
+    await get_tree().create_timer(1.2).timeout
+    if is_inside_tree():
+        get_tree().change_scene_to_file("res://scenes/settlement/izakaya_settlement.tscn")
 
 func on_ninja_dead() -> void:
     if level_failed or level_finished:
@@ -639,10 +667,10 @@ func _process(_delta: float) -> void:
         _update_hud()
     elif level_finished:
         if Input.is_action_pressed("retry"):
+            SettlementContext.clear()
             get_tree().reload_current_scene()
-        elif Input.is_action_pressed("confirm") and not level_data.next_scene_path.is_empty():
-            get_tree().change_scene_to_file(level_data.next_scene_path)
     elif level_failed and Input.is_action_pressed("retry"):
+        SettlementContext.clear()
         get_tree().reload_current_scene()
 
 func _suspicion_text() -> String:

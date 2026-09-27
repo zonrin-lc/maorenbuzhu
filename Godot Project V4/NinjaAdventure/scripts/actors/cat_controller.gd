@@ -14,6 +14,7 @@ signal emote_triggered()
 @export var emote_cooldown := 20.0
 
 var stamina := stamina_max
+var sprint_time := 0.0
 var carry_item: StringName = &""
 var action_id: StringName = &""
 var action_remaining := 0.0
@@ -50,6 +51,7 @@ func _physics_process(delta: float) -> void:
     var move_speed := sprint_speed if sprinting else speed
     if sprinting:
         stamina = max(0.0, stamina - sprint_cost * delta)
+        sprint_time += delta
     else:
         stamina = min(stamina_max, stamina + stamina_regen * delta)
     if input_vec.length() > 0.05:
