@@ -24,17 +24,21 @@ offset_bottom = 96.0
 
 [node name="SuspicionEye" type="Control" parent="HUD/TopBar"]
 layout_mode = 0
-offset_left = 24.0
-offset_top = 20.0
-offset_right = 88.0
-offset_bottom = 84.0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -96.0
+offset_top = 16.0
+offset_right = -24.0
+offset_bottom = 80.0
 script = ExtResource("2")
 
 [node name="NinjaMoodBubble" type="Label" parent="HUD/TopBar"]
 layout_mode = 0
-offset_left = 110.0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -160.0
 offset_top = 24.0
-offset_right = 420.0
+offset_right = -104.0
 offset_bottom = 72.0
 text = "😏"
 theme_override_font_sizes/font_size = 26

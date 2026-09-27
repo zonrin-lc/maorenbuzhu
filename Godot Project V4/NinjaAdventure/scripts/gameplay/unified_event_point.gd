@@ -132,8 +132,12 @@ func _draw() -> void:
         else:
             prop_sprite.modulate = Color.WHITE
     else:
-        var base := Color("#22c55e") if resolved_state else (Color("#ef4444") if active else Color("#64748b"))
-        draw_circle(Vector2.ZERO, 13.0, base)
+        # 无道具事件（守卫等，本体已有角色精灵）：柔和光环代替实心圆点
+        var ring := Color("#22c55e") if resolved_state else (Color("#fbbf24") if active else Color("#64748b"))
+        ring.a = 0.35 if active and not resolved_state else 0.2
+        draw_arc(Vector2.ZERO, 14.0, 0.0, TAU, 32, ring, 2.5)
+        if active and not resolved_state:
+            draw_arc(Vector2.ZERO, 18.0, 0.0, TAU, 32, Color(ring.r, ring.g, ring.b, 0.12), 6.0)
     if active and not resolved_state:
         draw_circle(Vector2.ZERO, data.trigger_radius, Color(1, 1, 1, 0.04))
     var font := ThemeDB.fallback_font

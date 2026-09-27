@@ -165,12 +165,54 @@ func _setup_decorations() -> void:
     for i in 14:
         var pos := Vector2(rng.randf_range(PLAY_RECT.position.x + 30, PLAY_RECT.end.x - 30), rng.randf_range(PLAY_RECT.position.y + 30, PLAY_RECT.end.y - 30))
         _add_decor(layer, floor_items[rng.randi() % floor_items.size()], pos, 1.4, Color(tint.r, tint.g, tint.b, 0.85))
-    # 码头章节追加：木箱与陶罐堆场
+    # 码头章节追加：木箱与陶罐堆场 + 水面
     if chapter == "CH02":
         for i in 5:
             _add_decor_tex(layer, load("res://assets/props/crate.png"), Vector2(rng.randf_range(60, 1040), rng.randf_range(620, 660)), 2.0)
         for i in 3:
             _add_decor_tex(layer, load("res://content/destroyable/pot.png"), Vector2(rng.randf_range(1064, 1090), rng.randf_range(160, 600)), 1.6)
+        _add_water_strip(layer, rng)
+    # 村庄章节追加：上边界房屋（树后）
+    if chapter == "CH01":
+        var house_regions := [Rect2(0, 0, 60, 48), Rect2(62, 0, 64, 48), Rect2(127, 0, 62, 48), Rect2(190, 0, 62, 48)]
+        var hx := 150.0
+        while hx < 1000.0:
+            var region: Rect2 = house_regions[rng.randi() % house_regions.size()]
+            var tex := AtlasTexture.new()
+            tex.atlas = load("res://assets/tilesets/house.png")
+            tex.region = region
+            var s := Sprite2D.new()
+            s.texture = tex
+            s.position = Vector2(hx, 66.0)
+            s.scale = Vector2(1.6, 1.6)
+            s.z_index = -10
+            layer.add_child(s)
+            hx += rng.randf_range(220.0, 330.0)
+
+func _add_water_strip(layer: Node2D, rng: RandomNumberGenerator) -> void:
+    # 码头下边界水面 + 涟漪动画（4 帧）
+    var water := ColorRect.new()
+    water.color = Color(0.16, 0.35, 0.5)
+    water.position = Vector2(0, 616)
+    water.size = Vector2(1100, 64)
+    water.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    layer.add_child(water)
+    var ripple_tex: Texture2D = load("res://assets/tilesets/water_ripples.png")
+    for i in 7:
+        var frames := SpriteFrames.new()
+        frames.add_animation(&"ripple")
+        frames.set_animation_speed(&"ripple", 3.0)
+        for f in 4:
+            var at := AtlasTexture.new()
+            at.atlas = ripple_tex
+            at.region = Rect2(f * 16, 0, 16, 16)
+            frames.add_frame(&"ripple", at)
+        var ripple := AnimatedSprite2D.new()
+        ripple.sprite_frames = frames
+        ripple.scale = Vector2(2.0, 2.0)
+        ripple.position = Vector2(rng.randf_range(40, 1060), rng.randf_range(624, 668))
+        ripple.play(&"ripple")
+        layer.add_child(ripple)
 
 func _add_decor(layer: Node2D, item: StringName, pos: Vector2, decor_scale: float, tint: Color) -> void:
     var tex := AtlasTexture.new()
