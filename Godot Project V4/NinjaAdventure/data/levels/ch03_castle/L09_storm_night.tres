@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="LevelData" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="LevelData" load_steps=8 format=3]
 [ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1"]
+[ext_resource type="Resource" path="res://data/score/L09_Score.tres" id="7"]
 [ext_resource type="Resource" path="res://data/routes/L09_Ninja_Main.tres" id="2"]
 [ext_resource type="Resource" path="res://data/events/L09_E01_TRIPWIRE.tres" id="3"]
 [ext_resource type="Resource" path="res://data/events/L09_E02_GUARD_A.tres" id="4"]
@@ -13,7 +14,7 @@ display_name = "雷雨夜"
 scene_path = "res://scenes/levels/ch03_castle/L09_storm_night.tscn"
 next_scene_path = "res://scenes/levels/ch03_castle/L10_dont_touch_dynamite.tscn"
 intro_time = 10.0
-target_time = 70.0
+target_time = 100.0
 ninja_route = ExtResource("2")
 events = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")]
-score_rules = null
+score_rules = ExtResource("7")

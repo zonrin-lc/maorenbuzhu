@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-target_time = 50.0
+target_time = 65.0
 ninja_hp_min_for_paw3 = 2
 max_suspicion_for_paw2 = 80.0
 max_suspicion_for_paw3 = 50.0

@@ -138,9 +138,10 @@ func _release_move() -> void:
         Input.action_release(a)
 
 func _update_visibility() -> void:
+    # 显隐策略（GDD §2.2 移动端优先）：真机触屏显示；桌面仅编辑器内预览显示
     visible = OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios") \
         or DisplayServer.is_touchscreen_available() \
-        or ProjectSettings.get_setting("input_devices/pointing/emulate_touch_from_mouse", false)
+        or (OS.has_feature("editor") and ProjectSettings.get_setting("input_devices/pointing/emulate_touch_from_mouse", false))
 
 class _CircleDrawer extends Control:
     var radius := 40.0

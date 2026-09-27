@@ -105,7 +105,41 @@ func resolve(action_id: StringName) -> void:
     resolved_state = true
     interacting = false
     resolved.emit(data, action_id)
+    _animate_resolved()
     queue_redraw()
+
+func _animate_resolved() -> void:
+    # 事件解决的世界反馈（§4 各威胁"成功演出"的白盒版）：让道具状态真实变化，不只是 flag
+    if prop_sprite == null:
+        return
+    var tw := create_tween()
+    match data.event_type:
+        &"TRIPWIRE", &"CALTROP", &"BOSS_CALTROP", &"DOG":
+            # 绳子断/蒺藜清走/鱼被吃掉：道具消失
+            tw.set_parallel(true)
+            tw.tween_property(prop_sprite, "scale", prop_sprite.scale * 0.2, 0.35)
+            tw.tween_property(prop_sprite, "modulate:a", 0.0, 0.35)
+        &"WATERGAP", &"BRIDGE", &"CLIFF":
+            # 木箱落位垫脚：下沉卡入 + 轻微弹跳
+            tw.tween_property(prop_sprite, "position:y", prop_sprite.position.y + 6.0, 0.18)
+            tw.tween_property(prop_sprite, "position:y", prop_sprite.position.y, 0.22).set_trans(Tween.TRANS_BOUNCE)
+        &"POISON":
+            # 药瓶放倒（被忍者捡走使用）
+            tw.tween_property(prop_sprite, "rotation", PI * 0.5, 0.3)
+            tw.parallel().tween_property(prop_sprite, "modulate:a", 0.35, 0.3)
+        &"DYNAMITE":
+            # 炸药桶推入水中受潮：滑走 + 变暗
+            tw.set_parallel(true)
+            tw.tween_property(prop_sprite, "position:x", prop_sprite.position.x + 40.0, 0.4)
+            tw.tween_property(prop_sprite, "modulate", Color(0.5, 0.6, 0.7, 0.8), 0.4)
+        &"BOSS_CRANE":
+            # 吊车货箱砸落：快速下坠
+            tw.tween_property(prop_sprite, "position:y", prop_sprite.position.y + 26.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+        &"BOSS_GOURD":
+            # 酒葫芦下药：晃动两下
+            tw.tween_property(prop_sprite, "rotation", 0.35, 0.12)
+            tw.tween_property(prop_sprite, "rotation", -0.35, 0.12)
+            tw.tween_property(prop_sprite, "rotation", 0.0, 0.12)
 
 func fail(code: StringName) -> void:
     if resolved_state:

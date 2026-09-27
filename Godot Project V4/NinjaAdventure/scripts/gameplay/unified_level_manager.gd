@@ -54,6 +54,8 @@ const EMERGENCY_POS := Vector2(930, 290)
 
 func _ready() -> void:
     _cache_nodes()
+    save_manager = SaveManagerClass.new()
+    add_child(save_manager)
     _setup_floor()
     _setup_decorations()
     var errors := validator.validate_level(level_data)
@@ -97,6 +99,16 @@ func _setup_global_ui() -> void:
     ui.bind_level(self)
     ui.bind_ninja(ninja)
     add_child(TouchControls.new())
+    _setup_pause(ui)
+
+func _setup_pause(ui: UIManager) -> void:
+    var pause := PauseController.new()
+    pause.process_mode = Node.PROCESS_MODE_ALWAYS
+    add_child(pause)
+    var overlay := ui.get_node_or_null("PauseOverlay")
+    if overlay != null:
+        overlay.process_mode = Node.PROCESS_MODE_ALWAYS
+        pause.pause_changed.connect(func(paused: bool): overlay.visible = paused)
 
 func _play_chapter_music() -> void:
     match String(level_data.chapter_id):
@@ -111,6 +123,7 @@ func _on_dog_barked() -> void:
 var reading_phase := false
 var _tour_tween: Tween
 var _cam: Camera2D
+var save_manager: SaveManagerClass
 
 func _start_reading_tour() -> void:
     reading_phase = true
@@ -371,14 +384,26 @@ func is_ninja_at_blocking_event(route_index: int) -> bool:
 func on_player_action_started(data: EventPointData, action_id: StringName) -> void:
     if boss != null and data.event_group == &"BOSS_COMBAT" and boss.phase != 2:
         return
-    _apply_suspicion(EventBehaviorRegistry.suspicion_for(data), action_id)
-    event_log.append_event({"event_id": data.event_id, "action": action_id, "success": true, "suspicion": suspicion})
+    if _ninja_sees_cat():
+        _apply_suspicion(EventBehaviorRegistry.suspicion_for(data), action_id)
+    event_log.append_event({"event_id": data.event_id, "action": action_id, "success": true, "suspicion": suspicion, "seen_by_ninja": _ninja_sees_cat()})
+
+func _ninja_sees_cat() -> bool:
+    # GDD §2.4 白盒近似判定：≤24px 周身全向感知；≤120px 且忍者朝向猫（生产版换 90° 视锥）
+    if ninja == null or cat == null:
+        return false
+    var dist := ninja.global_position.distance_to(cat.global_position)
+    if dist <= 24.0:
+        return true
+    if dist > 120.0:
+        return false
+    return ninja.is_facing_point(cat.global_position)
 
 func on_player_action_cancelled(_data: EventPointData) -> void:
     pass
 
 func _on_cat_action_started(action_id: StringName) -> void:
-    if action_id in [&"BITE", &"PUSH"]:
+    if action_id in [&"BITE", &"PUSH"] and _ninja_sees_cat():
         _apply_suspicion(15.0, action_id)
 
 func _on_cat_meow() -> void:
@@ -476,15 +501,23 @@ func _apply_effect(effect: EventEffectData) -> void:
 func _on_event_failed(data: EventPointData, code: StringName) -> void:
     if level_failed or level_finished:
         return
-    level_failed = true
-    if ninja:
-        ninja.take_damage(1)
-    for flag in data.failure_flags:
-        world_state.set_flag(flag)
-    event_log.append_event({"event_id": data.event_id, "action": &"FAIL", "success": false, "fail_code": code})
     GlobalAudioManager.play_event_sfx("fail")
     event_failed.emit(code)
-    _set_label(status_label, "任务失败：%s    R 重开" % String(code))
+    for flag in data.failure_flags:
+        world_state.set_flag(flag)
+    event_log.append_event({"event_id": data.event_id, "action": &"FAIL", "success": false, "fail_code": code, "ninja_hp_before": ninja.hp if ninja else 0})
+    if ninja:
+        # 容错（GDD §2.1 / §3.4）：坠崖直接死（FAIL_NINJA_DEATH），其余事件扣 1 心继续走
+        ninja.take_damage(3 if code == &"FAIL_NINJA_DEATH" else 1)
+    if level_failed:
+        # take_damage 已触发 on_ninja_dead（HP 归零）
+        return
+    # 惨而不死：威胁已经踩过，忍者继续推进，玩家继续救场
+    if data.event_group == &"MAIN" and _find_main_event_index(data.event_id) == active_main_event_index:
+        active_main_event_index += 1
+        if ninja:
+            ninja.release_event()
+    _set_label(status_label, "忍者受伤了！HP %d/3    R 重开" % (ninja.hp if ninja else 0))
     _show_toast(_fail_reason(code))
 
 func _current_main_event() -> UnifiedEventPoint:
@@ -567,11 +600,12 @@ func _complete_level(emergency: bool) -> void:
     var elapsed := Time.get_ticks_msec() / 1000.0 - start_time
     var paws := 1
     if not emergency:
-        paws = score_system.evaluate(true, ninja.hp, max_suspicion, elapsed, high_risk_rescue, chain_rescue, shortcut_mastery, level_data.target_time)
+        paws = score_system.evaluate(true, ninja.hp, max_suspicion, elapsed, high_risk_rescue, chain_rescue, shortcut_mastery, level_data.score_rules)
     _set_label(paw_label, "猫爪：%d / 3" % paws)
     _set_label(status_label, "任务完成！忍者：‘果然是我实力超群。’")
     _show_toast("按 Space 进入下一关。" if not level_data.next_scene_path.is_empty() else "第一章的真相：都是你干的。")
     event_log.append_event({"event_id": &"GOAL", "action": &"COMPLETE", "success": true, "paws": paws, "emergency": emergency})
+    save_manager.mark_level_complete(String(level_data.level_id), paws, int(elapsed * 1000.0), int(max_suspicion))
     level_completed.emit({
         "level_id": String(level_data.level_id),
         "paws": paws,
@@ -585,8 +619,11 @@ func _complete_level(emergency: bool) -> void:
     })
 
 func on_ninja_dead() -> void:
+    if level_failed or level_finished:
+        return
     level_failed = true
-    _set_label(status_label, "任务失败：NINJA_DEATH    R 重开")
+    event_failed.emit(&"FAIL_NINJA_DEATH")
+    _set_label(status_label, "任务失败：忍者倒下了（3 心耗尽）    R 重开")
 
 func _process(_delta: float) -> void:
     if reading_phase:
