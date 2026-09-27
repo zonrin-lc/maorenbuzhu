@@ -1,7 +1,7 @@
 class_name ResultFlow
 extends Node
 
-const RESULT_SCENE := "res://scenes/flow/result.tscn"
+const RESULT_SCENE := "res://scenes/settlement/izakaya_settlement.tscn"
 const MAIN_MENU := "res://scenes/flow/main_menu.tscn"
 const CHAPTER_SELECT := "res://scenes/flow/chapter_select.tscn"
 const LEVEL_SELECT := "res://scenes/flow/level_select.tscn"

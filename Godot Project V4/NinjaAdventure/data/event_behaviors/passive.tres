@@ -5,6 +5,8 @@
 [resource]
 script = ExtResource("1")
 event_type = &"PASSIVE"
-default_action = &"INTERACT"
+default_action = &"PASSIVE"
 suspicion = 0.0
-default_interaction_time = 0.0
+default_interaction_time = 0.1
+default_event_group = &"MAIN"
+default_non_blocking = false

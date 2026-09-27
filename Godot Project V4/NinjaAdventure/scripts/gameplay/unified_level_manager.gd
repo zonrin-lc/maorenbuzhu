@@ -1173,14 +1173,6 @@ func is_ninja_at_blocking_event(route_index: int) -> bool:
         if current_l10 == null or current_l10.resolved_state:
             return false
         return route_index >= current_l10.data.route_index
-    if level_data != null and level_data.level_id == &"L10":
-        var caltrop := _find_event_node(&"L10_E04_CALTROP")
-        if caltrop != null and is_event_active(caltrop.data) and not caltrop.resolved_state and route_index >= caltrop.data.route_index:
-            return true
-        var current_l10 := _current_main_event()
-        if current_l10 == null or current_l10.resolved_state:
-            return false
-        return route_index >= current_l10.data.route_index
 
     if level_data != null and level_data.level_id == &"L08":
         var current_l08 := _current_main_event()

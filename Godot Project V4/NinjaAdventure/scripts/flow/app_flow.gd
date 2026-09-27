@@ -4,7 +4,7 @@ extends Node
 const MAIN_MENU := "res://scenes/flow/main_menu.tscn"
 const CHAPTER_SELECT := "res://scenes/flow/chapter_select.tscn"
 const LEVEL_SELECT := "res://scenes/flow/level_select.tscn"
-const RESULT := "res://scenes/flow/result_stub.tscn"
+const RESULT := "res://scenes/settlement/izakaya_settlement.tscn"
 
 var level_catalog: LevelCatalog = LevelCatalog.new()
 var save_manager: SaveManagerClass

@@ -1,0 +1,73 @@
+case_id,level,flow,expected
+L01_01,L01,START,LevelData scene loads and gameplay begins
+L01_02,L01,READING,Reading tour can be skipped by interact/confirm
+L01_03,L01,COMPLETE,Goal reaches SettlementContext with result payload
+L01_04,L01,SAVE,Completion writes progress and best score data
+L01_05,L01,NEXT,Next destination is L02
+L01_06,L01,RETRY,Retry resets current scene without stale settlement context
+L02_01,L02,START,LevelData scene loads and gameplay begins
+L02_02,L02,READING,Reading tour can be skipped by interact/confirm
+L02_03,L02,COMPLETE,Goal reaches SettlementContext with result payload
+L02_04,L02,SAVE,Completion writes progress and best score data
+L02_05,L02,NEXT,Next destination is L03
+L02_06,L02,RETRY,Retry resets current scene without stale settlement context
+L03_01,L03,START,LevelData scene loads and gameplay begins
+L03_02,L03,READING,Reading tour can be skipped by interact/confirm
+L03_03,L03,COMPLETE,Goal reaches SettlementContext with result payload
+L03_04,L03,SAVE,Completion writes progress and best score data
+L03_05,L03,NEXT,Next destination is L04
+L03_06,L03,RETRY,Retry resets current scene without stale settlement context
+L04_01,L04,START,LevelData scene loads and gameplay begins
+L04_02,L04,READING,Reading tour can be skipped by interact/confirm
+L04_03,L04,COMPLETE,Goal reaches SettlementContext with result payload
+L04_04,L04,SAVE,Completion writes progress and best score data
+L04_05,L04,NEXT,Next destination is L05
+L04_06,L04,RETRY,Retry resets current scene without stale settlement context
+L05_01,L05,START,LevelData scene loads and gameplay begins
+L05_02,L05,READING,Reading tour can be skipped by interact/confirm
+L05_03,L05,COMPLETE,Goal reaches SettlementContext with result payload
+L05_04,L05,SAVE,Completion writes progress and best score data
+L05_05,L05,NEXT,Next destination is L06
+L05_06,L05,RETRY,Retry resets current scene without stale settlement context
+L06_01,L06,START,LevelData scene loads and gameplay begins
+L06_02,L06,READING,Reading tour can be skipped by interact/confirm
+L06_03,L06,COMPLETE,Goal reaches SettlementContext with result payload
+L06_04,L06,SAVE,Completion writes progress and best score data
+L06_05,L06,NEXT,Next destination is L07
+L06_06,L06,RETRY,Retry resets current scene without stale settlement context
+L07_01,L07,START,LevelData scene loads and gameplay begins
+L07_02,L07,READING,Reading tour can be skipped by interact/confirm
+L07_03,L07,COMPLETE,Goal reaches SettlementContext with result payload
+L07_04,L07,SAVE,Completion writes progress and best score data
+L07_05,L07,NEXT,Next destination is L08
+L07_06,L07,RETRY,Retry resets current scene without stale settlement context
+L08_01,L08,START,LevelData scene loads and gameplay begins
+L08_02,L08,READING,Reading tour can be skipped by interact/confirm
+L08_03,L08,COMPLETE,Goal reaches SettlementContext with result payload
+L08_04,L08,SAVE,Completion writes progress and best score data
+L08_05,L08,NEXT,Next destination is L09
+L08_06,L08,RETRY,Retry resets current scene without stale settlement context
+L09_01,L09,START,LevelData scene loads and gameplay begins
+L09_02,L09,READING,Reading tour can be skipped by interact/confirm
+L09_03,L09,COMPLETE,Goal reaches SettlementContext with result payload
+L09_04,L09,SAVE,Completion writes progress and best score data
+L09_05,L09,NEXT,Next destination is L10
+L09_06,L09,RETRY,Retry resets current scene without stale settlement context
+L10_01,L10,START,LevelData scene loads and gameplay begins
+L10_02,L10,READING,Reading tour can be skipped by interact/confirm
+L10_03,L10,COMPLETE,Goal reaches SettlementContext with result payload
+L10_04,L10,SAVE,Completion writes progress and best score data
+L10_05,L10,NEXT,Next destination is L11
+L10_06,L10,RETRY,Retry resets current scene without stale settlement context
+L11_01,L11,START,LevelData scene loads and gameplay begins
+L11_02,L11,READING,Reading tour can be skipped by interact/confirm
+L11_03,L11,COMPLETE,Goal reaches SettlementContext with result payload
+L11_04,L11,SAVE,Completion writes progress and best score data
+L11_05,L11,NEXT,Next destination is L12
+L11_06,L11,RETRY,Retry resets current scene without stale settlement context
+L12_01,L12,START,LevelData scene loads and gameplay begins
+L12_02,L12,READING,Reading tour can be skipped by interact/confirm
+L12_03,L12,COMPLETE,Goal reaches SettlementContext with result payload
+L12_04,L12,SAVE,Completion writes progress and best score data
+L12_05,L12,NEXT,Next destination is CHAPTER_CLEAR
+L12_06,L12,RETRY,Retry resets current scene without stale settlement context
