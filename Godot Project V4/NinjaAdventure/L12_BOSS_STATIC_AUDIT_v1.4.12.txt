@@ -1,0 +1,12 @@
+PASS | L12 E01 opens prep | 
+PASS | Prep disabled after Boss start | 
+PASS | Caltrop Phase2 only | 
+PASS | Boss three-hit math | 
+PASS | No single-mechanic auto-free pass | 
+PASS | 1-2 mechanics lose two hearts | 
+PASS | Zero-mechanic fail-safe timeout | 
+PASS | Boss position | 
+PASS | L12 route/event anchors | 
+PASS | HUD Boss diagnostics | 
+PASS | Boss overrun delay | 
+PASS | No duplicate function names | 

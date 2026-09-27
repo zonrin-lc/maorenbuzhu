@@ -27,6 +27,7 @@ allow_risky_solution = true
 required_action = &"INTERACT"
 banter_tags = [&"BOSS_CRANE"]
 
+activation_flag = &"l12_gate_open"
 event_group = &"BOSS_PREP"
 non_blocking = true
 

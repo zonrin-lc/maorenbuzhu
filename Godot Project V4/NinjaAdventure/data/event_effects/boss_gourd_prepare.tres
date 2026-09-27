@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1")
-effect_type = &"BOSS_PREPARE_DAMAGE"
-amount = 30
+effect_type = &"BOSS_PREPARE_DELAY"
+amount = 10.0
 phase_required = 0

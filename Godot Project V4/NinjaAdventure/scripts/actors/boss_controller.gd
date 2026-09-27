@@ -12,6 +12,7 @@ var timer := 0.0
 var charge_timer := 0.0
 var charge_window := 2.0
 var prepared_damage := 0
+var prepared_delay := 0.0
 var manager: Node
 var sprite: Sprite2D
 var anim_time := 0.0
@@ -28,16 +29,22 @@ func setup(owner: Node) -> void:
     timer = 0.0
     charge_timer = 0.0
     prepared_damage = 0
+    prepared_delay = 0.0
     queue_redraw()
 
 func prepare(amount: int) -> void:
     prepared_damage += amount
 
+func prepare_delay(seconds: float) -> void:
+    # 酒葫芦（GDD §15.2 仲裁：仅延迟、无伤害）：Boss 开场离席 seconds 秒
+    prepared_delay += seconds
+
 func start_boss() -> void:
     active = true
     phase = 1
-    timer = 0.0
+    timer = -prepared_delay
     charge_timer = 0.0
+    prepared_delay = 0.0
     if prepared_damage > 0:
         hp = max(1, hp - prepared_damage)
         prepared_damage = 0
@@ -88,6 +95,9 @@ func _process(delta: float) -> void:
         if manager and manager.can_boss_finish():
             active = false
             retreat.emit()
+        elif timer >= 12.0 and manager and manager.has_method("on_boss_overrun"):
+            active = false
+            manager.call("on_boss_overrun")
     queue_redraw()
 
 func is_in_charge_window() -> bool:
@@ -95,4 +105,6 @@ func is_in_charge_window() -> bool:
 
 func _draw() -> void:
     if active:
+        draw_circle(Vector2.ZERO, 58.0, Color(0.5, 0.05, 0.05, 0.08))
+        draw_arc(Vector2.ZERO, 54.0, 0.0, TAU, 48, Color(0.95, 0.25, 0.25, 0.22), 2.0)
         draw_arc(Vector2.ZERO, 34.0, 0.0, TAU * float(hp) / 100.0, 36, Color("#ef4444"), 4.0)
