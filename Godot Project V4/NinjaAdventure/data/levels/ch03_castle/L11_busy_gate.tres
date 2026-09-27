@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="LevelData" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="LevelData" load_steps=11 format=3]
 [ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1"]
 [ext_resource type="Resource" path="res://data/score/L11_Score.tres" id="9"]
 [ext_resource type="Resource" path="res://data/routes/L11_Ninja_Main.tres" id="2"]
@@ -8,6 +8,7 @@
 [ext_resource type="Resource" path="res://data/events/L11_E04_POISON.tres" id="6"]
 [ext_resource type="Resource" path="res://data/events/L11_E05_GUARD_B.tres" id="7"]
 [ext_resource type="Resource" path="res://data/events/L11_E06_CALTROP.tres" id="8"]
+[ext_resource type="Resource" path="res://data/events/L11_E07_GATE.tres" id="10"]
 [resource]
 script = ExtResource("1")
 level_id = &"L11"
@@ -18,5 +19,5 @@ next_scene_path = "res://scenes/levels/ch03_castle/L12_gatekeeper_boss.tscn"
 intro_time = 10.0
 target_time = 125.0
 ninja_route = ExtResource("2")
-events = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8")]
+events = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("10")]
 score_rules = ExtResource("9")

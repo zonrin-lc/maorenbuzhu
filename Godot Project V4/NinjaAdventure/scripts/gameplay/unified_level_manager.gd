@@ -90,6 +90,7 @@ func _ready() -> void:
     _setup_l08_combo()
     _setup_l09_storm()
     _setup_l10_chain()
+    _setup_l11_busy_gate()
     _setup_decorations()
     var errors := validator.validate_level(level_data)
     if not errors.is_empty():
@@ -123,6 +124,7 @@ func _ready() -> void:
         dog.arrived_at_target.connect(_on_l08_dog_arrived)
     if dog != null and not dog.arrived_at_target.is_connected(_on_l10_dog_arrived):
         dog.arrived_at_target.connect(_on_l10_dog_arrived)
+    # L11 uses the dog as a timed diversion, not as an ally state.
     _setup_global_ui()
     _update_hud()
     queue_redraw()
@@ -181,6 +183,15 @@ var l10_guard_a_stays := false
 var l10_poison_forced := false
 var l10_route_mode: StringName = &"STANDARD"
 
+# L11 multi-thread pressure: the Ninja keeps moving while side hazards arm on parallel timers.
+var l11_dynamite_window := -1.0
+var l11_dynamite_missed := false
+var l11_guard_b_window := -1.0
+var l11_guard_b_urgent := false
+var l11_dog_diverted := false
+var l11_poison_safe := false
+var l11_route_busy_mode: StringName = &"DUAL_THREAD"
+
 func _start_reading_tour() -> void:
     reading_phase = true
     _cam = Camera2D.new()
@@ -211,6 +222,9 @@ func _end_reading_tour() -> void:
     start_time = Time.get_ticks_msec() / 1000.0
     if level_data != null and level_data.level_id == &"L05":
         _show_toast("码头节奏：守卫 A 离岗后 8 秒，守卫 B 换岗到路线。")
+    elif level_data != null and level_data.level_id == &"L11":
+        _start_l11_pressure_after_reading()
+        _show_toast("L11：炸药线程已经倒计时；守卫 A 处理后，右翼线程会一起启动。")
     else:
         _show_toast("他开始走了。轮到你了。")
 
@@ -399,7 +413,7 @@ func _setup_shortcuts() -> void:
     nav.add_child(jump_root)
 
     var lid := String(level_data.level_id)
-    if lid in ["L01", "L02", "L03", "L04", "L06", "L07", "L08", "L10"]:
+    if lid in ["L01", "L02", "L03", "L04", "L06", "L07", "L08", "L10", "L11"]:
         var layout_id := StringName(lid)
         var layout: Dictionary = LayoutGeometry.LEVEL_LAYOUTS.get(layout_id, {})
         if lid == "L01":
@@ -488,6 +502,13 @@ func _setup_shortcuts() -> void:
             jump_root.add_child(jump)
             jump.setup(Vector2(330, 300), Vector2(700, 410))
             jump.used.connect(_on_shortcut_used)
+        elif lid == "L11":
+            # L11 CatTunnel：中央狗院 → 城门侧路，只缩短猫赶场，不改变 Ninja 双线程规则。
+            var tunnel := CatTunnel.new()
+            tunnel.name = "CatTunnel_L11_01"
+            tunnel_root.add_child(tunnel)
+            tunnel.setup(Vector2(470, 500), Vector2(760, 350), Vector2(190, 34))
+            tunnel.used.connect(_on_shortcut_used)
 func _on_shortcut_used() -> void:
     if level_finished or level_failed:
         return
@@ -548,6 +569,66 @@ func _setup_l10_chain() -> void:
     l10_late_antidote.set_process(false)
     l10_late_antidote.picked_up.connect(_on_l10_late_antidote_picked)
     _show_toast("L10：先看炸药会改变谁的位置，再处理守卫、狗和提前开的蒺藜。")
+
+func _setup_l11_busy_gate() -> void:
+    if level_data == null or level_data.level_id != &"L11":
+        return
+    var root := Node2D.new()
+    root.name = "L11CarryPickups"
+    add_child(root)
+
+    var fish := CarryPickup.new()
+    fish.name = "FishPickup"
+    root.add_child(fish)
+    fish.position = Vector2(270, 500)
+    fish.setup(&"FISH", self)
+
+    var antidote := CarryPickup.new()
+    antidote.name = "AntidotePickup"
+    root.add_child(antidote)
+    antidote.position = Vector2(710, 505)
+    antidote.setup(&"ANTIDOTE", self)
+
+    _show_toast("L11：左右两条线程会同时变忙。炸药先处理；A 离岗后，B 的补位倒计时启动。")
+
+func _update_l11_state(delta: float) -> void:
+    if level_data == null or level_data.level_id != &"L11" or reading_phase or level_finished or level_failed:
+        return
+
+    var dynamite := _find_event_node(&"L11_E02_DYNAMITE")
+    if l11_dynamite_window < 0.0 and not l11_dynamite_missed and dynamite != null and not dynamite.resolved_state and world_state.get_flag(&"L11_READING_DONE"):
+        l11_dynamite_window = 6.0
+
+    if l11_dynamite_window >= 0.0 and not l11_dynamite_missed and dynamite != null and not dynamite.resolved_state:
+        l11_dynamite_window -= delta
+        if l11_dynamite_window <= 0.0:
+            l11_dynamite_window = 0.0
+            l11_dynamite_missed = true
+            world_state.set_flag(&"L11_DYNAMITE_MISSED")
+            dynamite.fail(&"FAIL_TOO_LATE")
+            _show_toast("炸药来不及了！忍者前方少了一层缓冲，剩下的要抢着处理。")
+
+    if l11_guard_b_window >= 0.0 and not world_state.get_flag(&"L11_GUARD_B_SAFE"):
+        l11_guard_b_window -= delta
+        if l11_guard_b_window <= 0.0:
+            l11_guard_b_window = 0.0
+            l11_guard_b_urgent = true
+            world_state.set_flag(&"L11_GUARD_B_URGENT")
+            _show_toast("右翼守卫已经补位：靠近城门后窗口只剩最后一轮。")
+
+    # E05 is a real blocking event; when Ninja reaches it, failure causes one heart loss but does not end the level.
+    if ninja != null and ninja.waypoint_index >= 5:
+        var guard_b := _find_event_node(&"L11_E05_GUARD_B")
+        if guard_b != null and not guard_b.resolved_state and guard_b.is_inside_tree():
+            if guard_b.timer >= guard_b.data.timeout and not l11_guard_b_urgent:
+                l11_guard_b_urgent = true
+                world_state.set_flag(&"L11_GUARD_B_URGENT")
+
+func _start_l11_pressure_after_reading() -> void:
+    if level_data == null or level_data.level_id != &"L11":
+        return
+    world_state.set_flag(&"L11_READING_DONE")
+    l11_dynamite_window = 6.0
 
 func _find_event_node(event_id: StringName) -> UnifiedEventPoint:
     for node in event_nodes:
@@ -847,6 +928,15 @@ func _build_events() -> void:
                 &"L10_E03_DOG": point.position = Vector2(680, 435)
                 &"L10_E04_CALTROP": point.position = Vector2(740, 460)
                 &"L10_E04_POISON": point.position = Vector2(860, 340)
+        if level_data.level_id == &"L11":
+            match data.event_id:
+                &"L11_E01_GUARD_A": point.position = Vector2(350, 250)
+                &"L11_E02_DYNAMITE": point.position = Vector2(500, 430)
+                &"L11_E03_DOG": point.position = Vector2(610, 300)
+                &"L11_E04_POISON": point.position = Vector2(720, 430)
+                &"L11_E05_GUARD_B": point.position = Vector2(820, 250)
+                &"L11_E06_CALTROP": point.position = Vector2(900, 380)
+                &"L11_E07_GATE": point.position = Vector2(980, 220)
         point.setup(data, self)
         point.resolved.connect(event_resolved.bind(point))
         point.failed.connect(_on_event_failed)
@@ -877,6 +967,11 @@ func _place_guards_and_dog() -> void:
                     center = Vector2(820, 420)
             if level_data.level_id == &"L10" and data.event_id == &"L10_E02_GUARD_A":
                 center = Vector2(600, 300)
+            if level_data.level_id == &"L11":
+                if data.event_id == &"L11_E01_GUARD_A":
+                    center = Vector2(350, 320)
+                elif data.event_id == &"L11_E05_GUARD_B":
+                    center = Vector2(820, 320)
             if guard.has_method("setup"):
                 guard.call("setup", center)
             guard.visible = true
@@ -897,6 +992,8 @@ func _place_guards_and_dog() -> void:
             dog.setup(Vector2(690, 455))
         elif level_data.level_id == &"L10":
             dog.setup(Vector2(680, 435))
+        elif level_data.level_id == &"L11":
+            dog.setup(Vector2(560, 380))
         else:
             dog.setup(Vector2(520, 465))
 func is_event_active(data: EventPointData) -> bool:
@@ -907,6 +1004,16 @@ func is_event_active(data: EventPointData) -> bool:
             return false
     if data.event_group == &"BOSS_COMBAT":
         return boss != null and boss_started
+    if level_data != null and level_data.level_id == &"L11":
+        match data.event_id:
+            &"L11_E01_GUARD_A": return not _l11_event_done(&"L11_E01_GUARD_A")
+            &"L11_E02_DYNAMITE": return not _l11_event_done(&"L11_E02_DYNAMITE") and not l11_dynamite_missed
+            &"L11_E03_DOG": return _l11_event_done(&"L11_E01_GUARD_A") and not _l11_event_done(&"L11_E03_DOG")
+            &"L11_E04_POISON": return _l11_event_done(&"L11_E03_DOG") and not _l11_event_done(&"L11_E04_POISON")
+            &"L11_E05_GUARD_B": return _l11_event_done(&"L11_E01_GUARD_A") and not _l11_event_done(&"L11_E05_GUARD_B")
+            &"L11_E06_CALTROP": return _l11_event_done(&"L11_E04_POISON") and _l11_event_done(&"L11_E05_GUARD_B") and not _l11_event_done(&"L11_E06_CALTROP")
+            &"L11_E07_GATE": return _l11_event_done(&"L11_E06_CALTROP") and not _l11_event_done(&"L11_E07_GATE")
+        return false
     if level_data != null and level_data.level_id == &"L10":
         if data.event_id == &"L10_E04_CALTROP":
             var caltrop_node := _find_event_node(&"L10_E04_CALTROP")
@@ -992,6 +1099,12 @@ func _l08_event_done(event_id: StringName) -> bool:
             return node.resolved_state
     return false
 
+func _l11_event_done(event_id: StringName) -> bool:
+    for node in event_nodes:
+        if node.data.event_id == event_id:
+            return node.resolved_state
+    return false
+
 func _l07_event_done(event_id: StringName) -> bool:
     for node in event_nodes:
         if node.data.event_id == event_id:
@@ -999,6 +1112,12 @@ func _l07_event_done(event_id: StringName) -> bool:
     return false
 
 func is_ninja_at_blocking_event(route_index: int) -> bool:
+    if level_data != null and level_data.level_id == &"L11":
+        # E02 (dynamite) is deliberately non-blocking; all other main events block the fixed route.
+        var current_l11 := _current_main_event()
+        if current_l11 == null or current_l11.resolved_state or current_l11.data.non_blocking:
+            return false
+        return route_index >= current_l11.data.route_index
     if level_data != null and level_data.level_id == &"L10":
         var caltrop := _find_event_node(&"L10_E04_CALTROP")
         if caltrop != null and is_event_active(caltrop.data) and not caltrop.resolved_state and route_index >= caltrop.data.route_index:
@@ -1218,6 +1337,44 @@ func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedE
                 l08_bridge_open = true
                 world_state.set_flag(&"L08_BRIDGE_OPEN")
                 _show_toast("桥放下了！末班船就在前面。")
+    if level_data != null and level_data.level_id == &"L11":
+        match data.event_id:
+            &"L11_E01_GUARD_A":
+                world_state.set_flag(&"L11_GUARD_A_SAFE")
+                l11_guard_b_window = 8.0
+                if guards.size() > 0 and guards[0] != null:
+                    guards[0].call("depart", cat.global_position if cat else Vector2(350, 250), 6.0)
+                _show_toast("守卫 A 离岗：右翼线程启动，8 秒后补位。")
+                event_log.append_event({"event_id": &"L11_THREAD_RIGHT_ARM", "action": &"ARM_GUARD_B_TIMER", "success": true, "delay": 8.0, "world_changes": [&"guard_b_timer_started"]})
+            &"L11_E02_DYNAMITE":
+                l11_dynamite_window = -1.0
+                world_state.set_flag(&"L11_DYNAMITE_SAFE")
+                _show_toast("炸药已处理：中央线程清空。继续赶场。")
+            &"L11_E03_DOG":
+                l11_dog_diverted = true
+                world_state.set_flag(&"L11_DOG_DIVERTED")
+                if dog != null:
+                    dog.lure_to(Vector2(490, 360))
+                    dog.bark()
+                _show_toast("狗被鱼引走：左侧压力暂时减轻。")
+            &"L11_E04_POISON":
+                l11_poison_safe = true
+                world_state.set_flag(&"L11_POISON_SAFE")
+                _show_toast("毒雾处理完成：别停，城门已经在眼前。")
+            &"L11_E05_GUARD_B":
+                l11_guard_b_window = -1.0
+                l11_guard_b_urgent = false
+                world_state.set_flag(&"L11_GUARD_B_SAFE")
+                world_state.set_flag(&"L11_GUARD_B_URGENT", false)
+                if guards.size() > 1 and guards[1] != null:
+                    guards[1].call("depart", cat.global_position if cat else Vector2(820, 250), 6.0)
+                _show_toast("右翼守卫也被引开了：最后一段清蒺藜。")
+            &"L11_E06_CALTROP":
+                world_state.set_flag(&"L11_CALTROP_SAFE")
+                _show_toast("城门蒺藜清空：最后一关就是开门。")
+            &"L11_E07_GATE":
+                world_state.set_flag(&"L11_GATE_OPEN")
+                _show_toast("城门打开：一路忙到最后，终于赶上了。")
     if level_data != null and level_data.level_id == &"L10":
         match data.event_id:
             &"L10_E01_DYNAMITE_A":
@@ -1291,11 +1448,10 @@ func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedE
             &"L07_E05_POISON":
                 world_state.set_flag(&"L07_POISON_ROUTE_SAFE")
                 _show_toast("毒雾窗口处理完成：码头出口安全。")
-    if level_data == null or level_data.level_id != &"L07":
+    if level_data == null or level_data.level_id not in [&"L07", &"L11"]:
         _apply_event_side_effect(data, action_id)
     else:
-        # L07 Guard A/B must only affect their own guard; applying the generic
-        # GUARD_DISTRACT effect here would accidentally move both guards.
+        # L07/L11 Guard A/B must only affect their own guard; generic GUARD_DISTRACT would move both.
         if data.event_type != &"GUARD":
             _apply_event_side_effect(data, action_id)
     var late_window := 99.0
@@ -1309,6 +1465,9 @@ func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedE
     if level_data != null and level_data.level_id == &"L10":
         var next_l10 := _current_main_event()
         next_route_event = next_l10.data.event_id if next_l10 != null else &"GOAL"
+    if level_data != null and level_data.level_id == &"L11":
+        var next_l11 := _current_main_event()
+        next_route_event = next_l11.data.event_id if next_l11 != null else &"GOAL"
     event_log.append_event({
         "event_id": data.event_id,
         "event_type": data.event_type,
@@ -1320,7 +1479,7 @@ func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedE
         "late_success_window": late_window,
         "caused_event_id": caused_event_id,
         "world_changes": data.success_flags,
-        "route_change": next_route_event if level_data != null and level_data.level_id in [&"L04", &"L10"] else active_main_event_index + 1,
+        "route_change": next_route_event if level_data != null and level_data.level_id in [&"L04", &"L10", &"L11"] else active_main_event_index + 1,
     })
     if previous_event_id != &"":
         chain_rescue += 1
@@ -1581,6 +1740,15 @@ func _on_event_failed(data: EventPointData, code: StringName) -> void:
             world_state.set_flag(&"L06_GUARD_A_SAFE")
         elif data.event_id == &"L06_E04_GUARD_B":
             world_state.set_flag(&"L06_GUARD_B_SAFE")
+    if level_data != null and level_data.level_id == &"L11":
+        match data.event_id:
+            &"L11_E02_DYNAMITE":
+                l11_dynamite_missed = true
+                world_state.set_flag(&"L11_DYNAMITE_MISSED")
+            &"L11_E05_GUARD_B":
+                l11_guard_b_urgent = true
+                world_state.set_flag(&"L11_GUARD_B_URGENT")
+                world_state.set_flag(&"L11_GUARD_B_SAFE")
     if level_data != null and level_data.level_id == &"L10":
         match data.event_id:
             &"L10_E02_GUARD_A":
@@ -1610,6 +1778,13 @@ func _on_event_failed(data: EventPointData, code: StringName) -> void:
     _set_label(status_label, "忍者受伤了！HP %d/3    R 重开" % (ninja.hp if ninja else 0))
     _show_toast(_fail_reason(code))
 func _current_main_event() -> UnifiedEventPoint:
+    if level_data != null and level_data.level_id == &"L11":
+        var ordered_l11 := [&"L11_E01_GUARD_A", &"L11_E03_DOG", &"L11_E04_POISON", &"L11_E05_GUARD_B", &"L11_E06_CALTROP", &"L11_E07_GATE"]
+        for wanted in ordered_l11:
+            var node_l11 := _find_event_node(wanted)
+            if node_l11 != null and not node_l11.resolved_state and is_event_active(node_l11.data):
+                return node_l11
+        return null
     if level_data != null and level_data.level_id == &"L10":
         var ordered_l10_main := [&"L10_E01_DYNAMITE_A", &"L10_E02_GUARD_A", &"L10_E03_DOG", &"L10_E04_POISON"]
         for wanted in ordered_l10_main:
@@ -1792,6 +1967,7 @@ func _process(_delta: float) -> void:
     _update_l05_state(_delta)
     _update_l07_state(_delta)
     _update_l10_state(_delta)
+    _update_l11_state(_delta)
     if reading_phase:
         if Input.is_action_just_pressed("interact") or Input.is_action_just_pressed("confirm"):
             _end_reading_tour()
@@ -1851,6 +2027,11 @@ func _update_hud() -> void:
             base_state += " | " + dog_l08 + " | " + assist_l08 + " | " + bridge_l08
         if level_data != null and level_data.level_id == &"L09":
             base_state += " | 雷雨：忍者 66px/s | 窗口：0.5s | 鱼：Q"
+        if level_data != null and level_data.level_id == &"L11":
+            var dyn := "炸药 %.1fs" % maxf(0.0, l11_dynamite_window) if l11_dynamite_window >= 0.0 and not l11_dynamite_missed else ("炸药已处理" if world_state.get_flag(&"L11_DYNAMITE_SAFE") else "炸药已失误")
+            var gb := "B 倒计时 %.1fs" % maxf(0.0, l11_guard_b_window) if l11_guard_b_window > 0.0 else ("B 高压" if l11_guard_b_urgent else ("B 已处理" if world_state.get_flag(&"L11_GUARD_B_SAFE") else "B 未启动"))
+            var dog_l11 := "狗已引走" if l11_dog_diverted else "狗未引走"
+            base_state += " | 双线程 | " + dyn + " | " + gb + " | " + dog_l11
         if level_data != null and level_data.level_id == &"L10":
             var l10_guard := "A 已换位" if l10_guard_a_shifted else "A 未换位"
             if l10_guard_a_departed:

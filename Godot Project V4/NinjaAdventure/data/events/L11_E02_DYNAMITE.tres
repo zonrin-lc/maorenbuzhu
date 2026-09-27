@@ -26,3 +26,5 @@ required_action = &"INTERACT"
 banter_tags = [&"DYNAMITE"]
 
 success_effects = []
+
+non_blocking = true

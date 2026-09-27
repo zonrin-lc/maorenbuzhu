@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="EventPointData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/event_point_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+event_id = &"L11_E07_GATE"
+event_type = &"PASSIVE"
+display_name = "城门"
+classification = &"STANDARD"
+actor_id = &"NINJA_BLUE"
+route_index = 7
+trigger_radius = 34.0
+hesitation_time = 0.0
+timeout = 0.0
+interaction_time = 0.0
+fail_code = &"FAIL_TOO_LATE"
+success_flags = [&"l11_gate_open"]
+failure_flags = []
+caused_event_ids = []
+risk_level = &"SAFE"
+high_risk = false
+allow_standard_solution = true
+allow_risky_solution = false
+required_action = &"PASSIVE"
+banter_tags = [&"GATE"]
+event_group = &"MAIN"
+non_blocking = false
+success_effects = []

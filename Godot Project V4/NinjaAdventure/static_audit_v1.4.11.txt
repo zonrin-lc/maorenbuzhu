@@ -1,0 +1,9 @@
+L11 7 events: PASS - E01-E07 present
+E02 non-blocking: PASS - dynamite side thread
+Route 9 waypoints: PASS - 9 waypoints
+Gate route index 7: PASS - gate before goal
+L11 setup: PASS - carry pickups + intro
+L11 update: PASS - parallel timer tick
+Guard side effect isolated: PASS - generic guard effect skipped
+E07 scene no stale refs: PASS - spawned from LevelManager data
+Duplicate funcs: PASS - []
