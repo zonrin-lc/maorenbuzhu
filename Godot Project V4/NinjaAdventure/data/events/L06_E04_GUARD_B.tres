@@ -1,16 +1,16 @@
 [gd_resource type="Resource" script_class="EventPointData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/event_point_data.gd" id="1"]
-[ext_resource type="Resource" path="res://data/event_effects/dog_lure_guard.tres" id="2"]
+[ext_resource type="Resource" path="res://data/event_effects/dog_lure_guard_b.tres" id="2"]
 
 [resource]
 script = ExtResource("1")
-event_id = &"L06_E02_GUARD_A"
+event_id = &"L06_E04_GUARD_B"
 event_type = &"GUARD"
-display_name = "派狗出击·守卫 A"
+display_name = "派狗出击·守卫 B"
 classification = &"CRITICAL"
 actor_id = &"NINJA_BLUE"
-route_index = 3
+route_index = 5
 trigger_radius = 34.0
 hesitation_time = 3.0
 timeout = 3.0
@@ -22,6 +22,6 @@ high_risk = false
 allow_standard_solution = true
 allow_risky_solution = true
 required_action = &"SEND_DOG"
-caused_event_ids = [&"L06_E03_BRIDGE"]
+caused_event_ids = [&"L06_E05_CALTROP"]
 banter_tags = [&"L06", &"GUARD", &"DOG_ALLY"]
 success_effects = [ExtResource("2")]

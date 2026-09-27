@@ -4,23 +4,22 @@
 
 [resource]
 script = ExtResource("1")
-event_id = &"L06_E01_DOG"
-event_type = &"DOG"
-display_name = "结交狗狗"
+event_id = &"L08_E06_BRIDGE"
+event_type = &"BRIDGE"
+display_name = "最后一座桥"
 classification = &"CRITICAL"
 actor_id = &"NINJA_BLUE"
-route_index = 2
+route_index = 6
 trigger_radius = 34.0
 hesitation_time = 3.0
 timeout = 3.0
 interaction_time = 0.8
 fail_code = &"FAIL_TOO_LATE"
-success_flags = [&"L06_DOG_ALLY"]
+success_flags = [&"L08_BRIDGE_OPEN"]
 risk_level = &"SAFE"
 high_risk = false
 allow_standard_solution = true
 allow_risky_solution = true
-required_action = &"FEED"
-caused_event_ids = [&"L06_E02_GUARD_A"]
-banter_tags = [&"L06", &"DOG", &"ALLY"]
-consume_carry_item = &"FISH"
+required_action = &"INTERACT"
+consume_carry_item = &""
+banter_tags = [&"L08", &"BRIDGE"]

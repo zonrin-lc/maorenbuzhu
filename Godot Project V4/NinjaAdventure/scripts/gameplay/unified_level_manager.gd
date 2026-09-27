@@ -47,6 +47,21 @@ var l05_poisoned := false
 var l05_poison_tick_timer := 5.0
 var l05_guard_b_activated := false
 
+# L06 dog ally progression
+var l06_dog_guard_target := -1
+var l06_dog_help_pending := false
+
+# L07 dependency chain: Guard A -> (+8s) -> Guard B -> Dog route -> Bridge/Poison.
+var l07_guard_a_depart_time := -1.0
+var l07_guard_b_activated := false
+var l07_b_was_early := false
+var l07_dog_route_pending := false
+var l07_bridge_open := false
+
+# L08 integrated chapter-end combo: Guard A -> Dog ally -> Dog assists Guard B -> Poison -> Caltrop -> Bridge.
+var l08_dog_assist_pending := false
+var l08_bridge_open := false
+
 # Boss integration
 var boss_started := false
 var boss_mechanics_success := 0
@@ -70,6 +85,9 @@ func _ready() -> void:
     _setup_shortcuts()
     _setup_l03_suspicion()
     _setup_l05_carry_items()
+    _setup_l06_dog_ally()
+    _setup_l07_dependency_chain()
+    _setup_l08_combo()
     _setup_decorations()
     var errors := validator.validate_level(level_data)
     if not errors.is_empty():
@@ -95,6 +113,12 @@ func _ready() -> void:
     GlobalAudioManager.play_event_sfx("read_map")
     if dog != null and not dog.barked.is_connected(_on_dog_barked):
         dog.barked.connect(_on_dog_barked)
+    if dog != null and not dog.arrived_at_target.is_connected(_on_l06_dog_arrived):
+        dog.arrived_at_target.connect(_on_l06_dog_arrived)
+    if dog != null and not dog.arrived_at_target.is_connected(_on_l07_dog_arrived):
+        dog.arrived_at_target.connect(_on_l07_dog_arrived)
+    if dog != null and not dog.arrived_at_target.is_connected(_on_l08_dog_arrived):
+        dog.arrived_at_target.connect(_on_l08_dog_arrived)
     _setup_global_ui()
     _update_hud()
     queue_redraw()
@@ -246,6 +270,59 @@ func _setup_l05_carry_items() -> void:
 
     _show_toast("Q：叼取鱼肉 / 解毒药。先看守卫 A 的换岗节奏。")
 
+func _setup_l06_dog_ally() -> void:
+    if level_data == null or level_data.level_id != &"L06":
+        return
+    var root := Node2D.new()
+    root.name = "L06CarryPickups"
+    add_child(root)
+    var fish := CarryPickup.new()
+    fish.name = "FishPickup"
+    root.add_child(fish)
+    fish.position = Vector2(250, 490)
+    fish.setup(&"FISH", self)
+    _show_toast("L06：Q 叼鱼肉；先和狗狗成为队友，再用 E 派狗去引开守卫。")
+
+func _setup_l07_dependency_chain() -> void:
+    if level_data == null or level_data.level_id != &"L07":
+        return
+    var root := Node2D.new()
+    root.name = "L07CarryPickups"
+    add_child(root)
+
+    var fish := CarryPickup.new()
+    fish.name = "FishPickup"
+    root.add_child(fish)
+    fish.position = Vector2(300, 350)
+    fish.setup(&"FISH", self)
+
+    var antidote := CarryPickup.new()
+    antidote.name = "AntidotePickup"
+    root.add_child(antidote)
+    antidote.position = Vector2(860, 250)
+    antidote.setup(&"ANTIDOTE", self)
+
+    _show_toast("L07：先处理谁会改变后面的路线。A 离岗 8 秒后，B 才是稳定解。")
+
+func _setup_l08_combo() -> void:
+    if level_data == null or level_data.level_id != &"L08":
+        return
+    var root := Node2D.new()
+    root.name = "L08CarryPickups"
+    add_child(root)
+    var fish := CarryPickup.new()
+    fish.name = "FishPickup"
+    root.add_child(fish)
+    fish.position = Vector2(250, 500)
+    fish.setup(&"FISH", self)
+
+    var antidote := CarryPickup.new()
+    antidote.name = "AntidotePickup"
+    root.add_child(antidote)
+    antidote.position = Vector2(610, 225)
+    antidote.setup(&"ANTIDOTE", self)
+    _show_toast("L08：先清守卫 A，再喂狗成为队友；然后派狗、送药、清蒺藜、放桥。")
+
 func _l05_now() -> float:
     return Time.get_ticks_msec() / 1000.0
 
@@ -273,6 +350,25 @@ func _update_l05_state(delta: float) -> void:
                 event_log.append_event({"event_id": &"L05_POISON_TICK", "action": &"POISON", "success": false, "ninja_hp": ninja.hp})
                 _show_toast("毒雾发作：忍者 -1 心。")
 
+func _update_l07_state(_delta: float) -> void:
+    if level_data == null or level_data.level_id != &"L07" or reading_phase or level_finished or level_failed:
+        return
+    if l07_guard_a_depart_time >= 0.0 and not l07_guard_b_activated and not l07_b_was_early and _l05_now() - l07_guard_a_depart_time >= 8.0:
+        l07_guard_b_activated = true
+        world_state.set_flag(&"L07_GUARD_B_ACTIVE")
+        if guards.size() > 1:
+            var guard_b := guards[1]
+            if guard_b != null:
+                guard_b.call("setup", Vector2(650, 210))
+        event_log.append_event({
+            "event_id": &"L07_GUARD_B_SHIFT",
+            "action": &"ROTATE",
+            "success": true,
+            "delay": 8.0,
+            "world_changes": [&"guard_b_active"],
+        })
+        _show_toast("8 秒到了：守卫 B 稳定换岗。现在处理不会改变后续路线。")
+
 func _setup_shortcuts() -> void:
     if level_data == null:
         return
@@ -288,7 +384,7 @@ func _setup_shortcuts() -> void:
     nav.add_child(jump_root)
 
     var lid := String(level_data.level_id)
-    if lid in ["L01", "L02", "L03", "L04"]:
+    if lid in ["L01", "L02", "L03", "L04", "L06", "L07"]:
         var layout_id := StringName(lid)
         var layout: Dictionary = LayoutGeometry.LEVEL_LAYOUTS.get(layout_id, {})
         if lid == "L01":
@@ -349,10 +445,34 @@ func _setup_shortcuts() -> void:
                 tunnel.setup(entry, exit, Vector2(maxf(72.0, minf(rect.size.x, 210.0)), maxf(28.0, rect.size.y)))
                 tunnel.used.connect(_on_shortcut_used)
 
+        elif lid == "L06":
+            # 预位捷径：只缩短猫到狗区的移动，不跳过任何主线事件。
+            var tunnel := CatTunnel.new()
+            tunnel.name = "CatTunnel_L06_01"
+            tunnel_root.add_child(tunnel)
+            tunnel.setup(Vector2(432, 437), Vector2(523, 437), Vector2(92, 30))
+            tunnel.used.connect(_on_shortcut_used)
+        elif lid == "L07":
+            # L07 风险解专用捷径：让猫先到桥侧，但不改变 Ninja 的固定路线。
+            var tunnel := CatTunnel.new()
+            tunnel.name = "CatTunnel_L07_01"
+            tunnel_root.add_child(tunnel)
+            tunnel.setup(Vector2(430, 487), Vector2(625, 487), Vector2(165, 32))
+            tunnel.used.connect(_on_shortcut_used)
+        elif lid == "L08":
+            # L08 码头末班船捷径：猫从鱼场下沿直接切到毒雾前场，减少赶场距离，但不改变 Ninja Route。
+            var tunnel := CatTunnel.new()
+            tunnel.name = "CatTunnel_L08_01"
+            tunnel_root.add_child(tunnel)
+            tunnel.setup(Vector2(250, 530), Vector2(520, 410), Vector2(180, 34))
+            tunnel.used.connect(_on_shortcut_used)
+
 func _on_shortcut_used() -> void:
     if level_finished or level_failed:
         return
     shortcut_mastery = true
+    if level_data != null and level_data.level_id == &"L07":
+        world_state.set_flag(&"L07_SHORTCUT_USED")
     if level_data != null and level_data.level_id == &"L04" and world_state.get_flag(&"L04_GUARD_SAFE") and world_state.get_flag(&"L04_TRIPWIRE_SAFE"):
         world_state.set_flag(&"L04_SHORTCUT_USED")
         # Route B 已经满足水沟前置条件，释放当前可能正在水沟前等待的 Ninja。
@@ -568,11 +688,35 @@ func _place_guards_and_dog() -> void:
             var guard := guards[guard_i]
             if level_data.level_id == &"L05" and data.event_id == &"L05_E05_GUARD_B":
                 center = Vector2(860, 540) # staging; enters the route after Guard A has been absent for 8s
+            if level_data.level_id == &"L06":
+                if data.event_id == &"L06_E02_GUARD_A":
+                    center = Vector2(560, 230)
+                elif data.event_id == &"L06_E04_GUARD_B":
+                    center = Vector2(820, 360)
+            if level_data.level_id == &"L07":
+                if data.event_id == &"L07_E01_GUARD_A":
+                    center = Vector2(420, 220)
+                elif data.event_id == &"L07_E02_GUARD_B":
+                    center = Vector2(650, 210)
+            if level_data.level_id == &"L08":
+                if data.event_id == &"L08_E01_GUARD_A":
+                    center = Vector2(390, 370)
+                elif data.event_id == &"L08_E03_GUARD_B":
+                    center = Vector2(820, 420)
             if guard.has_method("setup"):
                 guard.call("setup", center)
             guard_i += 1
     if dog and dog.global_position == Vector2.ZERO:
-        dog.setup(Vector2(520, 465) if level_data.level_id != &"L05" else Vector2(540, 490))
+        if level_data.level_id == &"L05":
+            dog.setup(Vector2(540, 490))
+        elif level_data.level_id == &"L06":
+            dog.setup(Vector2(360, 475))
+        elif level_data.level_id == &"L07":
+            dog.setup(Vector2(470, 500))
+        elif level_data.level_id == &"L08":
+            dog.setup(Vector2(310, 500))
+        else:
+            dog.setup(Vector2(520, 465))
 
 func is_event_active(data: EventPointData) -> bool:
     if data.activation_flag != &"" and not world_state.get_flag(data.activation_flag):
@@ -582,6 +726,34 @@ func is_event_active(data: EventPointData) -> bool:
             return false
     if data.event_group == &"BOSS_COMBAT":
         return boss != null and boss_started
+    if level_data != null and level_data.level_id == &"L08":
+        match data.event_id:
+            &"L08_E01_GUARD_A": return not _l08_event_done(&"L08_E01_GUARD_A")
+            &"L08_E02_DOG": return _l08_event_done(&"L08_E01_GUARD_A") and not _l08_event_done(&"L08_E02_DOG")
+            &"L08_E03_GUARD_B": return world_state.get_flag(&"L08_DOG_ALLY") and _l08_event_done(&"L08_E02_DOG") and not _l08_event_done(&"L08_E03_GUARD_B")
+            &"L08_E04_POISON": return _l08_event_done(&"L08_E03_GUARD_B") and world_state.get_flag(&"L08_GUARD_B_SAFE") and not _l08_event_done(&"L08_E04_POISON")
+            &"L08_E05_CALTROP": return _l08_event_done(&"L08_E04_POISON") and world_state.get_flag(&"L08_POISON_SAFE") and not _l08_event_done(&"L08_E05_CALTROP")
+            &"L08_E06_BRIDGE": return _l08_event_done(&"L08_E05_CALTROP") and world_state.get_flag(&"L08_CALTROP_SAFE") and not _l08_event_done(&"L08_E06_BRIDGE")
+    if level_data != null and level_data.level_id == &"L07":
+        match data.event_id:
+            &"L07_E01_GUARD_A": return not _l07_event_done(&"L07_E01_GUARD_A")
+            &"L07_E02_GUARD_B": return _l07_event_done(&"L07_E01_GUARD_A") or not _l07_event_done(&"L07_E02_GUARD_B")
+            &"L07_E03_DOG": return _l07_event_done(&"L07_E01_GUARD_A") and not _l07_event_done(&"L07_E03_DOG")
+            &"L07_E04_BRIDGE":
+                if l07_b_was_early:
+                    return _l07_event_done(&"L07_E05_POISON") and world_state.get_flag(&"L07_BRIDGE_OPEN") and not _l07_event_done(&"L07_E04_BRIDGE")
+                return _l07_event_done(&"L07_E03_DOG") and world_state.get_flag(&"L07_BRIDGE_OPEN") and not _l07_event_done(&"L07_E04_BRIDGE")
+            &"L07_E05_POISON":
+                if l07_b_was_early:
+                    return _l07_event_done(&"L07_E03_DOG") and not _l07_event_done(&"L07_E05_POISON")
+                return _l07_event_done(&"L07_E04_BRIDGE") and not _l07_event_done(&"L07_E05_POISON")
+    if level_data != null and level_data.level_id == &"L06":
+        match data.event_id:
+            &"L06_E01_DOG": return not _l06_event_done(&"L06_E01_DOG")
+            &"L06_E02_GUARD_A": return _l06_event_done(&"L06_E01_DOG") and not _l06_event_done(&"L06_E02_GUARD_A")
+            &"L06_E03_BRIDGE": return _l06_event_done(&"L06_E02_GUARD_A") and world_state.get_flag(&"L06_GUARD_A_SAFE") and not _l06_event_done(&"L06_E03_BRIDGE")
+            &"L06_E04_GUARD_B": return _l06_event_done(&"L06_E03_BRIDGE") and not _l06_event_done(&"L06_E04_GUARD_B")
+            &"L06_E05_CALTROP": return _l06_event_done(&"L06_E04_GUARD_B") and world_state.get_flag(&"L06_GUARD_B_SAFE") and not _l06_event_done(&"L06_E05_CALTROP")
     if level_data != null and level_data.level_id == &"L05":
         match data.event_id:
             &"L05_E01_GUARD_A": return not _l05_event_done(&"L05_E01_GUARD_A")
@@ -592,15 +764,17 @@ func is_event_active(data: EventPointData) -> bool:
             &"L05_E06_CALTROP": return _l05_event_done(&"L05_E05_GUARD_B") and not _l05_event_done(&"L05_E06_CALTROP")
     if level_data != null and level_data.level_id == &"L04":
         match data.event_id:
-            &"L04_E01_GUARD":
-                return not world_state.get_flag(&"L04_GUARD_SAFE")
-            &"L04_E02_TRIPWIRE":
-                return not world_state.get_flag(&"L04_TRIPWIRE_SAFE")
-            &"L04_E03_CRATE":
-                return world_state.get_flag(&"L04_GUARD_SAFE") and world_state.get_flag(&"L04_TRIPWIRE_SAFE") and not world_state.get_flag(&"L04_CRATE_STOLEN") and not world_state.get_flag(&"L04_SHORTCUT_USED")
-            &"L04_E04_WATERGAP":
-                return world_state.get_flag(&"L04_GUARD_SAFE") and world_state.get_flag(&"L04_TRIPWIRE_SAFE") and (world_state.get_flag(&"L04_CRATE_STOLEN") or world_state.get_flag(&"L04_SHORTCUT_USED")) and not world_state.get_flag(&"L04_WATERGAP_SAFE")
+            &"L04_E01_GUARD": return not world_state.get_flag(&"L04_GUARD_SAFE")
+            &"L04_E02_TRIPWIRE": return not world_state.get_flag(&"L04_TRIPWIRE_SAFE")
+            &"L04_E03_CRATE": return world_state.get_flag(&"L04_GUARD_SAFE") and world_state.get_flag(&"L04_TRIPWIRE_SAFE") and not world_state.get_flag(&"L04_CRATE_STOLEN") and not world_state.get_flag(&"L04_SHORTCUT_USED")
+            &"L04_E04_WATERGAP": return world_state.get_flag(&"L04_GUARD_SAFE") and world_state.get_flag(&"L04_TRIPWIRE_SAFE") and (world_state.get_flag(&"L04_CRATE_STOLEN") or world_state.get_flag(&"L04_SHORTCUT_USED")) and not world_state.get_flag(&"L04_WATERGAP_SAFE")
     return true
+
+func _l06_event_done(event_id: StringName) -> bool:
+    for node in event_nodes:
+        if node.data.event_id == event_id:
+            return node.resolved_state
+    return false
 
 func _l05_event_done(event_id: StringName) -> bool:
     for node in event_nodes:
@@ -608,7 +782,34 @@ func _l05_event_done(event_id: StringName) -> bool:
             return node.resolved_state
     return false
 
+func _l08_event_done(event_id: StringName) -> bool:
+    for node in event_nodes:
+        if node.data.event_id == event_id:
+            return node.resolved_state
+    return false
+
+func _l07_event_done(event_id: StringName) -> bool:
+    for node in event_nodes:
+        if node.data.event_id == event_id:
+            return node.resolved_state
+    return false
+
 func is_ninja_at_blocking_event(route_index: int) -> bool:
+    if level_data != null and level_data.level_id == &"L08":
+        var current_l08 := _current_main_event()
+        if current_l08 == null or current_l08.resolved_state:
+            return false
+        return route_index >= current_l08.data.route_index
+    if level_data != null and level_data.level_id == &"L07":
+        var current_l07 := _current_main_event()
+        if current_l07 == null or current_l07.resolved_state or current_l07.data.non_blocking:
+            return false
+        return route_index >= current_l07.data.route_index
+    if level_data != null and level_data.level_id == &"L06":
+        var current_l06 := _current_main_event()
+        if current_l06 == null or current_l06.resolved_state:
+            return false
+        return route_index >= current_l06.data.route_index
     if level_data != null and level_data.level_id == &"L05":
         var current_l05 := _current_main_event()
         if current_l05 == null or current_l05.resolved_state:
@@ -675,13 +876,27 @@ func _on_cat_action_started(action_id: StringName) -> void:
 func _on_cat_meow() -> void:
     if level_finished or level_failed:
         return
-    for guard in guards:
-        if guard == null:
-            continue
-        if guard.has_method("distract"):
-            guard.call("distract", cat.global_position)
-        elif guard.has_method("depart"):
-            guard.call("depart", cat.global_position)
+    if level_data != null and level_data.level_id == &"L07":
+        # L07 只允许喵叫处理真正的 GuardPoint，且一次只影响当前附近的守卫。
+        for node in event_nodes:
+            if node.data.event_id not in [&"L07_E01_GUARD_A", &"L07_E02_GUARD_B"]:
+                continue
+            if not is_event_active(node.data) or node.resolved_state:
+                continue
+            if cat != null and cat.global_position.distance_to(node.global_position) <= 150.0:
+                node.resolve(&"MEOW")
+                return
+        event_log.append_event({"event_id": &"CAT_MEOW", "action": &"MEOW", "success": true, "level_id": &"L07"})
+        return
+    # L06 专门教学“狗也能当队友”：喵叫只做反馈，不允许直接替代狗协同。
+    if level_data == null or level_data.level_id != &"L06":
+        for guard in guards:
+            if guard == null:
+                continue
+            if guard.has_method("distract"):
+                guard.call("distract", cat.global_position)
+            elif guard.has_method("depart"):
+                guard.call("depart", cat.global_position)
     var current := _current_main_event()
     if level_data != null and level_data.level_id == &"L04":
         for node in event_nodes:
@@ -689,7 +904,8 @@ func _on_cat_meow() -> void:
                 node.resolve(&"MEOW")
                 break
     elif current != null and current.data.event_type == &"GUARD" and cat.global_position.distance_to(current.global_position) <= 150.0:
-        current.resolve(&"MEOW")
+        if level_data == null or level_data.level_id != &"L06" or current.data.required_action != &"SEND_DOG":
+            current.resolve(&"MEOW")
     event_log.append_event({"event_id": &"CAT_MEOW", "action": &"MEOW", "success": true})
 
 func _on_cat_emote() -> void:
@@ -741,7 +957,83 @@ func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedE
                 l05_poisoned = false
                 l05_poison_tick_timer = 5.0
                 _show_toast("解毒成功，毒雾段安全了。")
-    _apply_event_side_effect(data, action_id)
+    if level_data != null and level_data.level_id == &"L06":
+        match data.event_id:
+            &"L06_E01_DOG":
+                world_state.set_flag(&"L06_DOG_ALLY")
+                _show_toast("狗狗加入队伍：以后可以用 E 派它去守卫那里。")
+            &"L06_E03_BRIDGE":
+                _show_toast("木桥放下：前面的空档留给你和狗狗继续配合。")
+            &"L06_E05_CALTROP":
+                _show_toast("铁蒺藜处理完成，出口就在前面。")
+    if level_data != null and level_data.level_id == &"L08":
+        match data.event_id:
+            &"L08_E01_GUARD_A":
+                if guards.size() > 0 and guards[0] != null:
+                    guards[0].call("depart", cat.global_position if cat else Vector2(390, 370), 6.0)
+                world_state.set_flag(&"L08_GUARD_A_DEPARTED")
+                _show_toast("守卫 A 已离岗：下一步先把狗变成你的队友。")
+            &"L08_E02_DOG":
+                world_state.set_flag(&"L08_DOG_ALLY")
+                _show_toast("狗狗加入队伍：现在用 E 派它去守卫 B。")
+            &"L08_E03_GUARD_B":
+                l08_dog_assist_pending = true
+                if dog != null and guards.size() > 1 and guards[1] != null:
+                    dog.lure_to(guards[1].global_position)
+                _show_toast("狗狗正在赶去守卫 B：到位前忍者先别动。")
+            &"L08_E04_POISON":
+                _show_toast("毒雾段安全：最后两处就能赶上末班船。")
+            &"L08_E05_CALTROP":
+                _show_toast("蒺藜清掉了：最后一段桥还等着放下。")
+            &"L08_E06_BRIDGE":
+                l08_bridge_open = true
+                world_state.set_flag(&"L08_BRIDGE_OPEN")
+                _show_toast("桥放下了！末班船就在前面。")
+    if level_data != null and level_data.level_id == &"L07":
+        match data.event_id:
+            &"L07_E01_GUARD_A":
+                l07_guard_a_depart_time = _l05_now()
+                world_state.set_flag(&"L07_GUARD_A_DEPARTED")
+                if guards.size() > 0 and guards[0] != null:
+                    guards[0].call("depart", cat.global_position if cat else Vector2(360, 170), 6.0)
+                _show_toast("守卫 A 离岗：8 秒后 B 才是稳定换岗解。")
+            &"L07_E02_GUARD_B":
+                if guards.size() > 1 and guards[1] != null:
+                    guards[1].call("depart", cat.global_position if cat else Vector2(650, 210), 6.0)
+                var early := l07_guard_a_depart_time < 0.0 or (_l05_now() - l07_guard_a_depart_time) < 8.0
+                world_state.set_flag(&"L07_GUARD_B_ACTIVE")
+                if early:
+                    l07_b_was_early = true
+                    world_state.set_flag(&"L07_BRIDGE_BLOCKED")
+                    world_state.set_flag(&"L07_POISON_FIRST")
+                    event_log.append_event({
+                        "event_id": &"L07_ORDER_DIAGNOSTIC",
+                        "action": &"RESOLVE_GUARD_B_EARLY",
+                        "success": false,
+                        "fail_code": &"FAIL_WRONG_ORDER",
+                        "world_changes": [&"guard_b_active", &"bridge_blocked", &"poison_first"],
+                    })
+                    _apply_l07_route_branch(true)
+                    _show_toast("守卫 B 提前补位：桥口被堵，他改走毒雾侧线。")
+                else:
+                    _show_toast("守卫 B 稳定补位：后面的桥口保持原路线。")
+            &"L07_E03_DOG":
+                _l07_start_dog_route()
+            &"L07_E04_BRIDGE":
+                l07_bridge_open = true
+                world_state.set_flag(&"L07_BRIDGE_OPEN")
+                world_state.set_flag(&"L07_BRIDGE_BLOCKED", false)
+                _show_toast("狗的路线已经把桥口窗口拉开了。")
+            &"L07_E05_POISON":
+                world_state.set_flag(&"L07_POISON_ROUTE_SAFE")
+                _show_toast("毒雾窗口处理完成：码头出口安全。")
+    if level_data == null or level_data.level_id != &"L07":
+        _apply_event_side_effect(data, action_id)
+    else:
+        # L07 Guard A/B must only affect their own guard; applying the generic
+        # GUARD_DISTRACT effect here would accidentally move both guards.
+        if data.event_type != &"GUARD":
+            _apply_event_side_effect(data, action_id)
     var late_window := 99.0
     if point != null and data.timeout > 0.0:
         late_window = max(0.0, data.timeout - point.timer)
@@ -772,9 +1064,15 @@ func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedE
         # L04 不用单一索引锁死顺序：解决任一当前阻挡事件后，都重新计算下一阻挡点。
         if ninja:
             ninja.release_event()
+    elif level_data != null and level_data.level_id == &"L06" and data.event_id in [&"L06_E02_GUARD_A", &"L06_E04_GUARD_B"]:
+        # 必须等狗真实抵达守卫位置后再放行 Ninja。
+        l06_dog_help_pending = true
+    elif level_data != null and level_data.level_id == &"L08" and data.event_id == &"L08_E03_GUARD_B":
+        # 事件先解决，忍者继续等待；狗到位后再 release_event()。
+        l08_dog_assist_pending = true
     elif data.event_group == &"MAIN" and _find_main_event_index(data.event_id) == active_main_event_index:
         active_main_event_index += 1
-        if ninja:
+        if ninja and not (level_data != null and level_data.level_id == &"L07" and data.event_id == &"L07_E03_DOG"):
             ninja.release_event()
     GlobalAudioManager.play_event_sfx("success")
     if level_data != null and level_data.level_id == &"L04" and world_state.get_flag(&"L04_GUARD_SAFE") and world_state.get_flag(&"L04_TRIPWIRE_SAFE") and not world_state.get_flag(&"L04_CRATE_STOLEN") and not world_state.get_flag(&"L04_SHORTCUT_USED"):
@@ -854,6 +1152,8 @@ func _apply_effect(effect: EventEffectData) -> void:
                     dog.lure_to(Vector2(360, 560))
                 else:
                     dog.lure_to(cat.global_position + Vector2(120, 0))
+        &"DOG_LURE_GUARD":
+            _send_l06_dog_to_guard(int(effect.amount))
         &"BOSS_PREPARE_DAMAGE":
             if boss:
                 boss.prepare(int(effect.amount))
@@ -866,6 +1166,127 @@ func _apply_effect(effect: EventEffectData) -> void:
         _:
             pass
 
+func _send_l06_dog_to_guard(guard_index: int) -> void:
+    if level_data == null or level_data.level_id != &"L06" or dog == null:
+        return
+    if guard_index < 0 or guard_index >= guards.size():
+        return
+    var guard := guards[guard_index]
+    if guard == null:
+        return
+    l06_dog_guard_target = guard_index
+    l06_dog_help_pending = true
+    dog.lure_to(guard.global_position)
+    event_log.append_event({
+        "event_id": StringName("L06_DOG_SENT_%d" % guard_index),
+        "action": &"DOG_ASSIST",
+        "success": true,
+        "guard_index": guard_index,
+    })
+    _show_toast("狗狗出发：去把守卫引开。")
+
+func _on_l06_dog_arrived(_target: Vector2) -> void:
+    if level_data == null or level_data.level_id != &"L06" or l06_dog_guard_target < 0:
+        return
+    var idx := l06_dog_guard_target
+    if idx >= guards.size():
+        return
+    var guard := guards[idx]
+    if guard != null:
+        guard.call("depart", dog.global_position, 6.0)
+    dog.bark()
+    var flag: StringName = &"L06_GUARD_A_SAFE" if idx == 0 else &"L06_GUARD_B_SAFE"
+    world_state.set_flag(flag)
+    event_log.append_event({
+        "event_id": StringName("L06_DOG_BARK_GUARD_%d" % idx),
+        "action": &"BARK",
+        "success": true,
+        "guard_index": idx,
+        "world_changes": [flag],
+    })
+    _show_toast("狗狗成功把守卫 %s 引开了！" % ("A" if idx == 0 else "B"))
+    l06_dog_guard_target = -1
+    l06_dog_help_pending = false
+    if ninja != null:
+        ninja.release_event()
+
+func _on_l08_dog_arrived(_target: Vector2) -> void:
+    if level_data == null or level_data.level_id != &"L08" or not l08_dog_assist_pending:
+        return
+    l08_dog_assist_pending = false
+    if guards.size() > 1 and guards[1] != null and dog != null:
+        guards[1].call("depart", dog.global_position, 6.0)
+        dog.bark()
+    world_state.set_flag(&"L08_DOG_GUARD_B_DONE")
+    world_state.set_flag(&"L08_GUARD_B_SAFE")
+    event_log.append_event({
+        "event_id": &"L08_DOG_ASSIST_GUARD_B",
+        "action": &"BARK",
+        "success": true,
+        "world_changes": [&"guard_b_safe", &"dog_assist"],
+    })
+    _show_toast("狗狗到位了！守卫 B 被引开，忍者可以继续。")
+    if ninja != null:
+        ninja.release_event()
+
+func _l07_start_dog_route() -> void:
+    if dog == null:
+        return
+    l07_dog_route_pending = true
+    dog.lure_to(Vector2(685, 470))
+    event_log.append_event({
+        "event_id": &"L07_DOG_ROUTE",
+        "action": &"DOG_ROUTE_CHANGE",
+        "success": true,
+        "world_changes": [&"dog_distracted"],
+    })
+    _show_toast("狗的路线改变了：桥口窗口正在打开……")
+
+func _on_l07_dog_arrived(_target: Vector2) -> void:
+    if level_data == null or level_data.level_id != &"L07" or not l07_dog_route_pending:
+        return
+    l07_dog_route_pending = false
+    l07_bridge_open = true
+    world_state.set_flag(&"L07_BRIDGE_OPEN")
+    world_state.set_flag(&"L07_DOG_ROUTE_CHANGED")
+    event_log.append_event({
+        "event_id": &"L07_DOG_ROUTE_CHANGED",
+        "action": &"DOG_ROUTE_READY",
+        "success": true,
+        "world_changes": [&"dog_distracted", &"bridge_open"],
+    })
+    if ninja != null:
+        ninja.release_event()
+    _show_toast("狗已经到位：桥口窗口打开。")
+
+func _apply_l07_route_branch(early: bool) -> void:
+    if not early or ninja == null:
+        return
+    var alt_points := [
+        Vector2(110, 480),
+        Vector2(420, 220),
+        Vector2(650, 210),
+        Vector2(590, 470),
+        Vector2(590, 430),
+        Vector2(720, 220),
+        Vector2(840, 360),
+        Vector2(1000, 350),
+    ]
+    ninja.replace_scripted_route(alt_points, 2)
+    for node in event_nodes:
+        if node.data.event_id == &"L07_E04_BRIDGE":
+            node.data.route_index = 6
+            node.position = alt_points[6]
+        elif node.data.event_id == &"L07_E05_POISON":
+            node.data.route_index = 5
+            node.position = alt_points[5]
+    event_log.append_event({
+        "event_id": &"L07_ROUTE_BRANCH",
+        "action": &"NINJA_SWITCH_TO_POISON_FIRST",
+        "success": true,
+        "world_changes": [&"route_changed"],
+    })
+
 func _on_event_failed(data: EventPointData, code: StringName) -> void:
     if level_failed or level_finished:
         return
@@ -875,32 +1296,66 @@ func _on_event_failed(data: EventPointData, code: StringName) -> void:
         world_state.set_flag(flag)
     event_log.append_event({"event_id": data.event_id, "action": &"FAIL", "success": false, "fail_code": code, "ninja_hp_before": ninja.hp if ninja else 0})
     if ninja:
-        # 容错（GDD §2.1 / §3.4）：坠崖直接死（FAIL_NINJA_DEATH），其余事件扣 1 心继续走
+        # 坠崖直接死；其余威胁扣 1 心但继续推进。
         ninja.take_damage(3 if code == &"FAIL_NINJA_DEATH" else 1)
     if level_data != null and level_data.level_id == &"L05":
         if data.event_id == &"L05_E01_GUARD_A" and not level_failed:
-            # Guard A 无论被猫成功引开还是忍者撞上后脱身，都视为“离岗”起算换岗计时。
             l05_guard_a_depart_time = _l05_now()
-            _show_toast("守卫 A 出事了，但他已经离岗：8 秒后 B 会换岗。")
+            _show_toast("守卫 A 已离岗：8 秒后 B 会换岗。")
         if data.event_id == &"L05_E04_POISON" and not level_failed:
             l05_poisoned = true
             l05_poison_tick_timer = 5.0
             _show_toast("毒雾触发：每 5 秒 -1 心。尽快让他穿出去。")
+    if level_data != null and level_data.level_id == &"L06":
+        # 失败路径仍允许继续：守卫被忍者自己处理掉，后续事件继续开放，但记一次扣心。
+        if data.event_id == &"L06_E02_GUARD_A":
+            world_state.set_flag(&"L06_GUARD_A_SAFE")
+        elif data.event_id == &"L06_E04_GUARD_B":
+            world_state.set_flag(&"L06_GUARD_B_SAFE")
+    if level_data != null and level_data.level_id == &"L08":
+        # L08 允许失败后继续，但保留心数损失；Guard B 失败后视作“忍者自己扛过去”。
+        if data.event_id == &"L08_E01_GUARD_A":
+            world_state.set_flag(&"L08_GUARD_A_SAFE")
+        elif data.event_id == &"L08_E03_GUARD_B":
+            world_state.set_flag(&"L08_GUARD_B_SAFE")
+            l08_dog_assist_pending = false
     if level_failed:
-        # take_damage 已触发 on_ninja_dead（HP 归零）
         return
-    # 惨而不死：威胁已经踩过，忍者继续推进，玩家继续救场
-    if level_data != null and level_data.level_id == &"L04":
-        if ninja:
-            ninja.release_event()
-    elif data.event_group == &"MAIN" and _find_main_event_index(data.event_id) == active_main_event_index:
-        active_main_event_index += 1
-        if ninja:
-            ninja.release_event()
+    if ninja:
+        ninja.release_event()
+    if data.event_group == &"MAIN":
+        var idx := _find_main_event_index(data.event_id)
+        if idx == active_main_event_index:
+            active_main_event_index += 1
     _set_label(status_label, "忍者受伤了！HP %d/3    R 重开" % (ninja.hp if ninja else 0))
     _show_toast(_fail_reason(code))
 
 func _current_main_event() -> UnifiedEventPoint:
+    if level_data != null and level_data.level_id == &"L08":
+        var ordered := [&"L08_E01_GUARD_A", &"L08_E02_DOG", &"L08_E03_GUARD_B", &"L08_E04_POISON", &"L08_E05_CALTROP", &"L08_E06_BRIDGE"]
+        for wanted in ordered:
+            for node in event_nodes:
+                if node.data.event_id == wanted and not node.resolved_state and is_event_active(node.data):
+                    return node
+        return null
+    if level_data != null and level_data.level_id == &"L07":
+        var ordered := [&"L07_E01_GUARD_A", &"L07_E02_GUARD_B", &"L07_E03_DOG"]
+        if l07_b_was_early:
+            ordered += [&"L07_E05_POISON", &"L07_E04_BRIDGE"]
+        else:
+            ordered += [&"L07_E04_BRIDGE", &"L07_E05_POISON"]
+        for wanted in ordered:
+            for node in event_nodes:
+                if node.data.event_id == wanted and not node.resolved_state and is_event_active(node.data):
+                    return node
+        return null
+    if level_data != null and level_data.level_id == &"L06":
+        var ordered := [&"L06_E01_DOG", &"L06_E02_GUARD_A", &"L06_E03_BRIDGE", &"L06_E04_GUARD_B", &"L06_E05_CALTROP"]
+        for wanted in ordered:
+            for node in event_nodes:
+                if node.data.event_id == wanted and not node.resolved_state and is_event_active(node.data):
+                    return node
+        return null
     if level_data != null and level_data.level_id == &"L05":
         var ordered := [&"L05_E01_GUARD_A", &"L05_E02_DOG", &"L05_E03_BRIDGE", &"L05_E04_POISON", &"L05_E05_GUARD_B", &"L05_E06_CALTROP"]
         for wanted in ordered:
@@ -1042,6 +1497,7 @@ func on_ninja_dead() -> void:
 
 func _process(_delta: float) -> void:
     _update_l05_state(_delta)
+    _update_l07_state(_delta)
     if reading_phase:
         if Input.is_action_just_pressed("interact") or Input.is_action_just_pressed("confirm"):
             _end_reading_tour()
@@ -1090,6 +1546,16 @@ func _update_hud() -> void:
         if level_data != null and level_data.level_id == &"L05":
             var shift := "B 已换岗" if l05_guard_b_activated else ("B 还剩 %.1fs" % maxf(0.0, 8.0 - (_l05_now() - l05_guard_a_depart_time)) if l05_guard_a_depart_time >= 0.0 else "先处理守卫 A")
             base_state += " | " + shift
+        if level_data != null and level_data.level_id == &"L07":
+            var shift_l07 := "B 稳定换岗" if l07_guard_b_activated else ("B 换岗倒计时 %.1fs" % maxf(0.0, 8.0 - (_l05_now() - l07_guard_a_depart_time)) if l07_guard_a_depart_time >= 0.0 else "先处理 A")
+            var route_l07 := "毒雾优先线" if l07_b_was_early else "桥→毒雾标准线"
+            var dog_l07 := "狗已改线" if world_state.get_flag(&"L07_DOG_ROUTE_CHANGED") else "狗未改线"
+            base_state += " | " + shift_l07 + " | " + route_l07 + " | " + dog_l07
+        if level_data != null and level_data.level_id == &"L08":
+            var dog_l08 := "狗队友已建立" if world_state.get_flag(&"L08_DOG_ALLY") else "先喂狗"
+            var assist_l08 := "狗已到位" if world_state.get_flag(&"L08_DOG_GUARD_B_DONE") else ("狗正在赶路" if l08_dog_assist_pending else "未派狗")
+            var bridge_l08 := "桥已放下" if l08_bridge_open else "桥未处理"
+            base_state += " | " + dog_l08 + " | " + assist_l08 + " | " + bridge_l08
         state_label.text = base_state
     if stamina_label != null and cat:
         stamina_label.text = "体力 %03d" % int(cat.stamina)

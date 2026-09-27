@@ -1,0 +1,16 @@
+L07 v1.4.7 shipped files
+data/levels/ch02_dock/L07_who_goes_first.tres
+data/routes/L07_Ninja_Main.tres
+data/events/L07_E01_GUARD_A.tres
+data/events/L07_E02_GUARD_B.tres
+data/events/L07_E03_DOG.tres
+data/events/L07_E04_BRIDGE.tres
+data/events/L07_E05_POISON.tres
+scripts/actors/ninja_controller.gd
+scripts/gameplay/unified_level_manager.gd
+scripts/qa/qa_test_runner.gd
+data/qa/qa_contract.json
+data/qa/qa_matrix.csv
+docs/L07_VERTICAL_SLICE_v1.4.7_CHANGELOG.md
+docs/L07_PLAYTEST_CHECKLIST_v1.4.7.md
+static_audit_L07_v1.4.7.txt

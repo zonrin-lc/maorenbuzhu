@@ -4,6 +4,7 @@ extends Node2D
 signal barked()
 signal lure_started()
 signal lure_ended()
+signal arrived_at_target(target: Vector2)
 
 @export var patrol_speed := 45.0
 @export var lure_speed := 90.0
@@ -14,6 +15,7 @@ var target_position := Vector2.ZERO
 var state: StringName = &"IDLE"
 var lure_timer := 0.0
 var facing := Vector2.RIGHT
+var _arrived_emitted := false
 var sprite: Sprite2D
 var anim_time := 0.0
 
@@ -32,6 +34,7 @@ func lure_to(target: Vector2) -> void:
     target_position = target
     state = &"LURED"
     lure_timer = lure_duration
+    _arrived_emitted = false
     lure_started.emit()
     queue_redraw()
 
@@ -46,6 +49,9 @@ func _process(delta: float) -> void:
             facing = (target_position - position).normalized()
             moving = true
             position = position.move_toward(target_position, lure_speed * delta)
+            if not _arrived_emitted and position.distance_to(target_position) <= 2.0:
+                _arrived_emitted = true
+                arrived_at_target.emit(target_position)
             lure_timer -= delta
             if lure_timer <= 0.0:
                 state = &"RETURN"

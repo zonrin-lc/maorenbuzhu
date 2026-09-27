@@ -38,7 +38,7 @@ offset_top = 16.0
 offset_right = 700.0
 offset_bottom = 52.0
 theme_override_font_sizes/font_size = 28
-text = "猫忍不住 · 第二章 · L06"
+text = "猫忍不住 · 第二章 · L06 · 狗也能当队友"
 [node name="Status" type="Label" parent="UI"]
 offset_left = 24.0
 offset_top = 54.0

@@ -1,0 +1,20 @@
+《猫忍不住》v1.4.2 静态审计
+
+目标：L02《他总是踩同一个坑》第二垂直切片
+
+[PASS] L02 Route move_speed = 52 px/s
+[PASS] L02 E01→E02 route gap ≈ 6.43s
+[PASS] L02 E02→E03 route gap ≈ 5.54s
+[PASS] L02 CatTunnel_L02_01 enabled in UnifiedLevelManager
+[PASS] L02 JumpPoint_L02_01 enabled in UnifiedLevelManager
+[PASS] L02 shortcut does not alter Ninja Route data
+[PASS] L02 E03 has resolved_offset / resolved_motion_time
+[PASS] L02 E01 → E02 caused_event_id
+[PASS] L02 E02 → E03 caused_event_id
+[PASS] Unified EventLog resolved payload records caused_event_id / world_changes / route_change
+[PASS] No modified project resource reference errors found outside known dynamic/template/tmp references
+
+KNOWN / NOT RUN
+- Godot 4 runtime is not available in this environment; no runtime launch claim is made.
+- Dynamic res:// path templates and legacy *.tmp files are intentionally excluded from static resource existence checks.
+- L02 Variant B is not enabled in this cut.

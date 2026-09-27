@@ -67,7 +67,7 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
     if collected:
         return
-    var near: bool = level_manager != null and level_manager.cat != null and global_position.distance_to(level_manager.cat.global_position) <= pickup_radius and level_manager.cat.carry_item == &""
+    var near := level_manager != null and level_manager.cat != null and global_position.distance_to(level_manager.cat.global_position) <= pickup_radius and level_manager.cat.carry_item == &""
     var ring := Color("#fbbf24") if near else Color("#94a3b8")
     ring.a = 0.75 if near else 0.4
     draw_arc(Vector2.ZERO, 18.0, 0.0, TAU, 24, ring, 2.0)

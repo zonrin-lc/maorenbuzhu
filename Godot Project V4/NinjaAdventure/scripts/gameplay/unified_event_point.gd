@@ -110,6 +110,9 @@ func _action_pressed(action_id: StringName) -> bool:
         &"FEED": return Input.is_action_pressed("interact") and level_manager.cat.carry_item == &"FISH"
         &"PLACE_ANTIDOTE": return Input.is_action_pressed("interact") and level_manager.cat.carry_item == &"ANTIDOTE"
         &"STEAL_CRATE": return Input.is_action_pressed("carry")
+        &"SEND_DOG":
+            var dog_ally := level_manager.world_state.get_flag(&"L06_DOG_ALLY") or level_manager.world_state.get_flag(&"L08_DOG_ALLY")
+            return Input.is_action_pressed("interact") and dog_ally
         &"CALTROP_DURING_PHASE2": return Input.is_action_pressed("interact")
         _: return Input.is_action_pressed("interact")
 

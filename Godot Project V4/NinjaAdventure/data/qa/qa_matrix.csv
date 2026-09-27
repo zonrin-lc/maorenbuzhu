@@ -2,7 +2,7 @@ Suite,Case,Precondition,Action,Expected,Priority
 Boot,BOOT_001,Debug build,Start project,Debug overlay loads,P0
 Boot,BOOT_002,Debug build,Open console,Help command responds,P0
 Level,LVL_001,Data present,Load each L01-L12,No missing LevelData,P0
-Event,EVT_001,46 EventData expected,Enumerate all events,Count=46,P0
+Event,EVT_001,57 EventData expected,Enumerate all events,Count=57,P0
 World,WLD_001,Any level,Reset level,WorldState returns level defaults,P0
 World,WLD_002,L07/L08,Change dependency state,Downstream event reacts deterministically,P0
 Score,SCR_001,Complete level,Submit result,ScoreResult generated once,P0
@@ -13,7 +13,7 @@ Flow,FLW_002,L12 complete,Next,Return chapter-complete flow,P0
 Flow,FLW_003,Result open,Retry,Reload same level with fresh run state,P0
 Boss,BOS_001,L12,Set phase PREPARE,Prep state enters,P0
 Boss,BOS_002,L12,Set phase PHASE_2,Caltrop remains available,P0
-Boss,BOS_003,L12,HP<=1,Trigger emergency,Complete at 1 paw,P0
+Boss,BOS_003,L12 HP<=1,Trigger emergency,Complete at 1 paw,P0
 Boss,BOS_004,L12,Finish boss,No deadlock after phase transition,P0
 Input,INP_001,Bindings loaded,Rebind interact,UI reflects new binding,P1
 Audio,AUD_001,Audio manager loaded,Change boss phase,Music state changes,P1
@@ -22,3 +22,9 @@ QA,QA_001,Debug build,Run validate,No contract errors,P0
 QA,QA_002,Debug build,Run reset,Debug state returns defaults,P0
 Release,REL_001,Release build,Debug autoload disabled,No console available,P0
 Release,REL_002,Release build,QA shortcuts absent,No cheat path,P0
+L07_ORDER,L07_ORDER_001,L07 reset Guard A available,A → wait 8s → B → Dog → Bridge → Poison,Standard route; no order diagnostic,P0
+L07_ORDER,L07_ORDER_002,L07 reset Guard A available,A → Dog → B → Shortcut → Bridge → Poison,Risk route remains recoverable; shortcut logged,P0
+L07_ORDER,L07_ORDER_003,L07 reset Guard B reachable,B → A → Dog → Bridge → Poison,FAIL_WRONG_ORDER logged; poison-first branch active,P0
+L07_ORDER,L07_ORDER_004,L07 reset Guard B reachable,B → Dog → A → Bridge → Poison,Stable diagnostic; Dog waits for A; early-B branch remains recoverable,P1
+L07_ORDER,L07_ORDER_005,L07 reset,Dog → A → B → Bridge → Poison,Dog unavailable before A; no softlock; then standard route,P1
+L07_ORDER,L07_ORDER_006,L07 reset,Dog → B → A → Bridge → Poison,Dog/B unavailable until A; after A early-B branch if B was touched early,P1

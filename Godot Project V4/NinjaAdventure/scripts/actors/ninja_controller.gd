@@ -55,6 +55,25 @@ func _process(delta: float) -> void:
 func release_event() -> void:
     waiting_for_event = false
 
+func replace_scripted_route(points: Array, next_route_index: int = -1) -> void:
+    if route == null or points.is_empty():
+        return
+    route.waypoints = points
+    if next_route_index >= 0:
+        waypoint_index = clampi(next_route_index, 0, max(0, route.waypoints.size() - 2))
+    else:
+        var closest_index := 0
+        var closest_distance := INF
+        for i in range(route.waypoints.size()):
+            var d := global_position.distance_squared_to(route.waypoints[i])
+            if d < closest_distance:
+                closest_distance = d
+                closest_index = i
+        waypoint_index = clampi(closest_index, 0, max(0, route.waypoints.size() - 2))
+    waiting_for_event = false
+    route_changed.emit(waypoint_index)
+    queue_redraw()
+
 func take_damage(amount: int = 1) -> void:
     hp = max(0, hp - amount)
     damaged.emit(hp)

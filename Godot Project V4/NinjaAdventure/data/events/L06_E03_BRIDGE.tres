@@ -6,10 +6,10 @@
 script = ExtResource("1")
 event_id = &"L06_E03_BRIDGE"
 event_type = &"BRIDGE"
-display_name = "木箱搭桥"
+display_name = "狗狗护航·木桥"
 classification = &"CRITICAL"
 actor_id = &"NINJA_BLUE"
-route_index = 5
+route_index = 4
 trigger_radius = 34.0
 hesitation_time = 3.0
 timeout = 3.0
@@ -21,6 +21,7 @@ high_risk = false
 allow_standard_solution = true
 allow_risky_solution = true
 required_action = &"INTERACT"
-banter_tags = [&"L06", &"BRIDGE"]
-
-success_effects = []
+caused_event_ids = [&"L06_E04_GUARD_B"]
+banter_tags = [&"L06", &"BRIDGE", &"DOG_ALLY"]
+resolved_offset = Vector2(68, 0)
+resolved_motion_time = 0.5

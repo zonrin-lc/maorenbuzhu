@@ -1,7 +1,7 @@
 {
   "version": "v1.2.22",
   "level_count": 12,
-  "expected_event_count": 46,
+  "expected_event_count": 64,
   "fail_codes": [
     "FAIL_TOO_LATE",
     "FAIL_WRONG_ORDER",
@@ -11,7 +11,14 @@
     "FAIL_ROUTE_BLOCKED",
     "FAIL_TIMEOUT"
   ],
-  "boss_phases": ["NONE", "PREPARE", "PHASE_1", "PHASE_2", "PHASE_3", "DEFEAT"],
+  "boss_phases": [
+    "NONE",
+    "PREPARE",
+    "PHASE_1",
+    "PHASE_2",
+    "PHASE_3",
+    "DEFEAT"
+  ],
   "required_checks": [
     "level_data_load",
     "event_data_load",
