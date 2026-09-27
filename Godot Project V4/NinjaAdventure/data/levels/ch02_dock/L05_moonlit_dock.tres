@@ -1,11 +1,14 @@
-[gd_resource type="Resource" script_class="LevelData" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="LevelData" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1"]
 [ext_resource type="Resource" path="res://data/routes/L05_Ninja_Main.tres" id="2"]
 [ext_resource type="Resource" path="res://data/events/L05_E01_GUARD_A.tres" id="3"]
 [ext_resource type="Resource" path="res://data/events/L05_E02_DOG.tres" id="4"]
 [ext_resource type="Resource" path="res://data/events/L05_E03_BRIDGE.tres" id="5"]
-[ext_resource type="Resource" path="res://data/score/L05_Score.tres" id="7"]
+[ext_resource type="Resource" path="res://data/events/L05_E04_POISON.tres" id="6"]
+[ext_resource type="Resource" path="res://data/events/L05_E05_GUARD_B.tres" id="7"]
+[ext_resource type="Resource" path="res://data/events/L05_E06_CALTROP.tres" id="8"]
+[ext_resource type="Resource" path="res://data/score/L05_Score.tres" id="9"]
 
 [resource]
 script = ExtResource("1")
@@ -17,5 +20,5 @@ next_scene_path = "res://scenes/levels/ch02_dock/L06_dog_ally.tscn"
 intro_time = 10.0
 target_time = 80.0
 ninja_route = ExtResource("2")
-events = [ExtResource("3"), ExtResource("4"), ExtResource("5")]
-score_rules = ExtResource("7")
+events = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8")]
+score_rules = ExtResource("9")

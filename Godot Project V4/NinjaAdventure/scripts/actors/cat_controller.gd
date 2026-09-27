@@ -12,6 +12,7 @@ signal emote_triggered()
 @export var sprint_cost := 25.0
 @export var stamina_regen := 20.0
 @export var emote_cooldown := 20.0
+@export var carry_speed_mult := 0.85
 
 var stamina := stamina_max
 var sprint_time := 0.0
@@ -49,6 +50,8 @@ func _physics_process(delta: float) -> void:
     var input_vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
     var sprinting := Input.is_action_pressed("sprint") and input_vec.length() > 0.0 and stamina > 0.0
     var move_speed := sprint_speed if sprinting else speed
+    if carry_item != &"":
+        move_speed *= carry_speed_mult
     if sprinting:
         stamina = max(0.0, stamina - sprint_cost * delta)
         sprint_time += delta

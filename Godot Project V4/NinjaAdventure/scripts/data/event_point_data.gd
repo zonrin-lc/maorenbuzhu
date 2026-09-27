@@ -20,6 +20,7 @@ extends Resource
 @export var allow_standard_solution: bool = true
 @export var allow_risky_solution: bool = false
 @export var required_action: StringName = &"INTERACT"
+@export var suspicion_override: float = -1.0 # -1 uses EventBehaviorData; otherwise exact per-event suspicion value
 @export var banter_tags: Array[StringName] = []
 
 # v1.2.11 unified event architecture
@@ -30,3 +31,5 @@ extends Resource
 @export var non_blocking: bool = false # event never blocks Ninja route
 
 @export var success_effects: Array[Resource] = [] # EventEffectData resources; behavior stays data-driven
+@export var resolved_offset: Vector2 = Vector2.ZERO # whitebox visual motion applied to the event prop on success
+@export var resolved_motion_time: float = 0.42

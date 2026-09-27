@@ -1,0 +1,17 @@
+《猫忍不住》v1.4.1 L01 Vertical Slice static audit
+
+Scope:
+- L01 shortcut components
+- L01 teaching event parameters
+- literal res:// references
+- duplicate function names in changed scripts
+- shortcut signal signature / emit consistency
+
+Results:
+- literal resource references: 0 errors
+- duplicate functions in changed scripts: 0 errors
+- shortcut signal mismatch: 0 errors
+- L01 teaching values: 0 errors
+
+Runtime note:
+Godot 4 runtime/editor was not available in this environment, so this file records static checks only; local runtime smoke testing is still required.

@@ -6,7 +6,7 @@
 script = ExtResource("1")
 route_id = &"L03_NINJA_MAIN"
 actor_id = &"NINJA_BLUE"
-waypoints = Array[Vector2]([Vector2(140, 300), Vector2(360, 260), Vector2(520, 380), Vector2(690, 420), Vector2(880, 420), Vector2(990, 420)])
+waypoints = Array[Vector2]([Vector2(140, 300), Vector2(360, 260), Vector2(520, 380), Vector2(690, 470), Vector2(880, 420), Vector2(990, 420)])
 loop = false
 move_speed = 60.0
-stop_points = [&"L03_E01", &"L03_E02", &"L03_E03"]
+stop_points = [&"L03_E01_GUARD_PASSIVE", &"L03_E02_STEAL_CRATE", &"L03_E03_EMOTE_CHECK", &"L03_E04_WATERGAP"]

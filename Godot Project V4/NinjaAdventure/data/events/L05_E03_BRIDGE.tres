@@ -22,5 +22,3 @@ allow_standard_solution = true
 allow_risky_solution = true
 required_action = &"INTERACT"
 banter_tags = [&"L05", &"BRIDGE"]
-
-success_effects = []

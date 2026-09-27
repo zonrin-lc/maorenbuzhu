@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 tutorial_id = "TUTORIAL_SUSPICION"
-trigger_event = "L03_FIRST_SUSPICION"
+trigger_event = "L03_E02_STEAL_CRATE"
 input_action = "emote"
 title = "别慌"
 body = "做事被忍者看见会增加怀疑；卖萌可以清掉已有怀疑。"

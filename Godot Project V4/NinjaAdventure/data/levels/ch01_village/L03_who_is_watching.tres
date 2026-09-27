@@ -1,11 +1,12 @@
-[gd_resource type="Resource" script_class="LevelData" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="LevelData" load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1"]
 [ext_resource type="Resource" path="res://data/routes/L03_Ninja_Main.tres" id="2"]
 [ext_resource type="Resource" path="res://data/events/L03_01_GUARD.tres" id="3"]
-[ext_resource type="Resource" path="res://data/events/L03_02_TRIPWIRE.tres" id="4"]
-[ext_resource type="Resource" path="res://data/events/L03_03_WATERGAP.tres" id="5"]
-[ext_resource type="Resource" path="res://data/score/L03_Score.tres" id="6"]
+[ext_resource type="Resource" path="res://data/events/L03_02_STEAL_CRATE.tres" id="4"]
+[ext_resource type="Resource" path="res://data/events/L03_03_EMOTE_CHECK.tres" id="5"]
+[ext_resource type="Resource" path="res://data/events/L03_04_WATERGAP.tres" id="6"]
+[ext_resource type="Resource" path="res://data/score/L03_Score.tres" id="7"]
 
 [resource]
 script = ExtResource("1")
@@ -17,5 +18,5 @@ next_scene_path = "res://scenes/levels/ch01_village/L04_village_accident.tscn"
 intro_time = 10.0
 target_time = 65.0
 ninja_route = ExtResource("2")
-events = [ExtResource("3"), ExtResource("4"), ExtResource("5")]
-score_rules = ExtResource("6")
+events = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")]
+score_rules = ExtResource("7")

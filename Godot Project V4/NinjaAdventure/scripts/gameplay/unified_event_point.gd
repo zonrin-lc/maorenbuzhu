@@ -7,6 +7,7 @@ signal failed(data: EventPointData, fail_code: StringName)
 const PROP_TEXTURES := {
     &"TRIPWIRE": "res://assets/props/fish_net.png",
     &"WATERGAP": "res://assets/props/crate.png",
+    &"STEAL_CRATE": "res://assets/props/crate.png",
     &"BRIDGE": "res://assets/props/crate.png",
     &"CLIFF": "res://assets/props/crate.png",
     &"DOG": "res://assets/props/fish.png",
@@ -70,13 +71,25 @@ func _process(delta: float) -> void:
     if required == &"MEOW":
         return # F is owned by CatController; manager resolves Guard events from the signal.
 
+    if required == &"EMOTE_CHECK":
+        return # Ctrl is owned by CatController; manager resolves the teaching checkpoint.
+
+    if required == &"PASSIVE":
+        if global_position.distance_to(ninja.global_position) <= data.trigger_radius:
+            resolve(&"PASSIVE")
+        return
+
     if global_position.distance_to(cat.global_position) > 58.0:
         if interacting:
             _cancel_action()
         queue_redraw()
         return
 
-    if data.consume_carry_item != &"" and cat.carry_item != data.consume_carry_item and required in [&"FEED", &"PLACE_ANTIDOTE"]:
+    var needs_carry := data.consume_carry_item != &"" and cat.carry_item != data.consume_carry_item and required in [&"FEED", &"PLACE_ANTIDOTE", &"PLACE_CRATE"]
+    # L04 Route B 通过猫专用捷径后，E04 木桥不需要实际叼箱。
+    if data.event_id == &"L04_E04_WATERGAP" and level_manager.world_state.get_flag(&"L04_SHORTCUT_USED"):
+        needs_carry = false
+    if needs_carry:
         queue_redraw()
         return
 
@@ -96,6 +109,7 @@ func _action_pressed(action_id: StringName) -> bool:
     match action_id:
         &"FEED": return Input.is_action_pressed("interact") and level_manager.cat.carry_item == &"FISH"
         &"PLACE_ANTIDOTE": return Input.is_action_pressed("interact") and level_manager.cat.carry_item == &"ANTIDOTE"
+        &"STEAL_CRATE": return Input.is_action_pressed("carry")
         &"CALTROP_DURING_PHASE2": return Input.is_action_pressed("interact")
         _: return Input.is_action_pressed("interact")
 
@@ -120,13 +134,21 @@ func _animate_resolved() -> void:
             tw.tween_property(prop_sprite, "scale", prop_sprite.scale * 0.2, 0.35)
             tw.tween_property(prop_sprite, "modulate:a", 0.0, 0.35)
         &"WATERGAP", &"BRIDGE", &"CLIFF":
-            # 木箱落位垫脚：下沉卡入 + 轻微弹跳
-            tw.tween_property(prop_sprite, "position:y", prop_sprite.position.y + 6.0, 0.18)
-            tw.tween_property(prop_sprite, "position:y", prop_sprite.position.y, 0.22).set_trans(Tween.TRANS_BOUNCE)
+            # 数据指定落位时，箱子真实移动到目标锚点；否则保留轻微弹跳。
+            if data.resolved_offset != Vector2.ZERO:
+                tw.tween_property(prop_sprite, "position", prop_sprite.position + data.resolved_offset, data.resolved_motion_time).set_trans(Tween.TRANS_SINE)
+            else:
+                tw.tween_property(prop_sprite, "position:y", prop_sprite.position.y + 6.0, 0.18)
+                tw.tween_property(prop_sprite, "position:y", prop_sprite.position.y, 0.22).set_trans(Tween.TRANS_BOUNCE)
         &"POISON":
             # 药瓶放倒（被忍者捡走使用）
             tw.tween_property(prop_sprite, "rotation", PI * 0.5, 0.3)
             tw.parallel().tween_property(prop_sprite, "modulate:a", 0.35, 0.3)
+        &"STEAL_CRATE":
+            # 箱子被猫叼走：道具从世界中收起，由 LevelManager 挂到猫身上。
+            tw.set_parallel(true)
+            tw.tween_property(prop_sprite, "scale", Vector2.ZERO, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+            tw.tween_property(prop_sprite, "modulate:a", 0.0, 0.22)
         &"DYNAMITE":
             # 炸药桶推入水中受潮：滑走 + 变暗
             tw.set_parallel(true)

@@ -20,6 +20,8 @@ static func action_for(data: EventPointData) -> StringName:
     return get_behavior(data.event_type).default_action
 
 static func suspicion_for(data: EventPointData) -> float:
+    if data.suspicion_override >= 0.0:
+        return data.suspicion_override
     return get_behavior(data.event_type).suspicion
 
 static func is_boss_combat(data: EventPointData) -> bool:

@@ -24,3 +24,7 @@ required_action = &"INTERACT"
 banter_tags = [&"WATERGAP", &"L02"]
 
 success_effects = []
+caused_event_ids = []
+
+resolved_offset = Vector2(0, -20)
+resolved_motion_time = 0.45

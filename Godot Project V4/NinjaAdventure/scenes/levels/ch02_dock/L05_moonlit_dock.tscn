@@ -12,6 +12,12 @@ radius = 14.0
 [sub_resource type="RectangleShape2D" id="WallH"]
 size = Vector2(1020,20)
 
+[sub_resource type="RectangleShape2D" id="DockDividerA"]
+size = Vector2(20, 170)
+
+[sub_resource type="RectangleShape2D" id="DockDividerB"]
+size = Vector2(20, 150)
+
 [node name="L05_moonlit_dock" type="Node2D"]
 script = ExtResource("1")
 level_data = ExtResource("6")
@@ -86,3 +92,11 @@ shape = SubResource("WallH")
 [node name="Bottom" type="CollisionShape2D" parent="Walls"]
 position = Vector2(550,615)
 shape = SubResource("WallH")
+
+[node name="DividerFishYard" type="CollisionShape2D" parent="Walls"]
+position = Vector2(190, 300)
+shape = SubResource("DockDividerA")
+
+[node name="DividerPoisonYard" type="CollisionShape2D" parent="Walls"]
+position = Vector2(790, 200)
+shape = SubResource("DockDividerB")

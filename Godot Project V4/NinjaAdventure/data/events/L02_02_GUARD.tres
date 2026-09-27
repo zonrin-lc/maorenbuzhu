@@ -26,3 +26,5 @@ required_action = &"INTERACT"
 banter_tags = [&"GUARD", &"L02"]
 
 success_effects = [ExtResource("2")]
+
+caused_event_ids = [&"L02_E03_WATERGAP"]

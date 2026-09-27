@@ -16,6 +16,7 @@ timeout = 1.6
 interaction_time = 0.8
 fail_code = &"FAIL_TOO_LATE"
 success_flags = [&"L04_TRIPWIRE_SAFE"]
+caused_event_ids = [&"L04_E01_GUARD", &"L04_E03_CRATE"]
 risk_level = &"SAFE"
 high_risk = false
 allow_standard_solution = true
