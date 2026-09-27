@@ -3,7 +3,7 @@ import csv, json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-manifest = ROOT / "data/input/input_action_manifest.csv"
+manifest = ROOT / "tools/input_action_manifest.csv"
 defaults = ROOT / "data/input/default_bindings.json"
 required = [
     "move_up","move_down","move_left","move_right",

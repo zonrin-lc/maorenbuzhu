@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-manifest = ROOT / 'data' / 'audio' / 'audio_manifest.csv'
+manifest = ROOT / 'tools' / 'audio_manifest.csv'
 errors = []
 rows = list(csv.DictReader(manifest.open(encoding='utf-8')))
 ids = [r['AudioID'] for r in rows]

@@ -19,7 +19,7 @@ for p in required:
     if not p.exists():
         errors.append(f"MISSING {p.relative_to(ROOT)}")
 
-manifest = ROOT / "data/tutorial/tutorial_manifest.csv"
+manifest = ROOT / "tools/tutorial_manifest.csv"
 seen = set()
 with manifest.open(encoding="utf-8") as f:
     for row in csv.DictReader(f):
