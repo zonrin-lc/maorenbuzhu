@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="LevelData" load_steps=9 format=3]
+
 [ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1"]
-[ext_resource type="Resource" path="res://data/score/L10_Score.tres" id="8"]
 [ext_resource type="Resource" path="res://data/routes/L10_Ninja_Main.tres" id="2"]
 [ext_resource type="Resource" path="res://data/events/L10_E01_DYNAMITE_A.tres" id="3"]
 [ext_resource type="Resource" path="res://data/events/L10_E02_GUARD_A.tres" id="4"]
 [ext_resource type="Resource" path="res://data/events/L10_E03_DOG.tres" id="5"]
-[ext_resource type="Resource" path="res://data/events/L10_E04_DYNAMITE_B.tres" id="6"]
-[ext_resource type="Resource" path="res://data/events/L10_E05_POISON.tres" id="7"]
+[ext_resource type="Resource" path="res://data/events/L10_E04_CALTROP.tres" id="6"]
+[ext_resource type="Resource" path="res://data/events/L10_E04_POISON.tres" id="7"]
+[ext_resource type="Resource" path="res://data/score/L10_Score.tres" id="8"]
+
 [resource]
 script = ExtResource("1")
 level_id = &"L10"

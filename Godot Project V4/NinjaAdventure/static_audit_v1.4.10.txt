@@ -1,0 +1,16 @@
+L10 v1.4.10 static audit
+duplicate_functions: PASS
+l10_vars: PASS
+l10_setup: PASS
+l10_route_branch: PASS
+l10_dog_arrival: PASS
+l10_blocker: PASS
+l10_optional: PASS
+four_main_events: PASS
+no_old_dyn_b: PASS
+no_old_poison: PASS
+route66: PASS
+l07_void_fixed: PASS
+l10_meow: PASS
+l10_hud: PASS
+errors=0

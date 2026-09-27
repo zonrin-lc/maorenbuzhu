@@ -4,25 +4,27 @@
 
 [resource]
 script = ExtResource("1")
-event_id = &"L09_E01_TRIPWIRE"
-event_type = &"TRIPWIRE"
-display_name = "雷雨绊绳"
+event_id = &"L10_E04_POISON"
+event_type = &"POISON"
+display_name = "毒雾门"
 classification = &"CRITICAL"
 actor_id = &"NINJA_BLUE"
-route_index = 1
+route_index = 5
 trigger_radius = 34.0
-hesitation_time = 0.5
-timeout = 2.5
+hesitation_time = 1.0
+timeout = 4.0
 interaction_time = 0.8
 fail_code = &"FAIL_TOO_LATE"
-success_flags = [&"l09_tripwire_safe"]
+consume_carry_item = &"ANTIDOTE"
+success_flags = [&"L10_POISON_SAFE"]
 failure_flags = []
 caused_event_ids = []
-risk_level = &"SAFE"
+risk_level = &"BALANCED"
 high_risk = false
 allow_standard_solution = true
 allow_risky_solution = true
-required_action = &"INTERACT"
-banter_tags = [&"TRIPWIRE"]
-
+required_action = &"PLACE_ANTIDOTE"
+banter_tags = [&"POISON", &"L10_CHAIN_REACTION"]
+event_group = &"MAIN"
+non_blocking = false
 success_effects = []

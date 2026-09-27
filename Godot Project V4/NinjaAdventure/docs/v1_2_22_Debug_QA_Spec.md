@@ -81,7 +81,7 @@ Teleport Ninja
 
 ```text
 levels = 12
-expected_events = 64
+expected_events = 66
 ```
 
 实际工程应从目录 / Resource registry 枚举，而不是手写计数。

@@ -1,0 +1,24 @@
+《猫忍不住》v1.4.6 L06 静态回归
+
+L06 事件：5
+L06 Route waypoint：7
+L06 Guard：2
+L06 Dog：1
+L06 Fish pickup：1
+L06 CatTunnel：1
+
+主链：
+L06_E01_DOG(FEED/FISH)
+ -> L06_E02_GUARD_A(SEND_DOG -> DOG_LURE_GUARD amount 0 -> L06_GUARD_A_SAFE)
+ -> L06_E03_BRIDGE(INTERACT -> resolved_offset 68px)
+ -> L06_E04_GUARD_B(SEND_DOG -> DOG_LURE_GUARD amount 1 -> L06_GUARD_B_SAFE)
+ -> L06_E05_CALTROP(INTERACT)
+
+静态检查：
+- 事件资源全部存在：PASS
+- LevelData 引用全部存在：PASS
+- L06 action/flag 链：PASS
+- DogController arrived_at_target：PASS
+- SEND_DOG 不被 MEOW 绕过：PASS
+- L05 毒雾失败分支缩进：PASS
+- 当前环境无 Godot 4 Runtime：未执行实机启动检查

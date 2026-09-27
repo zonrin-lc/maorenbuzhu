@@ -1,0 +1,28 @@
+《猫忍不住》L05 垂直切片 v1.4.5 静态审计
+
+EVENTS
+- events=53 types=14 errors=0
+
+INPUT
+- ACTIONS=14 ERRORS=0
+
+AUDIO
+- AUDIO_ROWS=11 BUSES=5/5 ERRORS=0
+
+SETTINGS
+- REQUIRED_FILES=6 SETTINGS_KEYS=16 ERRORS=0
+
+DEBUG / QA
+- REQUIRED_FILES=7 QA_CASES=23 LEVELS=12 EXPECTED_EVENTS=46 ERRORS=0
+
+L05 CUSTOM
+- 6 event resources present
+- 9 Ninja route waypoints present
+- Q carry pickup script integrated
+- Guard B timed activation integrated (8s after Guard A departure)
+- Poison periodic damage integrated (5s tick)
+- L05 failure progression does not require success flags to advance
+- Fish / antidote carry visuals integrated
+
+NOTE
+静态审计不等于 Godot 4 Runtime 实机通过；需在 Godot 4 编辑器/导出包中进行实际 playtest。

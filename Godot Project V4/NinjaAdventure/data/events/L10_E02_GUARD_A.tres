@@ -1,8 +1,6 @@
-[gd_resource type="Resource" script_class="EventPointData" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="EventPointData" load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/event_point_data.gd" id="1"]
-
-[ext_resource type="Resource" path="res://data/event_effects/guard_distract.tres" id="2"]
 
 [resource]
 script = ExtResource("1")
@@ -13,18 +11,19 @@ classification = &"CRITICAL"
 actor_id = &"NINJA_BLUE"
 route_index = 2
 trigger_radius = 34.0
-hesitation_time = 1.5
+hesitation_time = 1.0
 timeout = 3.0
-interaction_time = 0.8
+interaction_time = 0.3
 fail_code = &"FAIL_WRONG_ORDER"
-success_flags = [&"l10_guard_a"]
-failure_flags = []
-caused_event_ids = []
+success_flags = [&"L10_GUARD_A_DEPARTED"]
+failure_flags = [&"L10_GUARD_A_STAYS"]
+caused_event_ids = [&"L10_E03_DOG"]
 risk_level = &"BALANCED"
 high_risk = false
 allow_standard_solution = true
-allow_risky_solution = true
+allow_risky_solution = false
 required_action = &"MEOW"
-banter_tags = [&"GUARD"]
-
-success_effects = [ExtResource("2")]
+banter_tags = [&"GUARD", &"L10_CHAIN_REACTION"]
+event_group = &"MAIN"
+non_blocking = false
+success_effects = []

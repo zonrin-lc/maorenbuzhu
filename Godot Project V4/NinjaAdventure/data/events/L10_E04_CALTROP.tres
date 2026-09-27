@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="EventPointData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/event_point_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+event_id = &"L10_E04_CALTROP"
+event_type = &"CALTROP"
+display_name = "提前开的蒺藜"
+classification = &"CRITICAL"
+actor_id = &"NINJA_BLUE"
+route_index = 4
+trigger_radius = 34.0
+hesitation_time = 0.0
+timeout = 0.0
+interaction_time = 0.8
+fail_code = &"FAIL_WRONG_ORDER"
+success_flags = [&"L10_CALTROP_CLEARED"]
+failure_flags = []
+caused_event_ids = [&"L10_E04_POISON"]
+risk_level = &"RISKY"
+high_risk = true
+allow_standard_solution = true
+allow_risky_solution = true
+required_action = &"CLEAR_CALTROP"
+banter_tags = [&"CALTROP", &"L10_CHAIN_REACTION"]
+event_group = &"OPTIONAL"
+activation_phase = 0
+activation_flag = &"L10_CALTROP_WINDOW_EARLY"
+consume_carry_item = &""
+non_blocking = true
+success_effects = []

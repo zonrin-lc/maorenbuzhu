@@ -1,0 +1,19 @@
+《猫忍不住》v1.4.4 L04 静态审计
+
+[PASS] L04 LevelData references 4 event resources
+[PASS] L04 route has 6 waypoints / goal after watergap
+[PASS] L04 route stop includes E04
+[PASS] L04 supports both route gates
+[PASS] L04 Ninja waits at E04 before route choice
+[PASS] L04 shortcut releases Ninja after branch unlock
+[PASS] L04 crate uses Q carry action
+[PASS] L04 Watergap allows shortcut route without crate
+[PASS] L04 EventLog route_change names next event
+[PASS] No stale L04_03_WATERGAP references
+[PASS] unified_level_manager.gd has no duplicate function names
+[PASS] unified_event_point.gd has no duplicate function names
+
+Summary: 12 PASS / 0 FAIL
+KNOWN / NOT RUN
+- Godot 4 runtime is not available in this environment; no runtime launch claim is made.
+- Route A/B logic is statically traced; runtime playtest is still required on Godot 4.
