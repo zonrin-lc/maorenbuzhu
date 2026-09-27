@@ -30,6 +30,10 @@ func _ready() -> void:
     sprite = SpriteAnimator.attach_animal(self, load("res://assets/actors/%s/sprite_sheet.png" % skin))
 
 func _physics_process(delta: float) -> void:
+    var manager = get_parent()
+    if manager != null and manager.get("reading_phase") == true:
+        velocity = Vector2.ZERO
+        return
     meow_cooldown = max(0.0, meow_cooldown - delta)
     if action_remaining > 0.0:
         action_remaining = max(0.0, action_remaining - delta)

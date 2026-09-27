@@ -24,7 +24,7 @@ func setup(route_data: RouteData, manager: Node) -> void:
     position = route.waypoints[0] if route.waypoints.size() > 0 else Vector2.ZERO
 
 func _physics_process(_delta: float) -> void:
-    if route == null or route.waypoints.size() < 2 or waiting_for_event or level_manager.level_finished or level_manager.level_failed:
+    if route == null or route.waypoints.size() < 2 or waiting_for_event or level_manager.level_finished or level_manager.level_failed or level_manager.reading_phase:
         velocity = Vector2.ZERO
         queue_redraw()
         return

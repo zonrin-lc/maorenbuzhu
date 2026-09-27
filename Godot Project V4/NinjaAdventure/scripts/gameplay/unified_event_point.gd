@@ -139,7 +139,8 @@ func _draw() -> void:
         if active and not resolved_state:
             draw_arc(Vector2.ZERO, 18.0, 0.0, TAU, 32, Color(ring.r, ring.g, ring.b, 0.12), 6.0)
     if active and not resolved_state:
-        draw_circle(Vector2.ZERO, data.trigger_radius, Color(1, 1, 1, 0.04))
+        draw_circle(Vector2.ZERO, data.trigger_radius, Color(1, 1, 1, 0.07))
+        draw_arc(Vector2.ZERO, data.trigger_radius, 0.0, TAU, 48, Color(1, 1, 1, 0.18), 1.5)
     var font := ThemeDB.fallback_font
     draw_string(font, Vector2(-64, -24), String(data.display_name), HORIZONTAL_ALIGNMENT_CENTER, 128, 14, Color("#f8fafc"))
     if interacting:

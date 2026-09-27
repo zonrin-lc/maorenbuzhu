@@ -61,7 +61,6 @@ func _ready() -> void:
         _set_label(status_label, "VALIDATION ERROR: " + ", ".join(errors))
         set_process(false)
         return
-    start_time = Time.get_ticks_msec() / 1000.0
     ninja.setup(level_data.ninja_route, self)
     if cat:
         cat.meow_triggered.connect(_on_cat_meow)
@@ -84,6 +83,7 @@ func _ready() -> void:
     _setup_global_ui()
     _update_hud()
     queue_redraw()
+    _start_reading_tour()
 
 func _setup_global_ui() -> void:
     var ui: UIManager = preload("res://scenes/ui/global_ui.tscn").instantiate()
@@ -107,6 +107,41 @@ func _play_chapter_music() -> void:
 func _on_dog_barked() -> void:
     GlobalAudioManager.play_event_sfx("dog")
 
+# 读图镜头巡游（GDD §2.1）：开场推进到每个主线事件点，再拉回全景；按互动/确认跳过
+var reading_phase := false
+var _tour_tween: Tween
+var _cam: Camera2D
+
+func _start_reading_tour() -> void:
+    reading_phase = true
+    _cam = Camera2D.new()
+    _cam.position = Vector2(550, 340)
+    add_child(_cam)
+    _cam.make_current()
+    _show_toast("读图：看清他的路线和沿途的危险。（互动键跳过）")
+    _tour_tween = create_tween()
+    _tour_tween.tween_property(_cam, "zoom", Vector2(1.7, 1.7), 0.8).set_trans(Tween.TRANS_SINE)
+    for node in event_nodes:
+        if node.data.event_group != &"MAIN":
+            continue
+        _tour_tween.tween_property(_cam, "position", node.position, 0.9).set_trans(Tween.TRANS_SINE)
+        _tour_tween.tween_interval(0.6)
+    _tour_tween.tween_property(_cam, "position", Vector2(550, 340), 0.8).set_trans(Tween.TRANS_SINE)
+    _tour_tween.parallel().tween_property(_cam, "zoom", Vector2(1.0, 1.0), 0.8)
+    _tour_tween.tween_callback(_end_reading_tour)
+
+func _end_reading_tour() -> void:
+    if not reading_phase:
+        return
+    reading_phase = false
+    if _tour_tween != null and _tour_tween.is_running():
+        _tour_tween.kill()
+    if _cam != null:
+        _cam.queue_free()
+        _cam = null
+    start_time = Time.get_ticks_msec() / 1000.0
+    _show_toast("他开始走了。轮到你了。")
+
 # 装饰层（GDD §8.2 四级装饰：永不抢玩法反馈）——确定性散布（种子=level_id），非随机地图
 const NATURE_SHEET := "res://assets/tilesets/nature.png"
 const DECOR_REGIONS := {
@@ -120,6 +155,7 @@ const DECOR_REGIONS := {
     &"tuft": Rect2(48, 160, 16, 16),
     &"tuft2": Rect2(144, 160, 16, 16),
     &"mushroom": Rect2(192, 176, 16, 16),
+    &"bush": Rect2(0, 160, 32, 32),
 }
 const PLAY_RECT := Rect2(40, 115, 1020, 500)
 
@@ -188,6 +224,25 @@ func _setup_decorations() -> void:
             s.z_index = -10
             layer.add_child(s)
             hx += rng.randf_range(220.0, 330.0)
+    _build_hedge(layer, chapter, tint)
+
+func _build_hedge(layer: Node2D, chapter: String, tint: Color) -> void:
+    # 沿碰撞墙的视觉边界：村庄树篱 / 码头木箱 / 城堡暗色灌木
+    var hedge_item: StringName = &"bush"
+    var hedge_scale := 1.6
+    var spacing := 26.0
+    if chapter == "CH03":
+        hedge_scale = 1.3
+    var x := PLAY_RECT.position.x + 8.0
+    while x <= PLAY_RECT.end.x - 8.0:
+        _add_decor(layer, hedge_item, Vector2(x, PLAY_RECT.position.y + 4.0), hedge_scale, tint)
+        _add_decor(layer, hedge_item, Vector2(x, PLAY_RECT.end.y - 4.0), hedge_scale, tint)
+        x += spacing
+    var y := PLAY_RECT.position.y + 12.0
+    while y <= PLAY_RECT.end.y - 12.0:
+        _add_decor(layer, hedge_item, Vector2(PLAY_RECT.position.x + 4.0, y), hedge_scale, tint)
+        _add_decor(layer, hedge_item, Vector2(PLAY_RECT.end.x - 4.0, y), hedge_scale, tint)
+        y += spacing
 
 func _add_water_strip(layer: Node2D, rng: RandomNumberGenerator) -> void:
     # 码头下边界水面 + 涟漪动画（4 帧）
@@ -534,6 +589,10 @@ func on_ninja_dead() -> void:
     _set_label(status_label, "任务失败：NINJA_DEATH    R 重开")
 
 func _process(_delta: float) -> void:
+    if reading_phase:
+        if Input.is_action_just_pressed("interact") or Input.is_action_just_pressed("confirm"):
+            _end_reading_tour()
+        return
     if not level_finished and not level_failed:
         _try_emergency()
         var elapsed := Time.get_ticks_msec() / 1000.0 - start_time
