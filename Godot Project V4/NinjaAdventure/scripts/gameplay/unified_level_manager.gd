@@ -59,6 +59,8 @@ func _ready() -> void:
     talent_tracker = TalentTrackerClass.new()
     add_child(talent_tracker)
     _setup_floor()
+    _setup_layout_geometry()
+    _setup_layout_design()
     _setup_decorations()
     var errors := validator.validate_level(level_data)
     if not errors.is_empty():
@@ -157,6 +159,41 @@ func _end_reading_tour() -> void:
         _cam = null
     start_time = Time.get_ticks_msec() / 1000.0
     _show_toast("他开始走了。轮到你了。")
+
+const LAYOUT_ZONES := {
+    &"L01": [[&"Start", Rect2(70, 250, 150, 270)], [&"绊绳巷", Rect2(220, 200, 260, 220)], [&"守卫广场", Rect2(430, 180, 300, 260)], [&"小水沟", Rect2(760, 250, 210, 260)], [&"Goal", Rect2(930, 250, 100, 270)]],
+    &"L02": [[&"Start", Rect2(70, 220, 160, 260)], [&"Narrow Alley", Rect2(230, 200, 220, 210)], [&"Plaza", Rect2(430, 180, 250, 250)], [&"Waterline", Rect2(730, 300, 250, 220)], [&"Goal", Rect2(920, 330, 110, 180)]],
+    &"L03": [[&"Start", Rect2(70, 220, 160, 240)], [&"Guard Vision", Rect2(300, 170, 260, 240)], [&"Crate Yard", Rect2(430, 320, 230, 190)], [&"Emote Shelter", Rect2(640, 330, 180, 190)], [&"Watergap", Rect2(820, 330, 170, 180)], [&"Goal", Rect2(930, 330, 100, 180)]],
+    &"L04": [[&"West Gate", Rect2(70, 250, 140, 250)], [&"Guard Square", Rect2(220, 210, 220, 220)], [&"Tripwire Alley", Rect2(380, 220, 240, 180)], [&"Crate Yard", Rect2(500, 380, 220, 180)], [&"Watergap", Rect2(740, 370, 230, 190)], [&"Goal", Rect2(930, 370, 90, 190)]],
+    &"L05": [[&"Dock Start", Rect2(60, 410, 160, 180)], [&"Fish Yard", Rect2(190, 210, 260, 190)], [&"Guard A", Rect2(370, 190, 240, 180)], [&"Dog Yard", Rect2(420, 360, 210, 170)], [&"Broken Bridge", Rect2(620, 370, 180, 170)], [&"Poison Marsh", Rect2(740, 210, 210, 180)], [&"Guard B", Rect2(830, 360, 170, 170)], [&"Goal Boat", Rect2(910, 240, 120, 200)]],
+    &"L06": [[&"Start", Rect2(60, 420, 150, 180)], [&"Fish Source", Rect2(190, 210, 230, 180)], [&"Guard Square", Rect2(470, 190, 250, 190)], [&"Dog Pen", Rect2(330, 360, 220, 180)], [&"Bridge Fork", Rect2(690, 360, 230, 180)], [&"Goal", Rect2(910, 220, 120, 220)]],
+    &"L07": [[&"Start", Rect2(60, 390, 160, 190)], [&"Fish Yard", Rect2(190, 260, 220, 180)], [&"Guard A", Rect2(370, 140, 180, 170)], [&"Guard B", Rect2(560, 140, 190, 170)], [&"Dog Yard", Rect2(330, 390, 220, 150)], [&"Bridge", Rect2(680, 270, 180, 180)], [&"Poison", Rect2(790, 170, 180, 160)], [&"Goal", Rect2(900, 300, 120, 190)]],
+    &"L08": [[&"Start", Rect2(60, 410, 150, 180)], [&"Fish/Crate Yard", Rect2(180, 280, 230, 180)], [&"Guard A Pier", Rect2(370, 180, 190, 180)], [&"Dog Yard", Rect2(300, 380, 220, 170)], [&"Broken Bridge", Rect2(560, 370, 180, 170)], [&"Poison Marsh", Rect2(560, 180, 220, 170)], [&"Guard B Jetty", Rect2(750, 350, 190, 160)], [&"Caltrop Dock", Rect2(690, 240, 210, 150)], [&"Final Boat", Rect2(880, 220, 130, 210)]],
+    &"L09": [[&"R0 南侧入口", Rect2(70, 430, 180, 150)], [&"R1 雨巷", Rect2(180, 300, 360, 220)], [&"R2 木箱堆场", Rect2(380, 220, 280, 190)], [&"R3 炸药区", Rect2(540, 180, 230, 190)], [&"R4 北门守卫区", Rect2(700, 220, 250, 220)], [&"R5 内城入口", Rect2(880, 250, 150, 230)]],
+    &"L10": [[&"R0 西门", Rect2(70, 430, 160, 150)], [&"R1 炸药仓", Rect2(200, 290, 250, 220)], [&"R2 中庭", Rect2(390, 360, 250, 190)], [&"R3 Guard A", Rect2(530, 210, 250, 220)], [&"R4 Dog 院", Rect2(690, 370, 200, 170)], [&"R5 Poison Corridor", Rect2(780, 210, 190, 180)], [&"R6 东门", Rect2(900, 170, 130, 180)]],
+    &"L11": [[&"Guard A", Rect2(260, 170, 230, 170)], [&"Guard B", Rect2(650, 120, 220, 170)], [&"Central", Rect2(430, 280, 260, 180)], [&"Dog Yard", Rect2(280, 430, 220, 150)], [&"Dynamite", Rect2(500, 440, 200, 140)], [&"Poison", Rect2(760, 260, 200, 160)], [&"Goal", Rect2(900, 120, 150, 160)]],
+    &"L12": [[&"R0 Approach", Rect2(60, 430, 220, 160)], [&"R1 Gourd Platform", Rect2(180, 260, 220, 160)], [&"R2 Crane Platform", Rect2(380, 200, 220, 160)], [&"R3 Boss Intro", Rect2(540, 250, 230, 170)], [&"R4 Charge Lane", Rect2(640, 400, 260, 150)], [&"R5 Caltrop Storage", Rect2(760, 450, 180, 130)], [&"R6 Combat Zone", Rect2(780, 220, 220, 180)], [&"R7 Emergency Door", Rect2(930, 120, 120, 140)]]
+}
+
+
+func _setup_layout_geometry() -> void:
+    if level_data == null:
+        return
+    var geometry := LayoutGeometry.new()
+    geometry.name = "LayoutGeometry"
+    geometry.z_index = -82
+    geometry.setup(level_data.level_id, level_data.ninja_route.waypoints)
+    add_child(geometry)
+
+func _setup_layout_design() -> void:
+    if level_data == null or level_data.ninja_route == null:
+        return
+    var layout := LayoutDesign.new()
+    layout.name = "LayoutDesign"
+    layout.z_index = -75
+    var lid := String(level_data.level_id)
+    layout.setup(level_data.level_id, level_data.ninja_route.waypoints, LAYOUT_ZONES.get(lid, []))
+    add_child(layout)
 
 # 装饰层（GDD §8.2 四级装饰：永不抢玩法反馈）——确定性散布（种子=level_id），非随机地图
 const NATURE_SHEET := "res://assets/tilesets/nature.png"

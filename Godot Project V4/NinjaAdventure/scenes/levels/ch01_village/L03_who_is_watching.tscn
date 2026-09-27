@@ -32,7 +32,7 @@ script = ExtResource("1")
 level_data = ExtResource("5")
 
 [node name="Cat" type="CharacterBody2D" parent="."]
-position = Vector2(110, 220)
+position = Vector2(140,300)
 script = ExtResource("2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Cat"]

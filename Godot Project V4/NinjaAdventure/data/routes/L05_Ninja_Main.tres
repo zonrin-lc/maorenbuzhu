@@ -6,6 +6,6 @@
 script = ExtResource("1")
 route_id = &"L05_NINJA_MAIN"
 actor_id = &"NINJA_BLUE"
-waypoints = [Vector2(120,300), Vector2(320,300), Vector2(520,300), Vector2(720,300), Vector2(920,300)]
+waypoints = [Vector2(110,500), Vector2(260,330), Vector2(450,260), Vector2(550,430), Vector2(700,450), Vector2(820,300), Vector2(940,420), Vector2(1010,320)]
 move_speed = 60.0
 loop = false

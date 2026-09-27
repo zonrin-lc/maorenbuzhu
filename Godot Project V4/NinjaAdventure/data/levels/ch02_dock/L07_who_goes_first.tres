@@ -18,5 +18,5 @@ next_scene_path = "res://scenes/levels/ch02_dock/L08_last_boat.tscn"
 intro_time = 10.0
 target_time = 100.0
 ninja_route = ExtResource("2")
-events = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")]
+events = [ExtResource("3"), ExtResource("4"), ExtResource("6"), ExtResource("5")]
 score_rules = ExtResource("7")
