@@ -1,4 +1,4 @@
-# 《猫忍不住》游戏设计文档 · 整合版 v1.4.3
+# 《猫忍不住》游戏设计文档 · 整合版 v1.4.4
 
 > **副标题：忍者在明处，猫在幕后。**
 >
@@ -38,7 +38,7 @@
 >
 > **冲突仲裁原则：版本新者优先（v1.2.x > v1.1 > v1.0 > v0.3）；同版本冲突在本文 §15.2 记录裁定。** 原始文件保留作历史归档，不再单独维护。
 >
-> **素材约束：美术与音频严格限于 Ninja Adventure Asset Pack（唯一缺口：猫叫声效，见 §9.3）。**
+> **素材约束：美术与音频严格限于 Ninja Adventure Asset Pack——素材零缺口（v1.5.8 起，猫叫见 §9.3）。**
 >
 > v1.3.1 修订（2026-09-24）：按《GDD_v1.3_审查报告》修复 P0×3 / P1×5 / P2×4，详见审查报告与 §15.2。
 >
@@ -49,6 +49,8 @@
 > v1.4.2 修订（2026-09-28）：融合 v1.5.2 反馈品质 / v1.5.3 动画层级 / v1.5.4 音效同步三个表现层版本（§3.5、§8.2、§9.2）。
 >
 > v1.4.3 修订（2026-09-28）：融合 v1.5.5 UI/居酒屋结算、v1.5.6 三端输入、v1.5.7 视觉层级与读图演出（§2.1、§2.2、§7.1、§15.1）。
+>
+> v1.4.4 修订（2026-09-28）：融合 v1.5.8 猫叫素材补全版——唯一素材缺口关闭（§9.3、§15.1）。
 
 ---
 
@@ -896,6 +898,7 @@ Master
 | 读图阶段 | 音乐渐弱 + `Audio/Jingles/Secret1.wav`（"要开始了"） |
 | 忍者语气音（哼/嗯？/呜哇） | `Audio/Sounds/Voice/Voice1~10.wav` 按需分配 |
 | 狗叫 | `Audio/Sounds/Creature/Dog.wav` |
+| 猫叫（喵叫 F） | `audio/sfx/cat_meow_*.wav` ×3 轮换（v1.5.8 原创合成） |
 | 卖萌成功 | `Audio/Jingles/Secret2.wav`（叮——） |
 | 自我消解台词 | 配一声 `Audio/Sounds/Bonus/Bonus.wav`"恍然大悟"音 |
 | **得手签名（只有玩家听得到）** | `Audio/Sounds/Bonus/PowerUp1.wav` 音量压到 20% |
@@ -906,11 +909,11 @@ Master
 
 **音频喜剧原则：** 得手签名音是《猫忍不住》的声音识别点——"全场只有玩家知道真相"。
 
-**音效触发链（v1.5.4，全部复用素材包音频，无外部新增）：** 互动开始 `SFX_INTERACT`（动作开始即触发）/ 叼取 `SFX_PICKUP` / 放置与事件成功 `SFX_PLACE`（按事件类型选 cue，不再全事件共用一个 success 声）/ 猫洞跳点 `SFX_SHORTCUT`（位移完成后）/ 忍者掉心 `SFX_DAMAGE` / 路线切换 `SFX_ROUTE_CHANGE` / Boss Phase `SFX_BOSS_PHASE` / Boss 击败 `SFX_VICTORY`。防噪：同类音效 80–450ms 冷却，四路 SFX 全忙时不强抢占；Boss 阶段切换若音乐资源相同不重新 start。F 喵叫继续保持素材缺口状态，不拿错误音效冒充猫叫。
+**音效触发链（v1.5.4，全部复用素材包音频，无外部新增）：** 互动开始 `SFX_INTERACT`（动作开始即触发）/ 叼取 `SFX_PICKUP` / 放置与事件成功 `SFX_PLACE`（按事件类型选 cue，不再全事件共用一个 success 声）/ 猫洞跳点 `SFX_SHORTCUT`（位移完成后）/ 忍者掉心 `SFX_DAMAGE` / 路线切换 `SFX_ROUTE_CHANGE` / Boss Phase `SFX_BOSS_PHASE` / Boss 击败 `SFX_VICTORY`。防噪：同类音效 80–450ms 冷却，四路 SFX 全忙时不强抢占；Boss 阶段切换若音乐资源相同不重新 start。F 喵叫在 v1.5.4 时仍为缺口、不拿错误音效冒充；v1.5.8 已由原创合成猫叫补全（见 §9.3）。
 
-## 9.3 唯一素材缺口
+## 9.3 ~~唯一素材缺口~~ 已关闭（v1.5.8）
 
-**猫叫声效（F 喵叫）。** 包内 Creature 只有 Bird/Dog/Duck/Wings。选项：freesound 免费音效外补 / 录音合成 / `Voice*.wav` 变调凑合（最省钱但效果存疑）。见 §15.1 待决策。v1.2.17 起方向定为**外部原创**（manifest 标记 `SFX_MEOW: Missing`），播放器与变体规则已就位（§9.6），音源到位即接入。
+**猫叫声效（F 喵叫）已由 v1.5.8 关闭：** 3 个原创程序合成猫叫 WAV（`audio/sfx/cat_meow_short.wav` / `cat_meow_bright.wav` / `cat_meow_low.wav`，PCM16/Mono/44.1kHz，本工程专用原创合成，不拿狗叫/鸟叫/Voice 冒充）。播放规则：F 触发后从三种猫叫轮换，最短重复间隔 350ms，加轻微音高随机防止机械重复。SFX_MEOW manifest 状态：Missing → Ready-Original-Generated。**至此美术与音频素材零缺口。**
 
 ## 9.4 音频运行时架构（v1.2.17）
 
@@ -926,7 +929,7 @@ Master
 
 ## 9.6 猫叫 / 忍者 Voice / 事件反馈音
 
-- **猫叫：** 3 变体 `cat_meow_01~03`，最短间隔 **0.35s**，同关同一变体不连续 >2 次，走 SFX Bus。
+- **猫叫：** 3 变体 `cat_meow_short/bright/low`，最短间隔 **0.35s**，同关同一变体不连续 >2 次，走 SFX Bus。
 - **忍者语气音六类标签：** `CONFIDENT / CONFUSED / SURPRISED / PROUD / PANIC / SETTLEMENT`，不替代字幕。
 - **事件反馈音分档：** 每类事件至少 `PREPARED / SUCCESS / FAIL / NEAR_MISS / RESET`；CRITICAL 必含 SUCCESS + FAIL + NEAR_MISS。
 
@@ -1405,7 +1408,7 @@ Experience [ ] 玩家能解释失败 [ ] 无无意义等待 [ ] 猫始终有下�
 1. ~~操作设备~~ **已定**：移动端优先（触屏虚拟摇杆为第一操作形态），键鼠/手柄经同一 Action 层兼容；v1.5.6 已实现三套输入自动切换（GameInputManager），手柄映射见 §2.2。
 2. **卖萌冷却：** 20s 初值，垂直切片实测调整。
 3. **吹牛台词生成：** 已定纯模板拼接，不接 LLM（v1.2.16 重申：禁止随机选句）。
-4. **猫叫声效（唯一素材缺口）：** 方向定为**外部原创**（v1.2.17 manifest 标记 Missing）；备选仍是录音合成 / `Voice*.wav` 变调凑合。播放器与变体规则已就位（§9.6），音源到位即接入。
+4. ~~猫叫声效来源~~ **已定（v1.5.8）**：原创程序合成猫叫 ×3 + 轮换播放，见 §9.3。
 5. **第四章及以后：** 换忍者人格（NinjaRed 自负 / NinjaGreen 胆小，素材现成）做"蠢法"变体——RC 之后根据试玩反馈定。
 
 ## 15.2 整合冲突仲裁记录
