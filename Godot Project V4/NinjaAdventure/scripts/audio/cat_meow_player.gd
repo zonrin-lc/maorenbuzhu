@@ -18,3 +18,11 @@ func choose_variant(count: int, rng: RandomNumberGenerator) -> int:
     if v == last_variant and same_variant_streak >= max_same_variant_streak:
         v = (v + 1) % count
     return v
+
+func mark_played(now: float, variant: int) -> void:
+    last_play_time = now
+    if variant == last_variant:
+        same_variant_streak += 1
+    else:
+        last_variant = variant
+        same_variant_streak = 1

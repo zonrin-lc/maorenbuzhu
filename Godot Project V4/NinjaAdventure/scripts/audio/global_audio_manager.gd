@@ -35,7 +35,13 @@ const SFX := {
 var current_state := ""
 var _music_player: AudioStreamPlayer
 var _sfx_players: Array[AudioStreamPlayer] = []
-var _meow_warned := false
+const CAT_MEOW_VARIANTS := [
+    "res://audio/sfx/cat_meow_short.wav",
+    "res://audio/sfx/cat_meow_bright.wav",
+    "res://audio/sfx/cat_meow_low.wav",
+]
+var _meow_selector: CatMeowPlayer
+var _meow_rng := RandomNumberGenerator.new()
 var _last_sfx_ms: Dictionary = {}
 const SFX_COOLDOWN_MS := {
     "success": 90, "fail": 180, "read_map": 250, "emote": 120, "dog": 140,
@@ -44,6 +50,8 @@ const SFX_COOLDOWN_MS := {
 }
 
 func _ready() -> void:
+    _meow_selector = CatMeowPlayer.new()
+    _meow_rng.randomize()
     _music_player = AudioStreamPlayer.new()
     _music_player.name = "MusicPlayer"
     add_child(_music_player)
@@ -121,7 +129,22 @@ func play_ninja_voice(tag: String) -> void:
     pass
 
 func play_cat_meow() -> void:
-    # 猫叫音源是唯一素材缺口（GDD §9.3，外部原创 Missing）；到位前静默跳过
-    if not _meow_warned:
-        push_warning("SFX_MEOW 素材缺失（外部原创音源待补）")
-        _meow_warned = true
+    if _meow_selector == null:
+        return
+    var now := Time.get_ticks_msec() / 1000.0
+    if not _meow_selector.can_play(now):
+        return
+    var variant := _meow_selector.choose_variant(CAT_MEOW_VARIANTS.size(), _meow_rng)
+    var stream := load(CAT_MEOW_VARIANTS[variant]) as AudioStream
+    if stream == null:
+        push_warning("猫叫音源加载失败：%s" % CAT_MEOW_VARIANTS[variant])
+        return
+    for p in _sfx_players:
+        if not p.playing:
+            p.stream = stream
+            p.bus = "SFX" if AudioServer.get_bus_index("SFX") >= 0 else "Master"
+            p.volume_db = -2.5
+            p.pitch_scale = _meow_rng.randf_range(0.97, 1.03)
+            p.play()
+            _meow_selector.mark_played(now, variant)
+            return

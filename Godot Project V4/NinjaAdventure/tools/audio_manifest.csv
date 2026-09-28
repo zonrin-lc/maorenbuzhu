@@ -7,7 +7,7 @@ MUSIC_BOSS,Music,Music,Musics/28 - Tension.ogg,Yes,Ready
 VOICE_NINJA,Voice,Voice,Audio/Sounds/Voice/Voice1~10.wav,Yes,Ready
 SFX_DOG,Event,SFX,Audio/Sounds/Creature/Dog.wav,Yes,Ready
 SFX_SUCCESS,UI,UI,Audio/Jingles/Success1~4.wav,Yes,Ready
-SFX_MEOW,Action,SFX,External Original Meow,Yes,Missing
+SFX_MEOW,Action,SFX,audio/sfx/cat_meow_short.wav;audio/sfx/cat_meow_bright.wav;audio/sfx/cat_meow_low.wav,Yes,Ready-Original-Generated
 SFX_THUNDER,Environment,Ambient,FX/Elemental/Thunder,Yes,Ready
 SFX_RAIN,Environment,Ambient,FX/Particle/Rain.png,Yes,Visual-Only
 SFX_INTERACT,Action,SFX,Existing success cue reused,Yes,Ready-Local-Reuse

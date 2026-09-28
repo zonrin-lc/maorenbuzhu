@@ -1,0 +1,34 @@
+{
+  "asset_id": "SFX_MEOW",
+  "status": "Ready-Original-Generated",
+  "note": "Dedicated cat-meow assets; no dog/bird/voice substitutions.",
+  "variants": [
+    {
+      "file": "audio/sfx/cat_meow_short.wav",
+      "duration_s": 0.58,
+      "sample_rate": 44100,
+      "channels": 1,
+      "format": "PCM16 WAV",
+      "origin": "original procedural synthesis for game project",
+      "sha256": "4beec8f3ab56125f14a8bbc5564a064b9c4a3c4a1a1e1358585bd4442ff13745"
+    },
+    {
+      "file": "audio/sfx/cat_meow_bright.wav",
+      "duration_s": 0.74,
+      "sample_rate": 44100,
+      "channels": 1,
+      "format": "PCM16 WAV",
+      "origin": "original procedural synthesis for game project",
+      "sha256": "d95c13311f29cc81a9c748c5e5f2d014baf4009e61c9071910dbc31aee73539b"
+    },
+    {
+      "file": "audio/sfx/cat_meow_low.wav",
+      "duration_s": 0.68,
+      "sample_rate": 44100,
+      "channels": 1,
+      "format": "PCM16 WAV",
+      "origin": "original procedural synthesis for game project",
+      "sha256": "1d5f5007f5d5d722ea8186a8143d971d123086be9be8b9d9dab7dfce31cc8f9e"
+    }
+  ]
+}

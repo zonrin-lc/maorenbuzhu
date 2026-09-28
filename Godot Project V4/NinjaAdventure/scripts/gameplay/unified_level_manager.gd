@@ -1288,6 +1288,7 @@ func _on_cat_action_started(action_id: StringName) -> void:
         _apply_suspicion(15.0, action_id)
 
 func _on_cat_meow() -> void:
+    GlobalAudioManager.play_cat_meow()
     if level_finished or level_failed:
         return
     if feedback_director != null:
