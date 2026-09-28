@@ -1,4 +1,4 @@
-# 《猫忍不住》游戏设计文档 · 整合版 v1.4.8
+# 《猫忍不住》游戏设计文档 · 整合版 v1.4.9
 
 > **副标题：忍者在明处，猫在幕后。**
 >
@@ -59,6 +59,8 @@
 > v1.4.7 修订（2026-09-28）：开发迁移至本机（Godot 4.7.2）；实现债 ①⑤⑨⑩ 修复落地，⑥⑦ 部分落地（§15.3）；顺带修复 input_manager.gd 的 InputEventMouseWheel 不存在类引用与 class_name/autoload 同名冲突两个历史编译错误。
 >
 > v1.4.8 修订（2026-09-28）：实现债 ③④⑦⑪ 落地——VariantData×12 + HardMode LevelModifier + EventLog FAILED + GitHub Actions CI（§15.3）；实现说明见工程 docs/VARIANT_HARDMOD_IMPL.md。
+>
+> v1.4.9 修订（2026-09-28）：实现债 ⑥ Legacy 旧栈删除（6 个死文件）、⑧ ULM 拆分启动（SceneArt 抽出为 SceneArtBuilder，2279→2130 行）（§15.3）。
 
 ---
 
@@ -1471,9 +1473,9 @@ Experience [ ] 玩家能解释失败 [ ] 无无意义等待 [ ] 猫始终有下�
 3. **[已落地]** 建立 VariantData + 12 个 Variant B 资源（Release Gate 要求"12 个 Variant B 可加载"，当前不存在 variants 数据资产）（VariantData + 12 个 VB 资源 + LevelData.variant + 选关 B 开关；route/npc 深层覆盖标 TODO）
 4. **[已落地]** 建立 HardMode LevelModifier 体系（当前只有解锁状态，无 Ninja +10% / 犹豫 -0.5s / 怀疑收益 +10% 的实际执行层）（LevelModifier + hard_mode.tres + 存档开关 + 选关开关；犹豫窗口经 timeout 联动实现）
 5. **[已落地]** Boss `phase_changed` 仅在 phase 实际变化时 emit
-6. **[部分]** 清理 Legacy 脚本栈（`level_manager.gd / dock_*/castle_*` 并行旧栈；`dock_event_point.gd` 直读物理键 KEY_F/KEY_E 绕过 Action 层，手柄/触控在该路径失效）（dock_event_point.gd 已改走 Action 层 InputMap；旧栈拆分仍在）
+6. **[已落地]** 清理 Legacy 脚本栈（`level_manager.gd / dock_*/castle_*` 并行旧栈；`dock_event_point.gd` 直读物理键 KEY_F/KEY_E 绕过 Action 层，手柄/触控在该路径失效）（物理键已改走 Action 层；六个无引用旧栈文件已删除——level_manager/dock/castle 三壳 + EventPoint 三旧类）
 7. **[已落地]** EventLog 区分 `ACTION_START / RESOLVED / FAILED` 三阶段，仅 RESOLVED 允许写 success=true（ACTION_START / RESOLVED / FAILED 三阶段标记全部落地）
-8. UnifiedLevelManager（2198 行）拆分 + SceneArt 独立成 L01–L12 Art Scene
+8. **[部分]** UnifiedLevelManager（2198 行）拆分 + SceneArt 独立成 L01–L12 Art Scene（SceneArt/装饰层已抽出为 SceneArtBuilder；ULM 2279→2130 行。剩余：Boss、关卡特例、UI/音频粘合层的后续拆分）
 9. **[已落地]** 接入 Ninja Voice（Voice1~10.wav，`play_ninja_voice()` 当前为 pass）（Voice1~10 已接入 play_ninja_voice，hurt/confused/proud/scared 四组轮换 + 600ms 冷却 + 音高随机）
 10. **[已落地]** export_presets 版本号跟随实现版本（当前滞留 0.1.0）（已升 1.6.0）
 11. **[已落地]** GitHub Actions + Godot smoke test（发布前必须；静态通过 ≠ 运行通过）（.github/workflows/godot-ci.yml：导入+编译检查+30 帧冒烟）

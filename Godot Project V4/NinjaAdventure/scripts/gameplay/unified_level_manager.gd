@@ -89,7 +89,7 @@ func _ready() -> void:
     talent_tracker = TalentTrackerClass.new()
     add_child(talent_tracker)
     _prepare_level_data()
-    _setup_floor()
+    SceneArtBuilder.build_floor(self)
     _setup_layout_geometry()
     _setup_layout_design()
     _setup_shortcuts()
@@ -102,7 +102,7 @@ func _ready() -> void:
     _setup_l10_chain()
     _setup_l11_busy_gate()
     _setup_l12_boss_slice()
-    _setup_decorations()
+    SceneArtBuilder.build_decorations(self, level_data)
     var errors := validator.validate_level(level_data)
     if not errors.is_empty():
         _set_label(status_label, "VALIDATION ERROR: " + ", ".join(errors))
@@ -622,20 +622,6 @@ func _on_shortcut_used() -> void:
     _show_toast("捷径成功：猫先到了。" if level_data == null or level_data.level_id != &"L04" else "路线 B：抄近路，直接去处理木桥。")
 
 # 装饰层（GDD §8.2 四级装饰：永不抢玩法反馈）——确定性散布（种子=level_id），非随机地图
-const NATURE_SHEET := "res://assets/tilesets/nature.png"
-const DECOR_REGIONS := {
-    &"tree_round": Rect2(0, 0, 32, 32),
-    &"tree_big": Rect2(44, 288, 56, 48),
-    &"cherry": Rect2(0, 280, 64, 56),
-    &"dead_tree": Rect2(64, 0, 32, 32),
-    &"rock_gray": Rect2(288, 256, 64, 48),
-    &"sunflower": Rect2(16, 176, 16, 16),
-    &"daisy": Rect2(96, 176, 16, 16),
-    &"tuft": Rect2(48, 160, 16, 16),
-    &"tuft2": Rect2(144, 160, 16, 16),
-    &"mushroom": Rect2(192, 176, 16, 16),
-    &"bush": Rect2(0, 160, 32, 32),
-}
 const PLAY_RECT := Rect2(40, 115, 1020, 500)
 
 func _setup_l10_chain() -> void:
@@ -868,141 +854,6 @@ func _l12_prep_count() -> int:
         count += 1
     return count
 
-func _setup_decorations() -> void:
-    # v1.6：正式美术层。背景与摆件均来自工程现有 Ninja Adventure 素材；
-    # 不改变碰撞、事件坐标或 Ninja 固定路线。
-    var layer := Node2D.new()
-    layer.name = "SceneArt"
-    layer.z_index = -60
-    add_child(layer)
-
-    var chapter := String(level_data.chapter_id) if level_data != null else "CH01"
-    var background_path := "res://assets/scene_art/chapter_village_bg.png"
-    match chapter:
-        "CH02": background_path = "res://assets/scene_art/chapter_dock_bg.png"
-        "CH03": background_path = "res://assets/scene_art/chapter_castle_bg.png"
-
-    var bg := Sprite2D.new()
-    bg.name = "ChapterBackground"
-    bg.texture = load(background_path)
-    bg.position = Vector2(552, 370)
-    bg.z_index = -100
-    layer.add_child(bg)
-
-    # 仅保留少量前景层，确保角色永远清楚。
-    var lid := String(level_data.level_id) if level_data != null else ""
-    match lid:
-        "L01":
-            _add_decor(layer, &"tree_round", Vector2(105, 225), 1.15, Color.WHITE)
-            _add_decor_tex(layer, load("res://assets/props/fish_net.png"), Vector2(330, 330), 1.55)
-            _add_decor_tex(layer, load("res://assets/props/crate.png"), Vector2(750, 392), 2.0)
-        "L02":
-            _add_decor(layer, &"tree_round", Vector2(185, 250), 1.0, Color.WHITE)
-            _add_decor_tex(layer, load("res://assets/props/fish_net.png"), Vector2(500, 300), 1.4)
-            _add_decor_tex(layer, load("res://assets/props/crate.png"), Vector2(815, 420), 2.0)
-        "L03":
-            _add_decor(layer, &"tree_big", Vector2(90, 230), 1.0, Color.WHITE)
-            _add_decor_tex(layer, load("res://assets/props/crate.png"), Vector2(520, 380), 2.0)
-            _add_decor_tex(layer, load("res://assets/props/fish_net.png"), Vector2(875, 420), 1.35)
-        "L04":
-            _add_decor(layer, &"cherry", Vector2(155, 220), 1.0, Color.WHITE)
-            _add_decor_tex(layer, load("res://assets/props/fish_net.png"), Vector2(450, 340), 1.45)
-            _add_decor_tex(layer, load("res://assets/props/crate.png"), Vector2(610, 440), 2.1)
-        "L05":
-            _add_decor_tex(layer, load("res://assets/props/fish.png"), Vector2(300, 350), 1.7)
-            _add_decor_tex(layer, load("res://assets/props/fish_net.png"), Vector2(430, 165), 1.25)
-            _add_decor_tex(layer, load("res://assets/props/crate.png"), Vector2(560, 150), 2.0)
-            _add_decor_tex(layer, load("res://assets/props/gourd.png"), Vector2(745, 255), 1.9)
-            _add_decor_tex(layer, load("res://assets/props/caltrop.png"), Vector2(900, 410), 1.8)
-        "L06":
-            _add_decor_tex(layer, load("res://assets/props/fish.png"), Vector2(250, 490), 1.7)
-            _add_decor_tex(layer, load("res://assets/props/crate.png"), Vector2(475, 285), 2.0)
-            _add_decor_tex(layer, load("res://assets/props/caltrop.png"), Vector2(840, 420), 1.7)
-        "L07":
-            _add_decor_tex(layer, load("res://assets/props/fish.png"), Vector2(300, 350), 1.7)
-            _add_decor_tex(layer, load("res://assets/props/crate.png"), Vector2(600, 445), 1.9)
-            _add_decor_tex(layer, load("res://assets/props/life_pot.png"), Vector2(860, 250), 1.7)
-        "L08":
-            _add_decor_tex(layer, load("res://assets/props/fish.png"), Vector2(240, 420), 1.7)
-            _add_decor_tex(layer, load("res://assets/props/crate.png"), Vector2(470, 300), 2.0)
-            _add_decor_tex(layer, load("res://assets/props/life_pot.png"), Vector2(690, 230), 1.7)
-            _add_decor_tex(layer, load("res://assets/props/caltrop.png"), Vector2(820, 330), 1.8)
-        "L09":
-            _add_decor_tex(layer, load("res://assets/props/fish_net.png"), Vector2(250, 430), 1.35)
-            _add_decor_tex(layer, load("res://assets/props/dynamite_crate.png"), Vector2(590, 300), 2.0)
-            _add_decor(layer, &"dead_tree", Vector2(100, 225), 1.15, Color(0.75,0.78,0.85,1.0))
-        "L10":
-            _add_decor_tex(layer, load("res://assets/props/dynamite_crate.png"), Vector2(440, 500), 2.0)
-            _add_decor_tex(layer, load("res://assets/props/caltrop.png"), Vector2(740, 460), 1.8)
-            _add_decor_tex(layer, load("res://assets/props/life_pot.png"), Vector2(820, 270), 1.7)
-        "L11":
-            _add_decor_tex(layer, load("res://assets/props/dynamite_crate.png"), Vector2(610, 355), 2.0)
-            _add_decor_tex(layer, load("res://assets/props/caltrop.png"), Vector2(825, 250), 1.8)
-            _add_decor_tex(layer, load("res://assets/props/life_pot.png"), Vector2(775, 355), 1.7)
-        "L12":
-            _add_decor_tex(layer, load("res://assets/props/gourd.png"), Vector2(660, 165), 1.9)
-            _add_decor_tex(layer, load("res://assets/props/dynamite_crate.png"), Vector2(425, 270), 2.0)
-            _add_decor_tex(layer, load("res://assets/props/caltrop.png"), Vector2(720, 355), 1.9)
-            _add_decor_tex(layer, load("res://assets/props/crane.png"), Vector2(795, 118), 2.2)
-
-    # 任务目标道具：所有关卡终点统一放置卷轴，强化“护送目标”的视觉认知。
-    if level_data != null and level_data.ninja_route != null and level_data.ninja_route.waypoints.size() > 0:
-        var goal_pos: Vector2 = level_data.ninja_route.waypoints[level_data.ninja_route.waypoints.size() - 1]
-        _add_decor_tex(layer, load("res://assets/props/scroll.png"), goal_pos + Vector2(0, -16), 1.8)
-
-func _build_hedge(layer: Node2D, chapter: String, tint: Color) -> void:
-    # deprecated in v1.6：正式背景已经包含章节边界美术，保留函数避免旧调用断链。
-    return
-
-func _add_water_strip(layer: Node2D, rng: RandomNumberGenerator) -> void:
-    # 码头下边界水面 + 涟漪动画（4 帧）
-    var water := ColorRect.new()
-    water.color = Color(0.16, 0.35, 0.5)
-    water.position = Vector2(0, 616)
-    water.size = Vector2(1100, 64)
-    water.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    layer.add_child(water)
-    var ripple_tex: Texture2D = load("res://assets/tilesets/water_ripples.png")
-    for i in 7:
-        var frames := SpriteFrames.new()
-        frames.add_animation(&"ripple")
-        frames.set_animation_speed(&"ripple", 3.0)
-        for f in 4:
-            var at := AtlasTexture.new()
-            at.atlas = ripple_tex
-            at.region = Rect2(f * 16, 0, 16, 16)
-            frames.add_frame(&"ripple", at)
-        var ripple := AnimatedSprite2D.new()
-        ripple.sprite_frames = frames
-        ripple.scale = Vector2(2.0, 2.0)
-        ripple.position = Vector2(rng.randf_range(40, 1060), rng.randf_range(624, 668))
-        ripple.play(&"ripple")
-        layer.add_child(ripple)
-
-func _add_decor(layer: Node2D, item: StringName, pos: Vector2, decor_scale: float, tint: Color) -> void:
-    var tex := AtlasTexture.new()
-    tex.atlas = load(NATURE_SHEET)
-    tex.region = DECOR_REGIONS[item]
-    _add_decor_tex(layer, tex, pos, decor_scale, tint)
-
-func _add_decor_tex(layer: Node2D, tex: Texture2D, pos: Vector2, decor_scale: float, tint: Color = Color.WHITE) -> void:
-    var s := Sprite2D.new()
-    s.texture = tex
-    s.position = pos
-    s.scale = Vector2(decor_scale, decor_scale)
-    s.modulate = tint
-    layer.add_child(s)
-
-func _setup_floor() -> void:
-    # v1.6：底层仅保留统一色底；正式章节美术由 SceneArt 在其上提供。
-    var floor_rect := ColorRect.new()
-    floor_rect.name = "Floor"
-    floor_rect.position = Vector2.ZERO
-    floor_rect.size = Vector2(1100, 680)
-    floor_rect.color = Color("#0b0f14")
-    floor_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    floor_rect.z_index = -120
-    add_child(floor_rect)
 
 func _cache_nodes() -> void:
     cat = get_node_or_null("Cat") as CatController
