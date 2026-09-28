@@ -14,6 +14,7 @@ extends Resource
 @export var talent_counters: Dictionary = {}
 @export var tutorial_seen: Array[String] = []
 @export var hard_mode_unlocked: bool = false
+@export var hard_mode_enabled: bool = false
 @export var hard_plus_unlocked: bool = false
 @export var last_level_id: String = "L01"
 
@@ -32,6 +33,7 @@ func to_dict() -> Dictionary:
         "talent_counters": talent_counters,
         "tutorial_seen": tutorial_seen,
         "hard_mode_unlocked": hard_mode_unlocked,
+        "hard_mode_enabled": hard_mode_enabled,
         "hard_plus_unlocked": hard_plus_unlocked,
         "last_level_id": last_level_id,
     }
@@ -51,6 +53,7 @@ static func from_dict(raw: Dictionary) -> SaveData:
     d.talent_counters = Dictionary(raw.get("talent_counters", {}))
     d.tutorial_seen.assign(raw.get("tutorial_seen", []))
     d.hard_mode_unlocked = bool(raw.get("hard_mode_unlocked", false))
+    d.hard_mode_enabled = bool(raw.get("hard_mode_enabled", false))
     d.hard_plus_unlocked = bool(raw.get("hard_plus_unlocked", false))
     d.last_level_id = str(raw.get("last_level_id", "L01"))
     return d

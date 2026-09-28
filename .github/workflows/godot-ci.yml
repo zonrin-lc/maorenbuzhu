@@ -1,0 +1,47 @@
+name: Godot CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  godot-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Setup Godot 4.7.2
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+
+      - name: Import resources
+        working-directory: Godot Project V4/NinjaAdventure
+        run: godot --headless --path . --import
+
+      - name: Script compile check (must be zero errors)
+        working-directory: Godot Project V4/NinjaAdventure
+        shell: bash
+        run: |
+          godot --headless --editor --quit --path . 2>&1 | tee compile.log
+          if grep -iE "SCRIPT ERROR|Parse Error|Failed to load script" compile.log; then
+            echo "Script compile errors found"
+            exit 1
+          fi
+          echo "Compile check passed"
+
+      - name: Main scene smoke test (30 frames)
+        working-directory: Godot Project V4/NinjaAdventure
+        shell: bash
+        run: |
+          godot --headless --path . --quit-after 30 2>&1 | tee smoke.log
+          if grep -iE "SCRIPT ERROR" smoke.log; then
+            echo "Runtime script errors found"
+            exit 1
+          fi
+          echo "Smoke test passed"

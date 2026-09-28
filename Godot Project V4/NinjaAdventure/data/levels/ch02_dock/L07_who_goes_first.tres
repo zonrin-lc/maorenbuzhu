@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="LevelData" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="LevelData" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1"]
 [ext_resource type="Resource" path="res://data/routes/L07_Ninja_Main.tres" id="2"]
@@ -8,6 +8,7 @@
 [ext_resource type="Resource" path="res://data/events/L07_E04_BRIDGE.tres" id="6"]
 [ext_resource type="Resource" path="res://data/events/L07_E05_POISON.tres" id="7"]
 [ext_resource type="Resource" path="res://data/score/L07_Score.tres" id="8"]
+[ext_resource type="Resource" path="res://data/variants/l07_variant_b.tres" id="9"]
 
 [resource]
 script = ExtResource("1")
@@ -21,3 +22,4 @@ target_time = 100.0
 ninja_route = ExtResource("2")
 events = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")]
 score_rules = ExtResource("8")
+variant = ExtResource("9")

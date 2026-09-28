@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="LevelData" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="LevelData" load_steps=9 format=3]
 [ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1"]
 [ext_resource type="Resource" path="res://data/score/L12_Score.tres" id="7"]
+[ext_resource type="Resource" path="res://data/variants/l12_variant_b.tres" id="8"]
 [ext_resource type="Resource" path="res://data/routes/L12_Ninja_Main.tres" id="2"]
 [ext_resource type="Resource" path="res://data/events/L12_E01_DYNAMITE.tres" id="3"]
 [ext_resource type="Resource" path="res://data/events/L12_E02_BOSS_CRANE.tres" id="4"]
@@ -18,3 +19,4 @@ target_time = 150.0
 ninja_route = ExtResource("2")
 events = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")]
 score_rules = ExtResource("7")
+variant = ExtResource("8")

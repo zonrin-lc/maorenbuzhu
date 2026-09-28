@@ -71,6 +71,12 @@ var emergency_used := false
 # L12 Boss slice: prep must happen before Boss starts; zero-prep requires emergency rescue.
 var l12_boss_overrun_logged := false
 
+# Hard Mode / Variant B（GDD §5.3）：修饰只作用于 _prepare_level_data() 深拷贝出的运行时副本，
+# 磁盘上的 LevelData/RouteData/EventPointData .tres 永不被改写。
+var active_variant: VariantData = null
+var active_modifier: LevelModifier = null
+var _suspicion_gain_mult := 1.0
+
 const SUSPICION_NOTICE := 25.0
 const SUSPICION_ALERT := 50.0
 const SUSPICION_HIGH := 80.0
@@ -82,6 +88,7 @@ func _ready() -> void:
     add_child(save_manager)
     talent_tracker = TalentTrackerClass.new()
     add_child(talent_tracker)
+    _prepare_level_data()
     _setup_floor()
     _setup_layout_geometry()
     _setup_layout_design()
@@ -182,6 +189,66 @@ func _play_chapter_music() -> void:
 
 func _on_dog_barked() -> void:
     GlobalAudioManager.play_event_sfx("dog")
+
+# 关卡加载/重开（reload_current_scene 会重新走 _ready）的统一入口：
+# 不开 Hard、不选 Variant B 时直接返回，默认路径与原行为完全一致。
+func _prepare_level_data() -> void:
+    if level_data == null:
+        return
+    var want_variant := false
+    if level_data.variant != null and bool(GlobalFlowMemory.variant_b_selected.get(String(level_data.level_id), false)):
+        want_variant = true
+    var want_hard := save_manager.data.hard_mode_unlocked and save_manager.data.hard_mode_enabled
+    if not want_variant and not want_hard:
+        return
+    level_data = level_data.duplicate(true)
+    if want_variant:
+        _apply_variant(level_data.variant)
+    if want_hard:
+        var modifier := load("res://data/modifiers/hard_mode.tres") as LevelModifier
+        if modifier != null:
+            _apply_level_modifier(modifier)
+
+func _apply_level_modifier(mod: LevelModifier) -> void:
+    active_modifier = mod
+    if level_data.ninja_route != null:
+        level_data.ninja_route.move_speed *= mod.ninja_speed_mult
+    for event_data in level_data.events:
+        event_data.hesitation_time = maxf(0.0, event_data.hesitation_time + mod.hesitation_delta)
+        # hesitation 是事件总窗口的前段：犹豫缩短 = 总窗口同步缩短（hard 更紧）。
+        if mod.hesitation_delta < 0.0 and event_data.timeout > 0.0:
+            event_data.timeout = maxf(0.5, event_data.timeout + mod.hesitation_delta)
+        if event_data.timeout > 0.0:
+            event_data.timeout = maxf(0.5, event_data.timeout * mod.event_timeout_mult)
+    _suspicion_gain_mult *= mod.suspicion_gain_mult
+    if boss != null:
+        boss.prepare_time = maxf(0.5, boss.prepare_time + mod.boss_prepare_delta)
+
+func _apply_variant(v: VariantData) -> void:
+    active_variant = v
+    # timer_overrides: "target_time"（绝对值）或 "target_time_mult"；"event_timeout_mult" 作用于全部事件窗口。
+    if v.timer_overrides.has("target_time"):
+        level_data.target_time = float(v.timer_overrides["target_time"])
+        if level_data.score_rules != null:
+            level_data.score_rules.target_time = level_data.target_time
+    else:
+        var target_mult := float(v.timer_overrides.get("target_time_mult", 1.0))
+        level_data.target_time *= target_mult
+        if level_data.score_rules != null:
+            level_data.score_rules.target_time *= target_mult
+    var timeout_mult := float(v.timer_overrides.get("event_timeout_mult", 1.0))
+    for event_data in level_data.events:
+        if event_data.timeout > 0.0 and not is_equal_approx(timeout_mult, 1.0):
+            event_data.timeout = maxf(0.5, event_data.timeout * timeout_mult)
+        if v.event_overrides.has(event_data.event_id):
+            var override: Dictionary = v.event_overrides[event_data.event_id]
+            if override.has("timeout") and event_data.timeout > 0.0:
+                event_data.timeout = maxf(0.5, float(override["timeout"]))
+            if override.has("hesitation_time"):
+                event_data.hesitation_time = maxf(0.0, float(override["hesitation_time"]))
+    _suspicion_gain_mult *= v.suspicion_modifier
+    # TODO: route_overrides / npc_overrides 目前只读入并挂在 active_variant 上供后续使用；
+    # 忍者路线分支与 NPC 起始位置的深层覆盖尚未接入（事件 position 覆盖在 _build_events 内应用）。
 
 # 读图镜头巡游（GDD §2.1）：开场推进到每个主线事件点，再拉回全景；按互动/确认跳过
 var reading_phase := false
@@ -991,6 +1058,10 @@ func _build_events() -> void:
                 &"L12_E02_BOSS_CRANE": point.position = Vector2(540, 250)
                 &"L12_E03_BOSS_GOURD": point.position = Vector2(410, 330)
                 &"L12_E04_BOSS_CALTROP": point.position = Vector2(800, 430)
+        if active_variant != null and active_variant.event_overrides.has(data.event_id):
+            var event_override: Dictionary = active_variant.event_overrides[data.event_id]
+            if event_override.has("position"):
+                point.position = event_override["position"]
         point.setup(data, self)
         point.resolved.connect(event_resolved.bind(point))
         point.failed.connect(_on_event_failed)
@@ -1356,6 +1427,8 @@ func _on_cat_emote() -> void:
     _show_toast("卖萌成功，怀疑清零。")
 
 func _apply_suspicion(amount: float, source: StringName) -> void:
+    if amount > 0.0:
+        amount *= _suspicion_gain_mult
     var before := suspicion
     suspicion = clamp(suspicion + amount, 0.0, 100.0)
     max_suspicion = max(max_suspicion, suspicion)
@@ -1813,7 +1886,7 @@ func _on_event_failed(data: EventPointData, code: StringName) -> void:
     event_failed.emit(code)
     for flag in data.failure_flags:
         world_state.set_flag(flag)
-    event_log.append_event({"event_id": data.event_id, "action": &"FAIL", "success": false, "fail_code": code, "ninja_hp_before": ninja.hp if ninja else 0})
+    event_log.append_event({"event_id": data.event_id, "action": &"FAIL", "phase": &"FAILED", "success": false, "fail_code": code, "ninja_hp_before": ninja.hp if ninja else 0})
     if ninja:
         # 坠崖直接死；其余威胁扣 1 心但继续推进。
         ninja.take_damage(3 if code == &"FAIL_NINJA_DEATH" else 1)
@@ -2029,7 +2102,7 @@ func on_boss_overrun() -> void:
         return
     l12_boss_overrun_logged = true
     emergency_available = false
-    event_log.append_event({"event_id": &"BOSS_OVERRUN", "action": &"FAIL", "success": false, "reason": &"NO_PREP_NO_EMERGENCY"})
+    event_log.append_event({"event_id": &"BOSS_OVERRUN", "action": &"FAIL", "phase": &"FAILED", "success": false, "reason": &"NO_PREP_NO_EMERGENCY"})
     _show_toast("来不及救场！守门武士把忍者打出场地。")
     on_ninja_dead()
 

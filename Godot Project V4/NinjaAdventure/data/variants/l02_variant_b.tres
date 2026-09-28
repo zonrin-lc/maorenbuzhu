@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="VariantData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/variant_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+variant_id = &"L02_VB"
+event_overrides = {&"L02_02_GUARD": {"hesitation_time": 1.5, "timeout": 2.6}}
+npc_overrides = {&"L02_02_GUARD": {"note": "守卫起始位置偏移由运行时处理，见 docs/VARIANT_HARDMOD_IMPL.md"}}

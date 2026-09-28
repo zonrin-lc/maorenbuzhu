@@ -11,3 +11,4 @@ extends Resource
 @export var ninja_route: RouteData
 @export var events: Array[EventPointData] = []
 @export var score_rules: ScoreRuleData
+@export var variant: VariantData

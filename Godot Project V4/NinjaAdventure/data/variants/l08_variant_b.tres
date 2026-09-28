@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="VariantData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/variant_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+variant_id = &"L08_VB"
+timer_overrides = {"target_time_mult": 0.9}

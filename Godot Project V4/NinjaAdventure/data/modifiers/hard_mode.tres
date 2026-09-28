@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="LevelModifier" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_modifier.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ninja_speed_mult = 1.1
+hesitation_delta = -0.5
+suspicion_gain_mult = 1.1
+event_timeout_mult = 1.0
+boss_prepare_delta = -2.0

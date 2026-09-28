@@ -11,6 +11,7 @@ var active := false
 var timer := 0.0
 var charge_timer := 0.0
 var charge_window := 2.0
+var prepare_time := 3.0 # Phase 1 战前准备窗口；Hard Mode 通过 LevelModifier.boss_prepare_delta 调整
 var prepared_damage := 0
 var manager: Node
 var sprite: Sprite2D
@@ -92,7 +93,7 @@ func _process(delta: float) -> void:
         queue_redraw()
         return
     timer += delta
-    if phase == 1 and timer >= 3.0:
+    if phase == 1 and timer >= prepare_time:
         phase = 2
         charge_timer = 0.0
         phase_changed.emit(phase)
