@@ -73,13 +73,17 @@ func damage(amount: int, source: StringName) -> void:
     queue_redraw()
 
 func _sync_phase_from_hp() -> void:
+    var new_phase := phase
     if hp <= 30:
-        phase = 3
+        new_phase = 3
     elif hp <= 60:
-        phase = 2
-    elif phase < 1:
-        phase = 1
-    phase_changed.emit(phase)
+        new_phase = 2
+    elif new_phase < 1:
+        new_phase = 1
+    if new_phase != phase:
+        phase = new_phase
+        phase_changed.emit(phase)
+        queue_redraw()
 
 func _process(delta: float) -> void:
     anim_time += delta

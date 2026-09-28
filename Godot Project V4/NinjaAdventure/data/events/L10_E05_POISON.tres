@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-event_id = &"L10_E04_POISON"
+event_id = &"L10_E05_POISON"
 event_type = &"POISON"
 display_name = "毒雾门"
 classification = &"CRITICAL"

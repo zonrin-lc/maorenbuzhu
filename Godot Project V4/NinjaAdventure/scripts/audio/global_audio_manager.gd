@@ -124,9 +124,32 @@ func event_sfx_for(event_type: StringName, action_id: StringName) -> String:
         &"BOSS_CRANE", &"BOSS_GOURD", &"BOSS_CALTROP": return "place"
         _: return "success"
 
+const NINJA_VOICE_TAGS := {
+    "hurt": ["res://audio/sfx/voice_01.wav", "res://audio/sfx/voice_02.wav"],
+    "confused": ["res://audio/sfx/voice_03.wav", "res://audio/sfx/voice_04.wav", "res://audio/sfx/voice_05.wav"],
+    "proud": ["res://audio/sfx/voice_06.wav", "res://audio/sfx/voice_07.wav", "res://audio/sfx/voice_08.wav"],
+    "scared": ["res://audio/sfx/voice_09.wav", "res://audio/sfx/voice_10.wav"],
+}
+const NINJA_VOICE_COOLDOWN_MS := 600
+var _last_voice_ms := -1000000
+
 func play_ninja_voice(tag: String) -> void:
-    # Voice 语气音池（Voice1~10.wav）待按 tag 映射接入；当前仅记录
-    pass
+    var variants: Array = NINJA_VOICE_TAGS.get(tag, [])
+    if variants.is_empty():
+        return
+    var now := Time.get_ticks_msec()
+    if now - _last_voice_ms < NINJA_VOICE_COOLDOWN_MS:
+        return
+    _last_voice_ms = now
+    var stream: AudioStream = load(variants[_meow_rng.randi_range(0, variants.size() - 1)])
+    if stream == null:
+        return
+    for p in _sfx_players:
+        if not p.playing:
+            p.stream = stream
+            p.pitch_scale = 1.0 + _meow_rng.randf_range(-0.05, 0.05)
+            p.play()
+            return
 
 func play_cat_meow() -> void:
     if _meow_selector == null:

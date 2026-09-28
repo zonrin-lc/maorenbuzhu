@@ -1,4 +1,4 @@
-# 《猫忍不住》游戏设计文档 · 整合版 v1.4.6
+# 《猫忍不住》游戏设计文档 · 整合版 v1.4.7
 
 > **副标题：忍者在明处，猫在幕后。**
 >
@@ -55,6 +55,8 @@
 > v1.4.5 修订（2026-09-28）：融合 v1.6.0 美术资产替换与场景精修版——项目进入正式美术层（§10 素材映射后新增美术状态段）。
 >
 > v1.4.6 修订（2026-09-28）：实现审查裁定落地——chain_rescue 定义收紧（§7.4）、L11 Cliff→Gate（§6.3）、L10 事件 ID 去重（§15.2）、新增实现债登记（§15.3）。详见《猫忍不住》_v1.6.0_实现审查记录.md。
+>
+> v1.4.7 修订（2026-09-28）：开发迁移至本机（Godot 4.7.2）；实现债 ①⑤⑨⑩ 修复落地，⑥⑦ 部分落地（§15.3）；顺带修复 input_manager.gd 的 InputEventMouseWheel 不存在类引用与 class_name/autoload 同名冲突两个历史编译错误。
 
 ---
 
@@ -1462,16 +1464,16 @@ Experience [ ] 玩家能解释失败 [ ] 无无意义等待 [ ] 猫始终有下�
 
 设计合同与实现的偏差在此登记，按处理优先级排序（详情见《猫忍不住》_v1.6.0_实现审查记录.md）：
 
-1. chain_rescue 判定改为沿 caused_event_id 链（§7.4）
+1. **[已落地]** chain_rescue 判定改为沿 caused_event_id 链（§7.4）（沿 caused_event_id 链判定，unified_level_manager.gd）
 2. L11 Gate 裁定在数据层落地（§6.3）
 3. 建立 VariantData + 12 个 Variant B 资源（Release Gate 要求"12 个 Variant B 可加载"，当前不存在 variants 数据资产）
 4. 建立 HardMode LevelModifier 体系（当前只有解锁状态，无 Ninja +10% / 犹豫 -0.5s / 怀疑收益 +10% 的实际执行层）
-5. Boss `phase_changed` 仅在 phase 实际变化时 emit
-6. 清理 Legacy 脚本栈（`level_manager.gd / dock_*/castle_*` 并行旧栈；`dock_event_point.gd` 直读物理键 KEY_F/KEY_E 绕过 Action 层，手柄/触控在该路径失效）
-7. EventLog 区分 `ACTION_START / RESOLVED / FAILED` 三阶段，仅 RESOLVED 允许写 success=true
+5. **[已落地]** Boss `phase_changed` 仅在 phase 实际变化时 emit
+6. **[部分]** 清理 Legacy 脚本栈（`level_manager.gd / dock_*/castle_*` 并行旧栈；`dock_event_point.gd` 直读物理键 KEY_F/KEY_E 绕过 Action 层，手柄/触控在该路径失效）（dock_event_point.gd 已改走 Action 层 InputMap；旧栈拆分仍在）
+7. **[部分]** EventLog 区分 `ACTION_START / RESOLVED / FAILED` 三阶段，仅 RESOLVED 允许写 success=true（ACTION_START / RESOLVED 标记已落地；FAILED 待补）
 8. UnifiedLevelManager（2198 行）拆分 + SceneArt 独立成 L01–L12 Art Scene
-9. 接入 Ninja Voice（Voice1~10.wav，`play_ninja_voice()` 当前为 pass）
-10. export_presets 版本号跟随实现版本（当前滞留 0.1.0）
+9. **[已落地]** 接入 Ninja Voice（Voice1~10.wav，`play_ninja_voice()` 当前为 pass）（Voice1~10 已接入 play_ninja_voice，hurt/confused/proud/scared 四组轮换 + 600ms 冷却 + 音高随机）
+10. **[已落地]** export_presets 版本号跟随实现版本（当前滞留 0.1.0）（已升 1.6.0）
 11. GitHub Actions + Godot smoke test（发布前必须；静态通过 ≠ 运行通过）
 
 ---

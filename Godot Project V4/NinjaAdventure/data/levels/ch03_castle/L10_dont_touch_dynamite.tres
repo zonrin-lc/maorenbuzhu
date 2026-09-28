@@ -6,7 +6,7 @@
 [ext_resource type="Resource" path="res://data/events/L10_E02_GUARD_A.tres" id="4"]
 [ext_resource type="Resource" path="res://data/events/L10_E03_DOG.tres" id="5"]
 [ext_resource type="Resource" path="res://data/events/L10_E04_CALTROP.tres" id="6"]
-[ext_resource type="Resource" path="res://data/events/L10_E04_POISON.tres" id="7"]
+[ext_resource type="Resource" path="res://data/events/L10_E05_POISON.tres" id="7"]
 [ext_resource type="Resource" path="res://data/score/L10_Score.tres" id="8"]
 
 [resource]

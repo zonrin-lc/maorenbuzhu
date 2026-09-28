@@ -1,4 +1,3 @@
-class_name GameInputManager
 extends Node
 
 signal device_changed(device: String)
@@ -50,6 +49,6 @@ func _device_for_event(event: InputEvent) -> String:
         return DEVICE_TOUCH
     if event is InputEventJoypadButton or event is InputEventJoypadMotion:
         return DEVICE_GAMEPAD
-    if event is InputEventKey or event is InputEventMouseButton or event is InputEventMouseMotion or event is InputEventMouseWheel:
+    if event is InputEventKey or event is InputEventMouseButton or event is InputEventMouseMotion:
         return DEVICE_KEYBOARD_MOUSE
     return ""

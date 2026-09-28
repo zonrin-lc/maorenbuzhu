@@ -161,6 +161,7 @@ func _setup_feedback_director() -> void:
 
 func _on_feedback_ninja_damaged(hp: int) -> void:
     GlobalAudioManager.play_event_sfx("damage")
+    GlobalAudioManager.play_ninja_voice("hurt")
     if feedback_director != null:
         feedback_director.show_ninja_damage(hp)
 
@@ -680,7 +681,7 @@ func _update_l10_state(delta: float) -> void:
     if level_data == null or level_data.level_id != &"L10" or reading_phase or level_finished or level_failed:
         return
     var current := _current_main_event()
-    if current != null and current.data.event_id == &"L10_E04_POISON" and cat != null and cat.carry_item == &"":
+    if current != null and current.data.event_id == &"L10_E05_POISON" and cat != null and cat.carry_item == &"":
         if l10_late_antidote != null and is_instance_valid(l10_late_antidote) and not l10_late_antidote.visible:
             l10_late_antidote.visible = true
             l10_late_antidote.set_process(true)
@@ -736,7 +737,7 @@ func _apply_l10_route_branch(poison_forced: bool) -> void:
     if poison_forced:
         var points := [Vector2(110,540), Vector2(270,410), Vector2(590,360), Vector2(680,435), Vector2(820,300), Vector2(860,340), Vector2(980,260)]
         ninja.replace_scripted_route(points, 3)
-        var poison := _find_event_node(&"L10_E04_POISON")
+        var poison := _find_event_node(&"L10_E05_POISON")
         if poison != null:
             poison.data.route_index = 5
             poison.position = points[5]
@@ -747,7 +748,7 @@ func _apply_l10_route_branch(poison_forced: bool) -> void:
         var points := [Vector2(110,540), Vector2(270,410), Vector2(590,360), Vector2(680,435), Vector2(740,460), Vector2(860,340), Vector2(980,260)]
         ninja.replace_scripted_route(points, 3)
         var caltrop := _find_event_node(&"L10_E04_CALTROP")
-        var poison := _find_event_node(&"L10_E04_POISON")
+        var poison := _find_event_node(&"L10_E05_POISON")
         if caltrop != null:
             caltrop.data.route_index = 4
             caltrop.position = points[4]
@@ -974,7 +975,7 @@ func _build_events() -> void:
                 &"L10_E02_GUARD_A": point.position = Vector2(590, 360)
                 &"L10_E03_DOG": point.position = Vector2(680, 435)
                 &"L10_E04_CALTROP": point.position = Vector2(740, 460)
-                &"L10_E04_POISON": point.position = Vector2(860, 340)
+                &"L10_E05_POISON": point.position = Vector2(860, 340)
         if level_data.level_id == &"L11":
             match data.event_id:
                 &"L11_E01_GUARD_A": point.position = Vector2(350, 250)
@@ -1090,7 +1091,7 @@ func is_event_active(data: EventPointData) -> bool:
         if data.event_id == &"L10_E04_CALTROP":
             var caltrop_node := _find_event_node(&"L10_E04_CALTROP")
             return l10_caltrop_armed and caltrop_node != null and not caltrop_node.resolved_state
-        var ordered_l10 := [&"L10_E01_DYNAMITE_A", &"L10_E02_GUARD_A", &"L10_E03_DOG", &"L10_E04_POISON"]
+        var ordered_l10 := [&"L10_E01_DYNAMITE_A", &"L10_E02_GUARD_A", &"L10_E03_DOG", &"L10_E05_POISON"]
         var wanted_index_l10 := ordered_l10.find(data.event_id)
         if wanted_index_l10 < 0:
             return false
@@ -1255,7 +1256,7 @@ func on_player_action_started(data: EventPointData, action_id: StringName) -> vo
         suspicion_gain = suspicion_observer.suspicion_for_action(data.interaction_time)
     if seen and action_id != &"PASSIVE" and action_id != &"EMOTE_CHECK":
         _apply_suspicion(suspicion_gain, action_id)
-    event_log.append_event({"event_id": data.event_id, "action": action_id, "success": true, "suspicion": suspicion, "suspicion_gain": suspicion_gain if seen else 0.0, "seen_by_ninja": seen})
+    event_log.append_event({"event_id": data.event_id, "action": action_id, "phase": &"ACTION_START", "suspicion": suspicion, "suspicion_gain": suspicion_gain if seen else 0.0, "seen_by_ninja": seen})
 
 func _ninja_sees_cat() -> bool:
     if suspicion_observer != null:
@@ -1358,8 +1359,10 @@ func _apply_suspicion(amount: float, source: StringName) -> void:
     var before := suspicion
     suspicion = clamp(suspicion + amount, 0.0, 100.0)
     max_suspicion = max(max_suspicion, suspicion)
-    event_log.append_event({"event_id": &"SUSPICION", "action": source, "success": true, "suspicion_before": before, "suspicion_after": suspicion})
+    event_log.append_event({"event_id": &"SUSPICION", "action": source, "phase": &"INFO", "suspicion_before": before, "suspicion_after": suspicion})
     suspicion_changed.emit(suspicion)
+    if amount > 0.0:
+        GlobalAudioManager.play_ninja_voice("confused")
     if feedback_director != null:
         feedback_director.show_suspicion(suspicion)
     if suspicion >= 100.0:
@@ -1475,7 +1478,7 @@ func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedE
                 l10_dog_pending = true
                 if dog != null:
                     dog.lure_to(Vector2(740, 430))
-                event_log.append_event({"event_id": &"L10_CHAIN_03", "action": &"DOG_STARTLED", "success": true, "caused_event_id": &"L10_E04_POISON", "world_changes": [&"dog_route_changed"], "route_change": l10_route_mode})
+                event_log.append_event({"event_id": &"L10_CHAIN_03", "action": &"DOG_STARTLED", "success": true, "caused_event_id": &"L10_E05_POISON", "world_changes": [&"dog_route_changed"], "route_change": l10_route_mode})
                 _show_toast("狗被鱼吸走：下一段路线开始改变。")
             &"L10_E04_CALTROP":
                 l10_caltrop_armed = false
@@ -1485,7 +1488,7 @@ func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedE
                 _show_toast("蒺藜清掉了：赶去毒雾。")
                 if ninja != null:
                     ninja.release_event()
-            &"L10_E04_POISON":
+            &"L10_E05_POISON":
                 world_state.set_flag(&"L10_POISON_SAFE")
                 _show_toast("毒雾段处理完成：东门就在前面。")
     if level_data != null and level_data.level_id == &"L07":
@@ -1550,6 +1553,7 @@ func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedE
         "event_id": data.event_id,
         "event_type": data.event_type,
         "action": action_id,
+        "phase": &"RESOLVED",
         "success": true,
         "risk_level": data.risk_level,
         "high_risk": data.high_risk,
@@ -1560,8 +1564,12 @@ func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedE
         "route_change": next_route_event if level_data != null and level_data.level_id in [&"L04", &"L10", &"L11"] else active_main_event_index + 1,
     })
     if previous_event_id != &"":
-        chain_rescue += 1
+        # GDD §7.4：仅当前一事件通过 caused_event_id 依赖链改变了本事件时，才计 chain_rescue。
+        var prev_node := _find_event_node(previous_event_id)
+        if prev_node != null and data.event_id in prev_node.data.caused_event_ids:
+            chain_rescue += 1
     previous_event_id = data.event_id
+    GlobalAudioManager.play_ninja_voice("proud")
     if data.high_risk:
         high_risk_rescue += 1
     if level_data != null and level_data.level_id == &"L04":
@@ -1869,7 +1877,7 @@ func _current_main_event() -> UnifiedEventPoint:
                 return node_l11
         return null
     if level_data != null and level_data.level_id == &"L10":
-        var ordered_l10_main := [&"L10_E01_DYNAMITE_A", &"L10_E02_GUARD_A", &"L10_E03_DOG", &"L10_E04_POISON"]
+        var ordered_l10_main := [&"L10_E01_DYNAMITE_A", &"L10_E02_GUARD_A", &"L10_E03_DOG", &"L10_E05_POISON"]
         for wanted in ordered_l10_main:
             var node_l10 := _find_event_node(wanted)
             if node_l10 != null and not node_l10.resolved_state and is_event_active(node_l10.data):

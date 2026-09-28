@@ -46,15 +46,15 @@ func _process(delta: float) -> void:
 func _input_action(cat: CatController) -> StringName:
     match data.event_type:
         &"GUARD":
-            return &"MEOW" if Input.is_key_pressed(KEY_F) else &""
+            return &"MEOW" if Input.is_action_pressed(&"meow") else &""
         &"DOG":
-            return &"FEED" if Input.is_key_pressed(KEY_E) and cat.carry_item == &"FISH" else &""
+            return &"FEED" if Input.is_action_pressed(&"interact") and cat.carry_item == &"FISH" else &""
         &"POISON":
-            return &"PLACE_ANTIDOTE" if Input.is_key_pressed(KEY_E) and cat.carry_item == &"ANTIDOTE" else &""
+            return &"PLACE_ANTIDOTE" if Input.is_action_pressed(&"interact") and cat.carry_item == &"ANTIDOTE" else &""
         &"BRIDGE", &"CALTRAP":
-            return &"PUSH" if Input.is_key_pressed(KEY_E) else &""
+            return &"PUSH" if Input.is_action_pressed(&"interact") else &""
         _:
-            return &"INTERACT" if Input.is_key_pressed(KEY_E) else &""
+            return &"INTERACT" if Input.is_action_pressed(&"interact") else &""
 
 func resolve(action_id: StringName) -> void:
     if resolved_state:
