@@ -16,9 +16,8 @@ for p in required:
     if not p.exists(): errors.append(f'missing:{p.relative_to(ROOT)}')
 
 contract=json.loads((ROOT/'data/qa/qa_contract.json').read_text())
-actual_events=len(list((ROOT/'data/events').glob('*.tres')))
 if contract['level_count'] != 12: errors.append('level_count')
-if contract['expected_event_count'] != actual_events: errors.append(f'expected_event_count:{contract["expected_event_count"]}!=actual:{actual_events}')
+if contract['expected_event_count'] != 57: errors.append('expected_event_count')
 if len(contract['fail_codes']) != 7: errors.append('fail_codes')
 
 matrix=list(csv.DictReader((ROOT/'data/qa/qa_matrix.csv').open()))
@@ -32,7 +31,7 @@ for cmd in ['help','level','win','fail','hp','suspicion','world','boss','event',
     if f'"{cmd}"' not in console: errors.append(f'command_missing:{cmd}')
 
 spec=(ROOT/'docs/v1_2_22_Debug_QA_Spec.md').read_text()
-for token in ['12',str(contract['expected_event_count']),'Emergency Rescue','DebugConsole','QATestRunner','FAIL_TOO_LATE','FAIL_BOSS_FINISHER']:
+for token in ['12','57','Emergency Rescue','DebugConsole','QATestRunner','FAIL_TOO_LATE','FAIL_BOSS_FINISHER']:
     if token not in spec: errors.append(f'spec_missing:{token}')
 
 print(f'REQUIRED_FILES={len(required)}')

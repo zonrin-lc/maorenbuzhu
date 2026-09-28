@@ -1,0 +1,14 @@
+L01: target=60s route=14.6s ratio=4.10 speed=60 events=3
+L02: target=55s route=17.2s ratio=3.19 speed=52 events=3
+L03: target=65s route=15.4s ratio=4.23 speed=60 events=4
+L04: target=70s route=14.6s ratio=4.79 speed=60 events=4
+L05: target=80s route=20.9s ratio=3.82 speed=60 events=6
+L06: target=90s route=18.0s ratio=4.99 speed=60 events=5
+L07: target=100s route=24.8s ratio=4.03 speed=60 events=5
+L08: target=115s route=16.5s ratio=6.97 speed=60 events=6
+L09: target=100s route=14.3s ratio=6.97 speed=66 events=4
+L10: target=105s route=16.6s ratio=6.31 speed=66 events=5
+L11: target=125s route=23.7s ratio=5.27 speed=66 events=7
+L12: target=150s route=19.2s ratio=7.82 speed=66 events=4
+orphan_event_files=0
+BALANCE_AUDIT: PASS

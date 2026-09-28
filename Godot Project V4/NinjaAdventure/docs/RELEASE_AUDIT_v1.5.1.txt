@@ -1,0 +1,14 @@
+RELEASE_V1_5
+levels=12 expected=12
+event_behavior_passive=PASS
+referenced_events=56 orphan_events=0
+errors=0
+PASS 12 level data ids
+PASS 12 score resources
+PASS 12 route resources
+PASS canonical settlement + passive behavior
+PASS single L10 blocker branch
+PASS flow result constants aligned
+PASS gameplay manager free of result stub
+PASS QA Python tools compile
+PASS referenced event resources clean

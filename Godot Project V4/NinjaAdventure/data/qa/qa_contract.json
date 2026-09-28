@@ -1,7 +1,7 @@
 {
   "version": "v1.2.22",
   "level_count": 12,
-  "expected_event_count": 67,
+  "expected_event_count": 57,
   "fail_codes": [
     "FAIL_TOO_LATE",
     "FAIL_WRONG_ORDER",

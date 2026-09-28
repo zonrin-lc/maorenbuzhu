@@ -12,7 +12,6 @@ var timer := 0.0
 var charge_timer := 0.0
 var charge_window := 2.0
 var prepared_damage := 0
-var prepared_delay := 0.0
 var manager: Node
 var sprite: Sprite2D
 var anim_time := 0.0
@@ -29,22 +28,16 @@ func setup(owner: Node) -> void:
     timer = 0.0
     charge_timer = 0.0
     prepared_damage = 0
-    prepared_delay = 0.0
     queue_redraw()
 
 func prepare(amount: int) -> void:
     prepared_damage += amount
 
-func prepare_delay(seconds: float) -> void:
-    # 酒葫芦（GDD §15.2 仲裁：仅延迟、无伤害）：Boss 开场离席 seconds 秒
-    prepared_delay += seconds
-
 func start_boss() -> void:
     active = true
     phase = 1
-    timer = -prepared_delay
+    timer = 0.0
     charge_timer = 0.0
-    prepared_delay = 0.0
     if prepared_damage > 0:
         hp = max(1, hp - prepared_damage)
         prepared_damage = 0

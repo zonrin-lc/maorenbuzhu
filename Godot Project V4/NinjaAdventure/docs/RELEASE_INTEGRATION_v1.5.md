@@ -36,3 +36,10 @@ v1.4.1–v1.4.12 的 12 个关卡垂直切片合并后的发布前基线。此�
 ## 验收说明
 
 当前环境没有 Godot 4 Runtime，因此自动验收属于静态资源/脚本检查；最终发布前仍需要本地 Godot 4 实机运行、碰撞和 UI 操作验证。
+
+## v1.5.1 balance follow-up
+
+- Added `BalanceDirector` for non-invasive time-line feedback.
+- Result payload now includes `target_time` and `time_ratio`.
+- Result/settlement UI reports whether the recorded time stayed within the three-paw line.
+- Added `docs/BALANCE_PASS_v1.5.1.md` and `tools/audit_balance_v15_1.py`.

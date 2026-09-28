@@ -28,6 +28,7 @@ var toast_label: Label
 var world_state := WorldState.new()
 var event_log := EventLog.new()
 var score_system := ScoreSystem.new()
+var balance_director := BalanceDirector.new()
 var validator := LevelValidator.new()
 var event_nodes: Array[UnifiedEventPoint] = []
 var active_main_event_index := 0
@@ -100,6 +101,7 @@ func _ready() -> void:
         _set_label(status_label, "VALIDATION ERROR: " + ", ".join(errors))
         set_process(false)
         return
+    balance_director.setup(level_data)
     ninja.setup(level_data.ninja_route, self)
     if cat:
         cat.meow_triggered.connect(_on_cat_meow)
@@ -1048,7 +1050,7 @@ func is_event_active(data: EventPointData) -> bool:
             &"L12_E02_BOSS_CRANE":
                 _show_toast("吊车机关已准备：Boss 开场会先吃掉 40% 血。")
             &"L12_E03_BOSS_GOURD":
-                _show_toast("酒葫芦已经动过手脚：Boss 开场会离席 10 秒，忍者有安全输出窗口。")
+                _show_toast("酒葫芦已经动过手脚：Boss 开场再掉 30% 血。")
             &"L12_E04_BOSS_CALTROP":
                 _show_toast("蒺藜命中！Boss 最后一段血量被清空。")
     if level_data != null and level_data.level_id == &"L11":
@@ -1625,11 +1627,6 @@ func _apply_effect(effect: EventEffectData) -> void:
             if boss:
                 boss.prepare(int(effect.amount))
                 boss_mechanics_success += 1
-        &"BOSS_PREPARE_DELAY":
-            if boss:
-                # 酒葫芦（GDD §15.2 仲裁：仅延迟、无伤害）
-                boss.prepare_delay(effect.amount)
-                boss_mechanics_success += 1
         &"BOSS_COMBAT_DAMAGE":
             if boss and boss.phase == effect.phase_required:
                 boss.damage(int(effect.amount), effect.effect_type)
@@ -2029,6 +2026,8 @@ func _complete_level(emergency: bool) -> void:
         "ninja_hp": ninja.hp if ninja else 0,
         "max_suspicion": max_suspicion,
         "elapsed_time": elapsed,
+        "target_time": balance_director.target_time,
+        "time_ratio": elapsed / maxf(1.0, balance_director.target_time),
         "high_risk_rescue": high_risk_rescue,
         "chain_rescue": chain_rescue,
         "emergency": emergency,
@@ -2059,7 +2058,10 @@ func _process(_delta: float) -> void:
     if not level_finished and not level_failed:
         _try_emergency()
         var elapsed := Time.get_ticks_msec() / 1000.0 - start_time
-        _set_label(timer_label, "时间 %.1fs" % elapsed)
+        _set_label(timer_label, "时间 %.1fs / %.0fs · %s" % [elapsed, balance_director.target_time, balance_director.status_text(elapsed)])
+        var balance_warning := balance_director.next_warning(elapsed)
+        if not balance_warning.is_empty():
+            _show_toast(balance_warning)
         _set_label(carry_label, "口中：" + (String(cat.carry_item) if cat and cat.carry_item != &"" else "空"))
         _set_label(suspicion_label, _suspicion_text())
         _update_hud()

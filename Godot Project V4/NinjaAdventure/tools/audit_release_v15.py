@@ -77,9 +77,24 @@ for p in pytools:
     except Exception as exc: errors.append(f'{p.name}: python compile error: {exc}')
 checks.append(('QA Python tools compile', not any('python compile error' in e for e in errors)))
 
+# 9) Event asset hygiene: every level-referenced EventPointData exists; no orphan event resources remain.
+referenced_events = set()
+for level_file in (ROOT/'data'/'levels').glob('*/*.tres'):
+    level_text = level_file.read_text(encoding='utf-8')
+    referenced_events.update(re.findall(r'path=\"res://data/events/([^\"]+\.tres)\"', level_text))
+all_events = {p.name for p in (ROOT/'data'/'events').glob('*.tres')}
+missing_events = sorted(referenced_events - all_events)
+orphan_events = sorted(all_events - referenced_events)
+for name in missing_events:
+    errors.append(f'missing referenced event: {name}')
+for name in orphan_events:
+    errors.append(f'orphan event resource: {name}')
+checks.append(('referenced event resources clean', not missing_events and not orphan_events))
+
 print('RELEASE_V1_5')
 print(f'levels={len(found)} expected=12')
 print(f'event_behavior_passive={"PASS" if (ROOT/"data/event_behaviors/passive.tres").exists() else "FAIL"}')
+print(f'referenced_events={len(referenced_events)} orphan_events={len(orphan_events)}')
 print(f'errors={len(errors)}')
 for name, ok in checks:
     print(('PASS' if ok else 'FAIL') + ' ' + name)

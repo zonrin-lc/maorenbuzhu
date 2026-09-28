@@ -90,7 +90,10 @@ func _reveal_paws() -> void:
     var stars := ""
     for i in 3:
         stars += "★" if i < paws else "☆"
-    var detail := "用时 %.1fs ｜ 最高怀疑 %d" % [float(SettlementContext.result.get("elapsed_time", 0.0)), int(SettlementContext.result.get("max_suspicion", 0))]
+    var elapsed := float(SettlementContext.result.get("elapsed_time", 0.0))
+    var target_time := float(SettlementContext.result.get("target_time", 0.0))
+    var time_status := "三星线内" if target_time <= 0.0 or elapsed <= target_time else "超过三星线"
+    var detail := "用时 %.1fs ｜ 三星 %.0fs（%s） ｜ 最高怀疑 %d" % [elapsed, target_time, time_status, int(SettlementContext.result.get("max_suspicion", 0))]
     _paws.text = "猫爪 %s\n%s\n他信了。他们又都信了。" % [stars, detail]
     var unlocked: Array = SettlementContext.result.get("unlocked_talents", [])
     if not unlocked.is_empty():
