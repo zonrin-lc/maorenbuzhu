@@ -1,4 +1,4 @@
-# 《猫忍不住》游戏设计文档 · 整合版 v1.4.5
+# 《猫忍不住》游戏设计文档 · 整合版 v1.4.6
 
 > **副标题：忍者在明处，猫在幕后。**
 >
@@ -53,6 +53,8 @@
 > v1.4.4 修订（2026-09-28）：融合 v1.5.8 猫叫素材补全版——唯一素材缺口关闭（§9.3、§15.1）。
 >
 > v1.4.5 修订（2026-09-28）：融合 v1.6.0 美术资产替换与场景精修版——项目进入正式美术层（§10 素材映射后新增美术状态段）。
+>
+> v1.4.6 修订（2026-09-28）：实现审查裁定落地——chain_rescue 定义收紧（§7.4）、L11 Cliff→Gate（§6.3）、L10 事件 ID 去重（§15.2）、新增实现债登记（§15.3）。详见《猫忍不住》_v1.6.0_实现审查记录.md。
 
 ---
 
@@ -647,7 +649,9 @@ Hard Mode 参数（LevelModifier）：`Ninja +10% / 犹豫 -0.5s / Boss Prepare 
 **核心：Boss 前最后一关，验证同时处理三条任务线。这一关不应该比 L12 更难——任务是让玩家进 Boss 前已经习惯多线程。**
 
 - **三线程：** 守卫线（Guard A→B→Goal，地标=城墙/门）/ 动物线（Dog→Guard Noise→路线偏移，地标=庭院/犬舍）/ 环境线（Dynamite→Caltrop/Bridge→Poison，地标=箱区/毒雾）
-- **事件（7 个）：** E11_GA CRITICAL / E11_GB STANDARD / E11_DOG CRITICAL / E11_DY1 CRITICAL / E11_CAL CRITICAL / E11_POI CRITICAL / E11_CLI STANDARD
+- **事件（7 个）：** E11_GA CRITICAL / E11_GB STANDARD / E11_DOG CRITICAL / E11_DY1 CRITICAL / E11_CAL CRITICAL / E11_POI CRITICAL / E11_GATE 城门通行检查点 STANDARD（PASSIVE 行为；v1.4.6 裁定替代 Cliff，见 §15.2）
+
+> 注（v1.4.6）：Cliff 自 L11 移除，悬崖机制保留在威胁库（§4.3）供后续关卡/变体使用。
 - **设计核心：** 玩家一次只能持续操作一个事件，必须学会"处理 A 一半 → 放弃 → 赶去 B → 再回来完成 A"——**首次验证"互动可打断"的实际价值**
 - **三阶段节奏：** Phase A 准备 → Phase B 移动中补救 → Phase C 入口冲刺；**不能要求玩家提前把全部事情处理干净**——至少保留 1 个中途事件 + 1 个最后窗口事件，确保一直"赶场"
 - **捷径：** CatTunnel 排水沟 / JumpPoint 西屋顶 / FenceGap 猫专用小缝
@@ -728,6 +732,8 @@ E = chain_rescue >= 1
 F = shortcut_or_dependency_mastery == true
 G = boss_mechanics_success >= 2        （仅 L12）
 ```
+
+> **chain_rescue 定义收紧（v1.4.6）：** 仅当"前一事件的完成通过 caused_event_id 依赖链改变了后一事件的可用性/窗口"时才计数；无因果依赖的连续完成不计入。实现侧 `if previous_event_id != &"": chain_rescue += 1` 的写法属于违约，须改为沿 caused_event_id 链判定。
 
 **保护规则：** `ninja_hp < 2` 永不可得 3 爪（防止靠故意卖血刷高风险救场）。唯一允许的关卡差异：target_time / 事件标签 / Boss 额外条件。
 
@@ -1449,6 +1455,24 @@ Experience [ ] 玩家能解释失败 [ ] 无无意义等待 [ ] 猫始终有下�
 | 事件总数合同 | GDD 无出处 vs v1.2.22 `expected_events=46` | 采纳为工程合同值（12 关 46 事件，LevelValidator 硬指标） |
 | 12 关 target_time | 三阶段演变：v1.2.5 表（L05–L12 = 85/80/95/110/90/100/120/125）→ v1.2.24 Balance Sheet（80/90/100/115/100/105/125/150）→ v1.5.1 实现版（与 v1.2.24 相同） | **以 v1.5.1 实现版为当前基线**——实现侧已锁定，下一次变更须来自 ≥8 人同关卡试玩数据；GDD §5.2 已同步 |
 | 手柄映射 | v1.2.18 设计稿（疾跑 RT / 重开 Select）vs v1.5.6 实现（疾跑 RB / 重开 LS） | **以 v1.5.6 实现为准**——已进代码且通过输入整合验收；§2.2 表已同步 |
+| L11 第七事件 | GDD 设计 Cliff vs 实现 GATE（城门检查点，PASSIVE） | **以实现为准：L11 采用 GATE**——悬崖玩法已被 L04/L09 覆盖，Gate 提供章节收口的流程控制；Cliff 保留在威胁库 |
+| L10 事件 ID 冲突 | `L10_E04_CALTROP` 与 `L10_E04_POISON` 同号并存 | **POISON 重编号为 `L10_E05_POISON`**；命名规则补充：同关 E## 序号唯一，EventLog/回放/QA/统计均依赖此唯一性 |
+
+## 15.3 实现债登记（v1.4.6 起）
+
+设计合同与实现的偏差在此登记，按处理优先级排序（详情见《猫忍不住》_v1.6.0_实现审查记录.md）：
+
+1. chain_rescue 判定改为沿 caused_event_id 链（§7.4）
+2. L11 Gate 裁定在数据层落地（§6.3）
+3. 建立 VariantData + 12 个 Variant B 资源（Release Gate 要求"12 个 Variant B 可加载"，当前不存在 variants 数据资产）
+4. 建立 HardMode LevelModifier 体系（当前只有解锁状态，无 Ninja +10% / 犹豫 -0.5s / 怀疑收益 +10% 的实际执行层）
+5. Boss `phase_changed` 仅在 phase 实际变化时 emit
+6. 清理 Legacy 脚本栈（`level_manager.gd / dock_*/castle_*` 并行旧栈；`dock_event_point.gd` 直读物理键 KEY_F/KEY_E 绕过 Action 层，手柄/触控在该路径失效）
+7. EventLog 区分 `ACTION_START / RESOLVED / FAILED` 三阶段，仅 RESOLVED 允许写 success=true
+8. UnifiedLevelManager（2198 行）拆分 + SceneArt 独立成 L01–L12 Art Scene
+9. 接入 Ninja Voice（Voice1~10.wav，`play_ninja_voice()` 当前为 pass）
+10. export_presets 版本号跟随实现版本（当前滞留 0.1.0）
+11. GitHub Actions + Godot smoke test（发布前必须；静态通过 ≠ 运行通过）
 
 ---
 
