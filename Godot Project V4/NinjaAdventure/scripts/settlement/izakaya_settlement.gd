@@ -1,9 +1,7 @@
 class_name IzakayaSettlement
 extends Node2D
 
-# 居酒屋结算演出（GDD §7）：忍者吹牛 + 猫舔爪 + 猫爪揭示 + 固定吐槽
-# 数据来自 SettlementContext（一次性 pending_result）
-
+# v1.5.5 居酒屋结算：忍者吹牛 + 猫吐槽 + 猫爪揭示 + 统一视觉演出
 const FALLBACK_BANTER := {
     "EMERGENCY": "最后那一下？我故意留给敌人的。",
     "NEAR_DEATH": "那点伤？连我的披风都没碰到。",
@@ -16,13 +14,21 @@ const FALLBACK_BANTER := {
 var _step := 0
 var _banter_text := ""
 var _cat_response := "……"
-var _locked_input_timer := 1.0
+var _locked_input_timer := 1.2
 
-@onready var _status: Label = $UI/Status
-@onready var _boast: Label = $UI/Boast
-@onready var _cat_label: Label = $UI/CatLabel
-@onready var _paws: Label = $UI/Paws
-@onready var _hint: Label = $UI/Hint
+@onready var _status: Label = $UI/Header/HBox/Status
+@onready var _level_title: Label = $UI/Header/HBox/LevelTitle
+@onready var _boast: Label = $UI/CenterCard/Boast
+@onready var _cat_label: Label = $UI/CenterCard/CatLabel
+@onready var _paws: Label = $UI/ResultCard/Paws
+@onready var _hint: Label = $UI/Bottom/Hint
+@onready var _ninja: Sprite2D = $Characters/Ninja
+@onready var _cat: Sprite2D = $Characters/Cat
+@onready var _boast_panel: Panel = $UI/CenterCard
+@onready var _result_card: Panel = $UI/ResultCard
+@onready var _next_button: Button = $UI/Bottom/Next
+@onready var _retry_button: Button = $UI/Bottom/Retry
+@onready var _menu_button: Button = $UI/Bottom/Menu
 
 func _ready() -> void:
     GlobalAudioManager.set_music_state("BOSS_DEFEAT")
@@ -30,24 +36,63 @@ func _ready() -> void:
         get_tree().call_deferred("change_scene_to_file", "res://scenes/flow/main_menu.tscn")
         return
     _build_banter()
-    _status.text = "%s · 任务完成" % String(SettlementContext.result.get("level_id", ""))
+    _status.text = "任务完成"
+    _level_title.text = "%s  ·  %s" % [String(SettlementContext.result.get("level_id", "L01")), _level_name(String(SettlementContext.result.get("level_id", "L01")))]
     _boast.text = ""
     _paws.text = ""
     _cat_label.text = ""
     _hint.text = ""
+    _next_button.disabled = true
+    _retry_button.disabled = true
+    _menu_button.disabled = true
+    _next_button.modulate = Color(1, 1, 1, 0.55)
+    _retry_button.modulate = Color(1, 1, 1, 0.55)
+    _menu_button.modulate = Color(1, 1, 1, 0.55)
+
+    _boast_panel.modulate = Color(1, 1, 1, 0)
+    _result_card.modulate = Color(1, 1, 1, 0)
+    _ninja.modulate = Color(1, 1, 1, 0)
+    _cat.modulate = Color(1, 1, 1, 0)
+
     var timeline := create_tween()
-    timeline.tween_interval(0.8)
-    timeline.tween_callback(func(): _boast.text = "忍者：“%s”" % _banter_text)
-    timeline.tween_interval(1.0)
-    timeline.tween_callback(func(): _cat_label.text = "猫：%s" % _cat_response)
-    timeline.tween_interval(0.8)
+    timeline.set_parallel(true)
+    timeline.tween_property(_ninja, "modulate", Color.WHITE, 0.45)
+    timeline.tween_property(_ninja, "position", Vector2(480, 392), 0.55).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    timeline.chain().set_parallel(false)
+    timeline.tween_interval(0.55)
+    timeline.tween_callback(func(): _boast.text = "“%s”" % _banter_text)
+    timeline.parallel().tween_property(_boast_panel, "modulate", Color.WHITE, 0.35)
+    timeline.chain().tween_interval(0.9)
+    timeline.tween_callback(func(): _cat.modulate = Color.WHITE)
+    timeline.parallel().tween_property(_cat, "position", Vector2(815, 455), 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    timeline.tween_interval(0.35)
+    timeline.tween_callback(func(): _cat_label.text = _cat_response)
+    timeline.tween_interval(0.55)
     timeline.tween_callback(_reveal_paws)
+    timeline.parallel().tween_property(_result_card, "modulate", Color.WHITE, 0.45)
+    timeline.tween_interval(0.35)
+    timeline.tween_callback(_enable_buttons)
+
+func _enable_buttons() -> void:
+    _next_button.disabled = false
+    _retry_button.disabled = false
+    _menu_button.disabled = false
+    _next_button.modulate = Color.WHITE
+    _retry_button.modulate = Color.WHITE
+    _menu_button.modulate = Color.WHITE
+
+func _level_name(level_id: String) -> String:
+    var names := {
+        "L01":"第一份差事", "L02":"他总是踩同一个坑", "L03":"谁在看猫", "L04":"村口大事故",
+        "L05":"月夜码头", "L06":"狗也能当队友", "L07":"谁先走", "L08":"最后一班船",
+        "L09":"雷雨夜", "L10":"炸药不能乱碰", "L11":"越靠近城门越忙", "L12":"守门武士"
+    }
+    return names.get(level_id, level_id)
 
 func _build_banter() -> void:
     var gen := BoastGenerator.new()
     var tags: Dictionary = gen.build_tags(SettlementContext.event_log)
     var importance: String = gen.classify_importance(tags)
-    # 数据驱动选句：banter tres 池（required_tags ⊆ 本局 tags，level_scope 匹配）
     var level_id := String(SettlementContext.result.get("level_id", ""))
     var best: BanterData = null
     var dir := DirAccess.open("res://data/banter")
@@ -93,15 +138,16 @@ func _reveal_paws() -> void:
     var elapsed := float(SettlementContext.result.get("elapsed_time", 0.0))
     var target_time := float(SettlementContext.result.get("target_time", 0.0))
     var time_status := "三星线内" if target_time <= 0.0 or elapsed <= target_time else "超过三星线"
-    var detail := "用时 %.1fs ｜ 三星 %.0fs（%s） ｜ 最高怀疑 %d" % [elapsed, target_time, time_status, int(SettlementContext.result.get("max_suspicion", 0))]
-    _paws.text = "猫爪 %s\n%s\n他信了。他们又都信了。" % [stars, detail]
+    var detail := "用时 %.1fs   ·   三星 %.0fs   ·   最高怀疑 %d" % [elapsed, target_time, int(SettlementContext.result.get("max_suspicion", 0))]
+    _paws.text = "%s\n%s\n%s" % [stars, detail, time_status]
     var unlocked: Array = SettlementContext.result.get("unlocked_talents", [])
     if not unlocked.is_empty():
         _paws.text += "\n新猫技艺：%s" % "、".join(unlocked)
     if SettlementContext.result.get("emergency", false):
-        _paws.text += "\n（应急救场：固定 1 爪）"
-    _hint.text = "Enter：下一关    R：重玩本关    Esc：主菜单"
+        _paws.text += "\n应急救场 · 本局固定 1 爪"
+    _hint.text = "Enter  下一关      R  重玩本关      Esc  主菜单"
     GlobalAudioManager.play_event_sfx("success")
+    _step = 1
 
 func _process(delta: float) -> void:
     _locked_input_timer = max(0.0, _locked_input_timer - delta)

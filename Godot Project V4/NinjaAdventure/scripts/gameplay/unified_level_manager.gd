@@ -147,6 +147,8 @@ func _setup_global_ui() -> void:
     ui.tutorial_director = ui.get_node_or_null("TutorialDirector")
     ui.bind_level(self)
     ui.bind_ninja(ninja)
+    if cat != null:
+        ui.bind_cat(cat)
     add_child(TouchControls.new())
     _setup_pause(ui)
 
@@ -210,6 +212,7 @@ var l11_dog_diverted := false
 var l11_poison_safe := false
 var l11_route_busy_mode: StringName = &"DUAL_THREAD"
 var feedback_director: FeedbackDirector
+var layout_presentation: LayoutPresentation
 
 func _start_reading_tour() -> void:
     reading_phase = true
@@ -223,6 +226,8 @@ func _start_reading_tour() -> void:
     for node in event_nodes:
         if node.data.event_group != &"MAIN":
             continue
+        if layout_presentation != null:
+            _tour_tween.tween_callback(layout_presentation.set_focus.bind(node.position))
         _tour_tween.tween_property(_cam, "position", node.position, 0.9).set_trans(Tween.TRANS_SINE)
         _tour_tween.tween_interval(0.6)
     _tour_tween.tween_property(_cam, "position", Vector2(550, 340), 0.8).set_trans(Tween.TRANS_SINE)
@@ -238,6 +243,8 @@ func _end_reading_tour() -> void:
     if _cam != null:
         _cam.queue_free()
         _cam = null
+    if layout_presentation != null:
+        layout_presentation.set_reading_mode(false)
     start_time = Time.get_ticks_msec() / 1000.0
     if level_data != null and level_data.level_id == &"L05":
         _show_toast("码头节奏：守卫 A 离岗后 8 秒，守卫 B 换岗到路线。")
@@ -275,12 +282,12 @@ func _setup_layout_geometry() -> void:
 func _setup_layout_design() -> void:
     if level_data == null or level_data.ninja_route == null:
         return
-    var layout := LayoutDesign.new()
-    layout.name = "LayoutDesign"
-    layout.z_index = -75
+    layout_presentation = LayoutPresentation.new()
+    layout_presentation.name = "LayoutPresentation"
+    layout_presentation.z_index = -75
     var lid := String(level_data.level_id)
-    layout.setup(level_data.level_id, level_data.ninja_route.waypoints, LAYOUT_ZONES.get(lid, []))
-    add_child(layout)
+    layout_presentation.setup(level_data.level_id, level_data.ninja_route.waypoints, LAYOUT_ZONES.get(lid, []))
+    add_child(layout_presentation)
 
 func _setup_l03_suspicion() -> void:
     if level_data == null or level_data.level_id != &"L03":
@@ -1587,7 +1594,7 @@ func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedE
 func _apply_event_side_effect(data: EventPointData, action_id: StringName) -> void:
     # Flags remain declarative facts; non-trivial behavior is expressed by EventEffectData.
     if data.event_type == &"STEAL_CRATE" and cat != null:
-        cat.carry_item = &"CRATE"
+        cat.set_carry_item(&"CRATE")
         _set_carry_visual(&"CRATE")
         _show_toast("路线 A：箱子到手了。把它送到木桥。")
     for effect_resource in data.success_effects:
@@ -1596,7 +1603,7 @@ func _apply_event_side_effect(data: EventPointData, action_id: StringName) -> vo
             continue
         _apply_effect(effect)
     if data.consume_carry_item != &"" and cat != null and cat.carry_item == data.consume_carry_item:
-        cat.carry_item = &""
+        cat.set_carry_item(&"")
         _clear_carry_visual()
 
 func _set_carry_visual(item: StringName) -> void:
@@ -1637,7 +1644,7 @@ func _drop_carry_item() -> void:
         var tw := create_tween()
         tw.tween_property(dropped, "modulate:a", 0.0, 0.35)
         tw.tween_callback(dropped.queue_free)
-    cat.carry_item = &""
+    cat.set_carry_item(&"")
     _clear_carry_visual()
 
 func _apply_effect(effect: EventEffectData) -> void:

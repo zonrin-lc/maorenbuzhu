@@ -105,6 +105,15 @@ func _process(delta: float) -> void:
         _cancel_action()
     queue_redraw()
 
+func _event_accent_color() -> Color:
+    if data == null:
+        return Color("#fbbf24")
+    match data.classification:
+        &"CRITICAL": return Color("#f59e0b")
+        &"STANDARD": return Color("#60a5fa")
+        &"OPTIONAL": return Color("#4ade80")
+        _: return Color("#fbbf24")
+
 func _action_pressed(action_id: StringName) -> bool:
     match action_id:
         &"FEED": return Input.is_action_pressed("interact") and level_manager.cat.carry_item == &"FISH"
@@ -193,10 +202,14 @@ func _draw() -> void:
     else:
         # 无道具事件（守卫等，本体已有角色精灵）：柔和光环代替实心圆点
         var ring := Color("#22c55e") if resolved_state else (Color("#fbbf24") if active else Color("#64748b"))
-        ring.a = 0.35 if active and not resolved_state else 0.2
+        if active and not resolved_state:
+            ring = _event_accent_color()
+        ring.a = 0.42 if active and not resolved_state else 0.2
         draw_arc(Vector2.ZERO, 14.0, 0.0, TAU, 32, ring, 2.5)
         if active and not resolved_state:
-            draw_arc(Vector2.ZERO, 18.0, 0.0, TAU, 32, Color(ring.r, ring.g, ring.b, 0.12), 6.0)
+            var pulse := 1.0 + sin(Time.get_ticks_msec() / 170.0) * 0.08
+            draw_arc(Vector2.ZERO, 18.0 * pulse, 0.0, TAU, 32, Color(ring.r, ring.g, ring.b, 0.14), 5.0)
+            draw_circle(Vector2(0, -22), 4.0, Color(ring.r, ring.g, ring.b, 0.55))
     if active and not resolved_state:
         draw_circle(Vector2.ZERO, data.trigger_radius, Color(1, 1, 1, 0.07))
         draw_arc(Vector2.ZERO, data.trigger_radius, 0.0, TAU, 48, Color(1, 1, 1, 0.18), 1.5)

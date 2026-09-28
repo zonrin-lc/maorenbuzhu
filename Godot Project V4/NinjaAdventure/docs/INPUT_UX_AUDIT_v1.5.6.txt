@@ -1,0 +1,11 @@
+Input UX v1.5.6 static audit
+- GameInputManager autoload: PASS
+- Keyboard/Mouse detection: PASS
+- Gamepad detection: PASS
+- Touch detection: PASS
+- Core action gamepad bindings: PASS
+- Responsive touch layout: PASS
+- Touch action buttons mouse/touch handling: PASS
+- Device-aware HUD hints: PASS
+- Carry notifications: PASS
+- Conflict scan: PASS

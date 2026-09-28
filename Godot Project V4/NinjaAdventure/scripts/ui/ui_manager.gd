@@ -12,6 +12,12 @@ signal failure_requested(fail_code: String)
 @export var result_panel: Node
 @export var failure_panel: Node
 
+func _ready() -> void:
+    var input_manager := get_node_or_null("/root/GameInputManager")
+    if input_manager != null and not input_manager.device_changed.is_connected(_on_input_device_changed):
+        input_manager.device_changed.connect(_on_input_device_changed)
+    _refresh_input_hints()
+
 func bind_level(level_manager: Node) -> void:
     if level_manager == null:
         return
@@ -66,3 +72,26 @@ func _on_level_completed(payload: Dictionary) -> void:
     result_requested.emit(payload)
     if result_panel != null and result_panel.has_method("show_result"):
         result_panel.show_result(payload)
+
+
+func _on_input_device_changed(_device: String) -> void:
+    _refresh_input_hints()
+
+func _refresh_input_hints() -> void:
+    var device_label := get_node_or_null("HUD/TopBar/DeviceIndicator") as Label
+    var hint_label := get_node_or_null("HUD/BottomBar/ControlHints") as Label
+    var input_manager := get_node_or_null("/root/GameInputManager")
+    var device := input_manager.last_device if input_manager != null else GameInputManager.DEVICE_KEYBOARD_MOUSE
+    if device_label != null:
+        device_label.text = InputDisplay.get_device_name(device)
+    if hint_label != null:
+        hint_label.visible = device != GameInputManager.DEVICE_TOUCH
+        hint_label.text = "移动 %s   互动 %s   叼取 %s   喵叫 %s   卖萌 %s   跳跃 %s   暂停 %s" % [
+            InputDisplay.get_binding_label(&"move_up"),
+            InputDisplay.get_binding_label(&"interact"),
+            InputDisplay.get_binding_label(&"carry"),
+            InputDisplay.get_binding_label(&"meow"),
+            InputDisplay.get_binding_label(&"emote"),
+            InputDisplay.get_binding_label(&"jump"),
+            InputDisplay.get_binding_label(&"pause"),
+        ]

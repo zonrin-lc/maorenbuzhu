@@ -1,0 +1,20 @@
+《猫忍不住》v1.5.6 Release Audit
+
+PASS - GameInputManager autoload
+PASS - Keyboard/Mouse detection
+PASS - Gamepad detection
+PASS - Touch detection
+PASS - Core gamepad bindings
+PASS - Responsive touch layout
+PASS - Touch button mouse/touch hit handling
+PASS - Device-aware HUD hint
+PASS - Touch hides redundant HUD control strip
+PASS - Carry setter and signal
+PASS - LevelManager binds cat to UI
+PASS - No direct carry writes
+PASS - No duplicate GDScript function declarations
+PASS - No merge conflict markers
+PASS - UI node references
+PASS - ZIP packaging
+
+Note: static audit only; Godot 4 runtime execution is not available in this environment.

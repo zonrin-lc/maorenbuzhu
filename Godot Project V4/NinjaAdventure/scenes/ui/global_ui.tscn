@@ -43,6 +43,18 @@ offset_bottom = 72.0
 text = "😏"
 theme_override_font_sizes/font_size = 26
 
+[node name="DeviceIndicator" type="Label" parent="HUD/TopBar"]
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -270.0
+offset_top = 18.0
+offset_right = -174.0
+offset_bottom = 48.0
+text = "键鼠"
+horizontal_alignment = 2
+theme_override_font_sizes/font_size = 14
+
 [node name="NinjaLocator" type="Control" parent="HUD"]
 layout_mode = 0
 offset_right = 48.0
@@ -79,6 +91,18 @@ layout_mode = 0
 offset_right = 420.0
 offset_top = 64.0
 offset_bottom = 112.0
+
+[node name="ControlHints" type="Label" parent="HUD/BottomBar"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -220.0
+offset_top = 72.0
+offset_right = 220.0
+offset_bottom = 108.0
+text = "移动 WASD   互动 E   叼取 Q   喵叫 F   卖萌 CTRL   跳跃 SPACE   暂停 ESC"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 12
 
 [node name="MeowButton" type="Button" parent="HUD/BottomBar/ActionButtons"]
 text = "F 喵叫"

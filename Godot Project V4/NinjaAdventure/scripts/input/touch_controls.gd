@@ -1,30 +1,39 @@
 class_name TouchControls
 extends CanvasLayer
 
-# 移动端触屏层：左侧虚拟摇杆（move_* 动作），右侧情境按键（E/Q/F/Ctrl/Shift）。
-# 按键通过 Input.action_press/action_release 驱动 InputMap，Gameplay 只读 Action（GDD §2.2 / v1.2.18）。
-# 自动显示：移动端平台、触屏输入、或编辑器开启 emulate_touch 时；桌面键鼠隐藏。
+# 移动端：左虚拟摇杆 + 右侧六个情境动作键。
+# 所有输入仍通过 InputMap Action，Gameplay 不区分输入设备。
 
 const BUTTONS := [
     {"action": "interact", "label": "互动"},
     {"action": "carry", "label": "叼取"},
     {"action": "meow", "label": "喵叫"},
     {"action": "emote", "label": "卖萌"},
+    {"action": "jump", "label": "跳跃"},
     {"action": "sprint", "label": "疾跑"},
 ]
 
 var _stick_base: Control
 var _stick_nub: Control
+var _button_grid: GridContainer
 var _stick_center := Vector2.ZERO
-var _stick_radius := 90.0
+var _stick_radius := 82.0
 var _stick_touch := -1
-var _button_touches := {}
+var _touch_capable := false
 
 func _ready() -> void:
     layer = 50
+    process_mode = Node.PROCESS_MODE_ALWAYS
+    _touch_capable = OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios") \
+        or DisplayServer.is_touchscreen_available() \
+        or (OS.has_feature("editor") and ProjectSettings.get_setting("input_devices/pointing/emulate_touch_from_mouse", false))
     _build_stick()
     _build_buttons()
+    var input_manager := get_node_or_null("/root/GameInputManager")
+    if input_manager != null and not input_manager.device_changed.is_connected(_on_device_changed):
+        input_manager.device_changed.connect(_on_device_changed)
     _update_visibility()
+    _layout()
 
 func _notification(what: int) -> void:
     if what == NOTIFICATION_WM_SIZE_CHANGED:
@@ -33,60 +42,77 @@ func _notification(what: int) -> void:
 func _build_stick() -> void:
     _stick_base = Control.new()
     _stick_base.name = "VirtualStick"
-    _stick_base.custom_minimum_size = Vector2(_stick_radius * 2.4, _stick_radius * 2.4)
-    _stick_base.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-    _stick_base.position = Vector2(36, -260)
     add_child(_stick_base)
     var base_ring := _make_circle(_stick_radius, Color(1, 1, 1, 0.10), Color(1, 1, 1, 0.35))
     _stick_base.add_child(base_ring)
-    base_ring.position = Vector2(_stick_radius * 1.2, _stick_radius * 1.2)
     _stick_nub = _make_circle(_stick_radius * 0.45, Color(1, 1, 1, 0.35), Color(1, 1, 1, 0.6))
     _stick_base.add_child(_stick_nub)
-    _stick_nub.position = Vector2(_stick_radius * 1.2, _stick_radius * 1.2)
-    _stick_center = Vector2(_stick_radius * 1.2, _stick_radius * 1.2)
+    _set_stick_geometry()
+
+func _set_stick_geometry() -> void:
+    if _stick_base == null:
+        return
+    var diameter := _stick_radius * 2.0
+    _stick_base.size = Vector2(diameter, diameter)
+    _stick_base.custom_minimum_size = _stick_base.size
+    _stick_center = Vector2(diameter * 0.5, diameter * 0.5)
+    _stick_nub.position = _stick_center - _stick_nub.size * 0.5
 
 func _make_circle(radius: float, fill: Color, border: Color) -> Control:
     var c := Control.new()
-    c.custom_minimum_size = Vector2(radius * 2, radius * 2)
-    c.size = c.custom_minimum_size
-    c.pivot_offset = Vector2(radius, radius)
+    c.size = Vector2(radius * 2.0, radius * 2.0)
     var drawer := _CircleDrawer.new()
     drawer.radius = radius
     drawer.fill = fill
     drawer.border = border
-    c.add_child(drawer)
     drawer.set_anchors_preset(Control.PRESET_FULL_RECT)
+    c.add_child(drawer)
     return c
 
 func _build_buttons() -> void:
-    var col := VBoxContainer.new()
-    col.name = "ActionButtons"
-    col.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-    col.position = Vector2(-120, -460)
-    col.add_theme_constant_override("separation", 14)
-    add_child(col)
+    _button_grid = GridContainer.new()
+    _button_grid.name = "ActionButtons"
+    _button_grid.columns = 2
+    _button_grid.add_theme_constant_override("h_separation", 10)
+    _button_grid.add_theme_constant_override("v_separation", 10)
+    add_child(_button_grid)
     for spec in BUTTONS:
         var b := Button.new()
+        b.name = str(spec.action).capitalize()
         b.text = spec.label
-        b.custom_minimum_size = Vector2(88, 64)
-        b.modulate = Color(1, 1, 1, 0.75)
+        b.focus_mode = Control.FOCUS_NONE
+        b.mouse_filter = Control.MOUSE_FILTER_STOP
         var action: StringName = spec.action
-        b.button_down.connect(func(): Input.action_press(action))
-        b.button_up.connect(func(): Input.action_release(action))
-        col.add_child(b)
+        b.button_down.connect(func():
+            _set_device_touch()
+            Input.action_press(action)
+        )
+        b.button_up.connect(func():
+            Input.action_release(action)
+        )
+        _button_grid.add_child(b)
 
 func _layout() -> void:
-    # 横屏布局：摇杆左下、按键右下（随窗口尺寸自适应）
+    var size := get_viewport().get_visible_rect().size
+    var short_side := minf(size.x, size.y)
+    _stick_radius = clampf(short_side * 0.105, 64.0, 94.0)
+    _set_stick_geometry()
     if _stick_base:
-        _stick_base.position = Vector2(36, -260)
-    var col := get_node_or_null("ActionButtons") as VBoxContainer
-    if col:
-        col.position = Vector2(-120, -460)
+        _stick_base.position = Vector2(24.0, size.y - _stick_base.size.y - 24.0)
+    if _stick_nub:
+        _stick_nub.position = _stick_center - _stick_nub.size * 0.5
+    if _button_grid:
+        var cell := clampf(short_side * 0.095, 58.0, 82.0)
+        _button_grid.position = Vector2(size.x - cell * 2.0 - 28.0, size.y - cell * 3.0 - 28.0)
+        _button_grid.size = Vector2(cell * 2.0, cell * 3.0)
+        for child in _button_grid.get_children():
+            if child is Button:
+                child.custom_minimum_size = Vector2(cell, cell)
+                child.size = Vector2(cell, cell)
 
 func _input(event: InputEvent) -> void:
     if event is InputEventScreenTouch or event is InputEventScreenDrag:
-        if not visible:
-            visible = true
+        _set_device_touch()
     if not visible:
         return
     if event is InputEventScreenTouch:
@@ -95,19 +121,19 @@ func _input(event: InputEvent) -> void:
         _on_drag(event)
 
 func _on_touch(event: InputEventScreenTouch) -> void:
-    var local := _stick_base.get_global_transform_with_canvas().affine_inverse() * event.position
+    if _stick_base == null:
+        return
     if event.pressed:
-        if _stick_touch == -1 and _stick_base.get_global_rect().grow(40).has_point(event.position):
+        if _stick_touch == -1 and _stick_base.get_global_rect().grow(28).has_point(event.position):
             _stick_touch = event.index
-            _drag_stick(local)
-    else:
-        if event.index == _stick_touch:
-            _stick_touch = -1
-            _stick_nub.position = _stick_center
-            _release_move()
+            _drag_stick(_stick_base.get_global_transform_with_canvas().affine_inverse() * event.position)
+    elif event.index == _stick_touch:
+        _stick_touch = -1
+        _stick_nub.position = _stick_center - _stick_nub.size * 0.5
+        _release_move()
 
 func _on_drag(event: InputEventScreenDrag) -> void:
-    if event.index != _stick_touch:
+    if event.index != _stick_touch or _stick_base == null:
         return
     var local := _stick_base.get_global_transform_with_canvas().affine_inverse() * event.position
     _drag_stick(local)
@@ -116,7 +142,7 @@ func _drag_stick(local: Vector2) -> void:
     var offset := local - _stick_center
     if offset.length() > _stick_radius:
         offset = offset.normalized() * _stick_radius
-    _stick_nub.position = _stick_center + offset
+    _stick_nub.position = _stick_center + offset - _stick_nub.size * 0.5
     var dir := offset / _stick_radius
     _apply_move(dir)
 
@@ -134,14 +160,23 @@ func _set_action(action: StringName, pressed: bool, strength: float = 1.0) -> vo
         Input.action_release(action)
 
 func _release_move() -> void:
-    for a in [&"move_left", &"move_right", &"move_up", &"move_down"]:
-        Input.action_release(a)
+    for action in [&"move_left", &"move_right", &"move_up", &"move_down"]:
+        Input.action_release(action)
+
+func _set_device_touch() -> void:
+    var input_manager := get_node_or_null("/root/GameInputManager")
+    if input_manager != null:
+        input_manager.set_last_device(GameInputManager.DEVICE_TOUCH)
+
+func _on_device_changed(device: String) -> void:
+    if device == GameInputManager.DEVICE_TOUCH:
+        visible = true
+    elif not _touch_capable:
+        visible = false
 
 func _update_visibility() -> void:
-    # 显隐策略（GDD §2.2 移动端优先）：真机触屏显示；桌面仅编辑器内预览显示
-    visible = OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios") \
-        or DisplayServer.is_touchscreen_available() \
-        or (OS.has_feature("editor") and ProjectSettings.get_setting("input_devices/pointing/emulate_touch_from_mouse", false))
+    var input_manager := get_node_or_null("/root/GameInputManager")
+    visible = _touch_capable and (input_manager == null or input_manager.last_device == GameInputManager.DEVICE_TOUCH)
 
 class _CircleDrawer extends Control:
     var radius := 40.0

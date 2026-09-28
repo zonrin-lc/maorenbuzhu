@@ -2,7 +2,7 @@ extends Control
 
 @onready var app: AppFlow = $AppFlow
 @onready var continue_button: Button = $Margin/VBox/Continue
-@onready var status: Label = $Margin/VBox/Status
+@onready var status: Label = $Margin/VBox/ProgressPanel/Status
 
 func _ready() -> void:
     var save := app.save_data()

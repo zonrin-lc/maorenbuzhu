@@ -46,7 +46,7 @@ func _process(_delta: float) -> void:
         return
     if Input.is_action_just_pressed("carry"):
         collected = true
-        level_manager.cat.carry_item = item_id
+        level_manager.cat.set_carry_item(item_id)
         level_manager.call("_set_carry_visual", item_id)
         level_manager.event_log.append_event({
             "event_id": StringName("PICKUP_%s" % String(item_id)),

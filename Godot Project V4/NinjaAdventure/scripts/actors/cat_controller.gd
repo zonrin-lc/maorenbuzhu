@@ -5,6 +5,8 @@ signal action_started(action_id: StringName)
 signal action_finished(action_id: StringName)
 signal meow_triggered()
 signal emote_triggered()
+signal interaction_changed(action_name: String, enabled: bool)
+signal carry_changed(item_id: String)
 
 @export var speed := 90.0
 @export var sprint_speed := 160.0
@@ -36,6 +38,12 @@ func _ready() -> void:
     add_child(anim_driver)
     anim_driver.setup(sprite, &"animal")
 
+func set_carry_item(item_id: StringName) -> void:
+    if carry_item == item_id:
+        return
+    carry_item = item_id
+    carry_changed.emit(String(carry_item))
+
 func _physics_process(delta: float) -> void:
     var manager = get_parent()
     if manager != null and manager.get("reading_phase") == true:
@@ -51,6 +59,7 @@ func _physics_process(delta: float) -> void:
             var finished := action_id
             action_id = &""
             action_finished.emit(finished)
+            interaction_changed.emit(String(finished), false)
         queue_redraw()
         return
 
@@ -98,6 +107,7 @@ func start_action(new_action: StringName, duration: float) -> bool:
     action_id = new_action
     action_remaining = duration
     action_started.emit(new_action)
+    interaction_changed.emit(String(new_action), false)
     if anim_driver != null:
         anim_driver.play(AnimationFeedbackDriver.State.ACTION, max(duration, 0.18))
     return true
