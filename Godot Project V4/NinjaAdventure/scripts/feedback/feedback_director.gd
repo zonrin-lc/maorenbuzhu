@@ -82,7 +82,7 @@ func _ready() -> void:
     root.add_child(paw_stamp)
 
 func show_event_resolved(event_type: StringName, display_name: String, action_id: StringName) -> void:
-    var copy := EVENT_COPY.get(String(event_type), "处理成功")
+    var copy: String = EVENT_COPY.get(String(event_type), "处理成功")
     var action_copy := _action_copy(action_id)
     _show_banner(copy, "%s · %s" % [display_name, action_copy], false)
     _flash(Color(0.55, 1.0, 0.65, 0.14))

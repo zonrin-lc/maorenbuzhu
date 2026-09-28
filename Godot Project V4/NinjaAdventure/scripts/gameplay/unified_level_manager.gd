@@ -63,13 +63,8 @@ var l07_bridge_open := false
 var l08_dog_assist_pending := false
 var l08_bridge_open := false
 
-# Boss integration
-var boss_started := false
-var boss_mechanics_success := 0
-var emergency_available := false
-var emergency_used := false
-# L12 Boss slice: prep must happen before Boss starts; zero-prep requires emergency rescue.
-var l12_boss_overrun_logged := false
+# Boss integration（Boss 领域状态与流程已抽出到 BossDirector，见 scripts/gameplay/boss_director.gd）
+var boss_director: BossDirector
 
 # Hard Mode / Variant B（GDD §5.3）：修饰只作用于 _prepare_level_data() 深拷贝出的运行时副本，
 # 磁盘上的 LevelData/RouteData/EventPointData .tres 永不被改写。
@@ -80,7 +75,6 @@ var _suspicion_gain_mult := 1.0
 const SUSPICION_NOTICE := 25.0
 const SUSPICION_ALERT := 50.0
 const SUSPICION_HIGH := 80.0
-const EMERGENCY_POS := Vector2(930, 290)
 
 func _ready() -> void:
     _cache_nodes()
@@ -101,7 +95,7 @@ func _ready() -> void:
     _setup_l09_storm()
     _setup_l10_chain()
     _setup_l11_busy_gate()
-    _setup_l12_boss_slice()
+    _setup_boss_director()
     SceneArtBuilder.build_decorations(self, level_data)
     var errors := validator.validate_level(level_data)
     if not errors.is_empty():
@@ -116,9 +110,9 @@ func _ready() -> void:
         cat.action_started.connect(_on_cat_action_started)
     if boss:
         boss.setup(self)
-        boss.phase_changed.connect(_on_boss_phase)
-        boss.defeated.connect(_on_boss_defeated)
-        boss.retreat.connect(_on_boss_retreat)
+        boss.phase_changed.connect(boss_director.on_phase)
+        boss.defeated.connect(boss_director.on_defeated)
+        boss.retreat.connect(boss_director.on_retreat)
     _build_events()
     _place_guards_and_dog()
     _set_label(status_label, "%s · %s" % [String(level_data.chapter_id), level_data.display_name])
@@ -163,6 +157,8 @@ func _setup_feedback_director() -> void:
     feedback_director = FeedbackDirector.new()
     feedback_director.name = "FeedbackDirector"
     add_child(feedback_director)
+    if boss_director != null:
+        boss_director.feedback_director = feedback_director
     if ninja != null and ninja.has_signal("damaged"):
         ninja.damaged.connect(_on_feedback_ninja_damaged)
 
@@ -835,24 +831,23 @@ func _setup_l09_storm() -> void:
     fish.setup(&"FISH", self)
     _show_toast("雷雨夜：忍者全程加速。Q 叼鱼，E 处理狗；每个窗口都更短。")
 
-func _setup_l12_boss_slice() -> void:
-    if level_data == null or level_data.level_id != &"L12":
+func _setup_boss_director() -> void:
+    if boss == null:
         return
-    # Prep items become available only after the outer dynamite/gate event,
-    # then remain usable while Ninja walks toward the Boss arena.
-    _show_toast("L12：先做吊车/酒葫芦准备；都不做也能打，但最后要赶去应急门。")
-
-func _l12_event_done(event_id: StringName) -> bool:
-    var node := _find_event_node(event_id)
-    return node != null and node.resolved_state
-
-func _l12_prep_count() -> int:
-    var count := 0
-    if world_state.get_flag(&"boss_crane_ready"):
-        count += 1
-    if world_state.get_flag(&"boss_gourd_ready"):
-        count += 1
-    return count
+    boss_director = BossDirector.new()
+    boss_director.boss = boss
+    boss_director.ninja = ninja
+    boss_director.cat = cat
+    boss_director.world_state = world_state
+    boss_director.event_log = event_log
+    boss_director.level_id = level_data.level_id if level_data != null else &""
+    boss_director.find_event_node = Callable(self, "_find_event_node")
+    boss_director.show_toast = Callable(self, "_show_toast")
+    boss_director.complete_level = Callable(self, "_complete_level")
+    boss_director.notify_ninja_dead = Callable(self, "on_ninja_dead")
+    boss_director.is_level_failed = func() -> bool: return level_failed
+    boss_director.is_level_finished = func() -> bool: return level_finished
+    boss_director.setup_l12_slice()
 
 
 func _cache_nodes() -> void:
@@ -976,18 +971,18 @@ func is_event_active(data: EventPointData) -> bool:
     if level_data != null and level_data.level_id == &"L12":
         match data.event_id:
             &"L12_E01_DYNAMITE":
-                return not _l12_event_done(&"L12_E01_DYNAMITE")
+                return not boss_director.l12_event_done(&"L12_E01_DYNAMITE")
             &"L12_E02_BOSS_CRANE", &"L12_E03_BOSS_GOURD":
-                return world_state.get_flag(&"l12_gate_open") and not boss_started and not _l12_event_done(data.event_id)
+                return world_state.get_flag(&"l12_gate_open") and not boss_director.boss_started and not boss_director.l12_event_done(data.event_id)
             &"L12_E04_BOSS_CALTROP":
-                return boss != null and boss_started and boss.phase == 2 and not _l12_event_done(&"L12_E04_BOSS_CALTROP")
+                return boss != null and boss_director.boss_started and boss.phase == 2 and not boss_director.l12_event_done(&"L12_E04_BOSS_CALTROP")
     if data.activation_flag != &"" and not world_state.get_flag(data.activation_flag):
         return false
     if data.activation_phase != 0:
         if boss == null or boss.phase != data.activation_phase:
             return false
     if data.event_group == &"BOSS_COMBAT":
-        return boss != null and boss_started
+        return boss != null and boss_director.boss_started
     if level_data != null and level_data.level_id == &"L12":
         match data.event_id:
             &"L12_E01_DYNAMITE":
@@ -1593,13 +1588,10 @@ func _apply_effect(effect: EventEffectData) -> void:
         &"DOG_LURE_GUARD":
             _send_l06_dog_to_guard(int(effect.amount))
         &"BOSS_PREPARE_DAMAGE":
-            if boss:
-                boss.prepare(int(effect.amount))
-                boss_mechanics_success += 1
+            if boss_director != null:
+                boss_director.apply_prepare_damage(int(effect.amount))
         &"BOSS_COMBAT_DAMAGE":
-            if boss and boss.phase == effect.phase_required:
-                boss.damage(int(effect.amount), effect.effect_type)
-                boss_mechanics_success += 1
+            if boss_director != null and boss_director.apply_combat_damage(int(effect.amount), effect.phase_required, effect.effect_type):
                 high_risk_rescue += 1
         _:
             pass
@@ -1871,8 +1863,8 @@ func _find_main_event_index(event_id: StringName) -> int:
     return -1
 
 func ninja_reached_goal() -> void:
-    if boss != null and not boss_started:
-        _start_boss_sequence()
+    if boss != null and not boss_director.boss_started:
+        boss_director.start_boss_sequence()
         return
     if _current_main_event() != null:
         return
@@ -1880,93 +1872,14 @@ func ninja_reached_goal() -> void:
         return
     _complete_level(false)
 
-func _start_boss_sequence() -> void:
-    if boss == null or boss_started:
-        return
-    boss_started = true
-    emergency_available = false
-    emergency_used = false
-    l12_boss_overrun_logged = false
-    world_state.set_flag(&"boss_started")
-    GlobalAudioManager.set_music_state("BOSS_PREPARE")
-    boss.start_boss()
-    var prep := boss_mechanics_success
-    if level_data != null and level_data.level_id == &"L12":
-        if prep == 0:
-            _show_toast("Boss 出现！你一个机关都没做，只能准备应急救援。")
-        elif prep == 1:
-            _show_toast("Boss 出现！准备机关生效了一项，剩下靠临场救场。")
-        else:
-            _show_toast("Boss 出现！两项战前准备生效，Phase 2 处理蒺藜即可终结。")
-    else:
-        _show_toast("Boss 出现！战场还没有结束。")
-    event_log.append_event({"event_id": &"BOSS_START", "action": &"START", "success": true, "prep_mechanics": prep, "prepared_damage": 100 - boss.hp})
-
-func _on_boss_phase(phase: int) -> void:
-    GlobalAudioManager.play_event_sfx("boss_phase")
-    if feedback_director != null:
-        feedback_director.show_boss_phase(phase)
-    world_state.set_flag(&"boss_phase_%d" % phase)
-    if phase >= 1 and phase <= 3:
-        GlobalAudioManager.set_music_state("BOSS_PHASE_%d" % phase)
-    if phase == 2:
-        _show_toast("Boss 开始冲锋！现在处理蒺藜。")
-    elif phase == 3:
-        if boss_mechanics_success == 0:
-            emergency_available = true
-            _show_toast("危险！赶去应急门救场。Boss 进入最后追击。")
-            event_log.append_event({"event_id": &"BOSS_EMERGENCY_WINDOW", "action": &"OPEN", "success": true, "phase": 3})
-
-func _on_boss_defeated() -> void:
-    boss_started = false
-    GlobalAudioManager.play_event_sfx("victory")
-    GlobalAudioManager.set_music_state("BOSS_DEFEAT")
-    _complete_level(false)
-
-func _on_boss_retreat() -> void:
-    boss_started = false
-    if emergency_used:
-        event_log.append_event({"event_id": &"BOSS_RETREAT_EMERGENCY", "action": &"EMERGENCY", "success": true, "mechanics": boss_mechanics_success})
-        _complete_level(true)
-        return
-    # GDD: 1–2 mechanics = Ninja survives the Boss but loses 2 hearts in the final struggle.
-    if boss_mechanics_success < 3 and ninja != null:
-        var before := ninja.hp
-        ninja.take_damage(2)
-        event_log.append_event({"event_id": &"BOSS_HARD_FIGHT", "action": &"RETREAT_DAMAGE", "success": ninja.hp > 0, "ninja_hp_before": before, "ninja_hp_after": ninja.hp, "mechanics": boss_mechanics_success})
-        if level_failed:
-            return
-    _complete_level(false)
-
 func can_boss_finish() -> bool:
-    # 0 mechanics: only emergency rescue can close the fight.
-    # 1–2 mechanics: Boss retreats after Phase 3 as a hard-fought clear.
-    # 3 mechanics: Boss HP reaches 0 first and defeated signal closes the level.
-    return boss_mechanics_success > 0 or emergency_used
+    # 对外 API 保留（BossController 直接调用），实现已迁移到 BossDirector。
+    return boss_director != null and boss_director.can_finish()
 
 func on_boss_overrun() -> void:
-    if level_failed or level_finished or l12_boss_overrun_logged:
-        return
-    if level_data == null or level_data.level_id != &"L12":
-        return
-    if emergency_used or boss_mechanics_success > 0:
-        return
-    l12_boss_overrun_logged = true
-    emergency_available = false
-    event_log.append_event({"event_id": &"BOSS_OVERRUN", "action": &"FAIL", "phase": &"FAILED", "success": false, "reason": &"NO_PREP_NO_EMERGENCY"})
-    _show_toast("来不及救场！守门武士把忍者打出场地。")
-    on_ninja_dead()
-
-func _try_emergency() -> void:
-    if not emergency_available or emergency_used or boss == null:
-        return
-    if cat.global_position.distance_to(EMERGENCY_POS) <= 60.0 and Input.is_action_pressed("interact"):
-        emergency_used = true
-        emergency_available = false
-        if ninja:
-            ninja.hp = max(1, ninja.hp)
-        boss.retreat.emit()
-        event_log.append_event({"event_id": &"EMERGENCY_RESCUE", "action": &"EMERGENCY", "success": true, "ninja_hp_after": ninja.hp})
+    # 对外 API 保留（BossController 通过 has_method/call 调用），实现已迁移到 BossDirector。
+    if boss_director != null:
+        boss_director.on_overrun()
 
 func _complete_level(emergency: bool) -> void:
     if level_finished:
@@ -2034,7 +1947,8 @@ func _process(_delta: float) -> void:
             _end_reading_tour()
         return
     if not level_finished and not level_failed:
-        _try_emergency()
+        if boss_director != null:
+            boss_director.try_emergency()
         var elapsed := Time.get_ticks_msec() / 1000.0 - start_time
         _set_label(timer_label, "时间 %.1fs / %.0fs · %s" % [elapsed, balance_director.target_time, balance_director.status_text(elapsed)])
         var balance_warning := balance_director.next_warning(elapsed)
@@ -2075,7 +1989,14 @@ func _update_hud() -> void:
     if paw_label != null and not level_finished:
         paw_label.text = "猫爪：— / 3"
     if state_label != null:
-        var base_state := "事件 %d/%d | Boss %s | 机关 %d | 应急 %s" % [active_main_event_index, _main_event_count(), "已启动" if boss_started else "未启动", boss_mechanics_success, "可用" if emergency_available else "—"]
+        var boss_state_text := "未启动"
+        var boss_mechanics := 0
+        var emergency_text := "—"
+        if boss_director != null:
+            boss_state_text = "已启动" if boss_director.boss_started else "未启动"
+            boss_mechanics = boss_director.boss_mechanics_success
+            emergency_text = "可用" if boss_director.emergency_available else "—"
+        var base_state := "事件 %d/%d | Boss %s | 机关 %d | 应急 %s" % [active_main_event_index, _main_event_count(), boss_state_text, boss_mechanics, emergency_text]
         if level_data != null and level_data.level_id == &"L05":
             var shift := "B 已换岗" if l05_guard_b_activated else ("B 还剩 %.1fs" % maxf(0.0, 8.0 - (_l05_now() - l05_guard_a_depart_time)) if l05_guard_a_depart_time >= 0.0 else "先处理守卫 A")
             base_state += " | " + shift
@@ -2102,7 +2023,7 @@ func _update_hud() -> void:
             var cal := "✓蒺藜" if world_state.get_flag(&"L12_E04_BOSS_CALTROP") else "○蒺藜"
             var phase := boss.phase if boss else 0
             var hp := boss.hp if boss else 100
-            var emergency := "应急开启" if emergency_available else "应急—"
+            var emergency := "应急开启" if boss_director.emergency_available else "应急—"
             base_state += " | Boss P%d HP%d | %s %s %s | %s" % [phase, hp, crane, gourd, cal, emergency]
         if level_data != null and level_data.level_id == &"L10":
             var l10_guard := "A 已换位" if l10_guard_a_shifted else "A 未换位"
@@ -2125,6 +2046,6 @@ func _draw() -> void:
     # 外框压暗 + 游玩区域描边（地面纹理由 Floor 节点平铺）
     draw_rect(Rect2(40, 115, 1020, 500), Color(0, 0, 0, 0.18))
     draw_rect(Rect2(40, 115, 1020, 500), Color(1, 1, 1, 0.12), false, 2.0)
-    if boss_started:
-        draw_circle(EMERGENCY_POS, 24.0, Color(0.9, 0.2, 0.2, 0.15))
-        draw_arc(EMERGENCY_POS, 28.0, 0.0, TAU, 32, Color("#f87171"), 2.0)
+    if boss_director != null and boss_director.boss_started:
+        draw_circle(BossDirector.EMERGENCY_POS, 24.0, Color(0.9, 0.2, 0.2, 0.15))
+        draw_arc(BossDirector.EMERGENCY_POS, 28.0, 0.0, TAU, 32, Color("#f87171"), 2.0)

@@ -81,7 +81,7 @@ func _refresh_input_hints() -> void:
     var device_label := get_node_or_null("HUD/TopBar/DeviceIndicator") as Label
     var hint_label := get_node_or_null("HUD/BottomBar/ControlHints") as Label
     var input_manager := get_node_or_null("/root/GameInputManager")
-    var device := input_manager.last_device if input_manager != null else GameInputManager.DEVICE_KEYBOARD_MOUSE
+    var device: String = input_manager.last_device if input_manager != null else GameInputManager.DEVICE_KEYBOARD_MOUSE
     if device_label != null:
         device_label.text = InputDisplay.get_device_name(device)
     if hint_label != null:

@@ -107,13 +107,13 @@ func _apply_transform() -> void:
             if actor_kind == &"character" and sprite.vframes >= 7:
                 sprite.frame_coords.y = 4
         State.HIT:
-            var shake := sin(t * 70.0) * max(0.0, state_remaining + 0.02) * 0.08
+            var shake: float = sin(t * 70.0) * max(0.0, state_remaining + 0.02) * 0.08
             sprite.rotation = shake
             sprite.scale = base_scale * (1.0 - min(t, 0.16) * 0.4)
             if actor_kind == &"character" and sprite.vframes >= 7:
                 sprite.frame_coords.y = 6
         State.VICTORY:
-            var jump_phase := min(t / 0.42, 1.0)
+            var jump_phase: float = min(t / 0.42, 1.0)
             sprite.position.y = -sin(jump_phase * PI) * 5.0
             sprite.scale = base_scale * (1.0 + sin(jump_phase * PI) * 0.06)
         State.DEATH:
@@ -126,8 +126,8 @@ func _apply_transform() -> void:
             pass
 
     if state == State.HIT:
-        var flash_phase := clamp(anim_clock / 0.18, 0.0, 1.0)
-        var tint := base_modulate
+        var flash_phase: float = clamp(anim_clock / 0.18, 0.0, 1.0)
+        var tint: Color = base_modulate
         sprite.modulate = Color(
             lerp(tint.r, 1.0, 0.45),
             lerp(tint.g, 0.55, 0.45 + 0.45 * flash_phase),
