@@ -1,9 +1,0 @@
-[gd_resource type="Resource" script="res://data/banter/banter_data.gd"]
-
-[resource]
-banter_id = "BAN_BOSS_CALTROP_01"
-priority = "BOSS"
-required_tags = ["BOSS_CALTROP"]
-text_template = "那家伙刚冲过来，我只用气势就让他脚底打滑。"
-cat_response = "（舔爪）"
-weight = 1.0

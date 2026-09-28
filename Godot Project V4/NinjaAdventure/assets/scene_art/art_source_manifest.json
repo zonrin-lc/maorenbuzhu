@@ -1,0 +1,31 @@
+{
+  "version": "1.6.0",
+  "backgrounds": {
+    "CH01": "res://assets/scene_art/chapter_village_bg.png",
+    "CH02": "res://assets/scene_art/chapter_dock_bg.png",
+    "CH03": "res://assets/scene_art/chapter_castle_bg.png"
+  },
+  "source_assets": [
+    "res://assets/tilesets/field.png",
+    "res://assets/tilesets/floor.png",
+    "res://assets/tilesets/nature.png",
+    "res://assets/tilesets/house.png",
+    "res://assets/tilesets/dungeon.png",
+    "res://assets/tilesets/water_ripples.png",
+    "res://assets/props/crate.png",
+    "res://assets/props/fish.png",
+    "res://assets/props/fish_net.png",
+    "res://assets/props/gourd.png",
+    "res://assets/props/crane.png",
+    "res://assets/props/caltrop.png",
+    "res://assets/props/dynamite_crate.png",
+    "res://assets/props/life_pot.png",
+    "res://assets/props/scroll.png"
+  ],
+  "principles": [
+    "visual-only pass",
+    "preserve collision geometry",
+    "preserve scripted Ninja routes",
+    "no external commercial art added"
+  ]
+}

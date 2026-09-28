@@ -1,9 +1,0 @@
-[gd_resource type="Resource" script_class="RouteData" load_steps=2 format=3]
-[ext_resource type="Script" path="res://scripts/data/route_data.gd" id="1"]
-[resource]
-script = ExtResource("1")
-route_id = &"L09_NINJA_MAIN"
-actor_id = &"NINJA_BLUE"
-waypoints = [Vector2(100,500), Vector2(240,420), Vector2(390,470), Vector2(540,360), Vector2(700,420), Vector2(860,300), Vector2(980,220)]
-move_speed = 60.0
-loop = false

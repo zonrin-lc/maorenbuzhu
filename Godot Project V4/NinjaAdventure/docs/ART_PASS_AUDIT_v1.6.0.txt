@@ -1,0 +1,35 @@
+《猫忍不住》v1.6.0 ART PASS AUDIT
+
+ART_PASS_LEVELS=12
+ART_BG_ASSETS=3
+ERRORS=0
+DUPLICATE_FUNC_FILES=0
+
+Background sizes:
+- chapter_village_bg.png = 1104x490
+- chapter_dock_bg.png = 1104x490
+- chapter_castle_bg.png = 1104x490
+
+Integration:
+- SceneArt background references = 3/3
+- Scroll goal prop = wired
+- Key chapter props = wired
+- LayoutGeometry visible = false (collisions retained)
+- UnifiedLevelManager remains the single gameplay flow owner
+
+Legacy static audits:
+- Event Audit = PASS
+- Input Audit = PASS
+- Audio Audit = PASS
+- Settings Audit = PASS
+- Debug/QA Audit = PASS
+- Balance Audit = PASS
+- Release Audit = PASS
+- Settlement Audit = PASS
+- Feedback Audit = PASS
+- Audio Feedback Audit = PASS
+- Audio Layer Audit = PASS
+- Cat Meow Audit = PASS
+- UI Pack Validation = PASS
+
+Godot 4 runtime launch not available in the current environment; this file is a static/source/resource audit.

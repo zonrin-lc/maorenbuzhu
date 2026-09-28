@@ -1,8 +1,0 @@
-events=46 types=11 errors=0
-
---- property audit ---
-event_behavior_files=12
-event_effect_files=5
-events_with_effect_property=46
-dog_consume=6
-poison_consume=4

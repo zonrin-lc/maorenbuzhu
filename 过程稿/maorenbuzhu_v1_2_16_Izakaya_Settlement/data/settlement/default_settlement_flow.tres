@@ -1,9 +1,0 @@
-[gd_resource type="Resource" script="res://data/settlement/settlement_flow_data.gd"]
-
-[resource]
-first_clear_full_seconds = 20.0
-repeat_compact_seconds = 10.0
-max_banter_lines_full = 3
-max_banter_lines_compact = 1
-allow_expand_repeat = true
-save_failure_non_blocking = true

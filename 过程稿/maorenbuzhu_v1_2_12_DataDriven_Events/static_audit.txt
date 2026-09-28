@@ -1,8 +1,0 @@
-Version: v1.2.11
-Architecture: Unified Event Architecture
-Main scenes migrated: 12
-Unified manager: scripts/gameplay/unified_level_manager.gd
-Unified event point: scripts/gameplay/unified_event_point.gd
-Behavior registry: scripts/gameplay/event_behavior_registry.gd
-Compatibility shims: level_manager.gd, dock_level_manager.gd, castle_level_manager.gd
-Static audit result: GREEN
