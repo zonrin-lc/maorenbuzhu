@@ -147,6 +147,8 @@ func play_ninja_voice(tag: String) -> void:
     for p in _sfx_players:
         if not p.playing:
             p.stream = stream
+            # Voice 走 Voice 总线（GDD §9.1），音量与普通 SFX 对齐
+            p.bus = "Voice" if AudioServer.get_bus_index("Voice") >= 0 else (&"SFX" if AudioServer.get_bus_index("SFX") >= 0 else &"Master")
             p.pitch_scale = 1.0 + _meow_rng.randf_range(-0.05, 0.05)
             p.play()
             return

@@ -86,11 +86,6 @@ offset_right = 520.0
 offset_bottom = 56.0
 text = "空爪"
 
-[node name="ActionButtons" type="HBoxContainer" parent="HUD/BottomBar"]
-layout_mode = 0
-offset_right = 420.0
-offset_top = 64.0
-offset_bottom = 112.0
 
 [node name="ControlHints" type="Label" parent="HUD/BottomBar"]
 layout_mode = 0
@@ -104,11 +99,7 @@ text = "移动 WASD   互动 E   叼取 Q   喵叫 F   卖萌 CTRL   跳跃 SPAC
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 12
 
-[node name="MeowButton" type="Button" parent="HUD/BottomBar/ActionButtons"]
-text = "F 喵叫"
 
-[node name="EmoteButton" type="Button" parent="HUD/BottomBar/ActionButtons"]
-text = "Ctrl 卖萌"
 
 [node name="InteractPrompt" type="Control" parent="HUD/BottomBar"]
 layout_mode = 0

@@ -45,3 +45,37 @@ jobs:
             exit 1
           fi
           echo "Smoke test passed"
+
+      - name: 12-level regression (each level 90 frames, zero script errors)
+        working-directory: Godot Project V4/NinjaAdventure
+        shell: bash
+        run: |
+          LEVELS="
+          scenes/levels/ch01_village/L01_first_job.tscn
+          scenes/levels/ch01_village/L02_same_old_trap.tscn
+          scenes/levels/ch01_village/L03_who_is_watching.tscn
+          scenes/levels/ch01_village/L04_village_accident.tscn
+          scenes/levels/ch02_dock/L05_moonlit_dock.tscn
+          scenes/levels/ch02_dock/L06_dog_ally.tscn
+          scenes/levels/ch02_dock/L07_who_goes_first.tscn
+          scenes/levels/ch02_dock/L08_last_boat.tscn
+          scenes/levels/ch03_castle/L09_storm_night.tscn
+          scenes/levels/ch03_castle/L10_dont_touch_dynamite.tscn
+          scenes/levels/ch03_castle/L11_busy_gate.tscn
+          scenes/levels/ch03_castle/L12_gatekeeper_boss.tscn
+          "
+          FAILED=0
+          for level in $LEVELS; do
+            godot --headless --path . "$level" --quit-after 90 > level.log 2>&1
+            if grep -iE "SCRIPT ERROR|Parse Error" level.log; then
+              echo "LEVEL FAIL: $level"
+              FAILED=1
+            else
+              echo "LEVEL PASS: $level"
+            fi
+          done
+          if [ $FAILED -ne 0 ]; then
+            echo "Level regression failed"
+            exit 1
+          fi
+          echo "12-level regression passed"

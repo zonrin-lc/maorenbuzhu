@@ -20,6 +20,7 @@ config/icon="res://icon.png"
 GameInputManager="*res://scripts/input/input_manager.gd"
 
 SettingsManager="*res://scripts/flow/settings_manager.gd"
+SaveManager="*res://scripts/flow/save_manager.gd"
 GlobalAudioManager="*res://scripts/audio/global_audio_manager.gd"
 SettlementContext="*res://scripts/settlement/settlement_context.gd"
 DebugConsole="*res://scripts/debug/debug_console.gd"

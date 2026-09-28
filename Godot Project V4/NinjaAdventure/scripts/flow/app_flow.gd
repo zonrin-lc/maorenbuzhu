@@ -13,8 +13,7 @@ var settings_manager
 var result_flow: ResultFlow
 
 func _ready() -> void:
-    save_manager = SaveManagerClass.new()
-    add_child(save_manager)
+    save_manager = get_node("/root/SaveManager") as SaveManagerClass
     progress_manager = ProgressManagerClass.new()
     add_child(progress_manager)
     result_flow = ResultFlow.new()

@@ -59,8 +59,7 @@ const SUSPICION_HIGH := 80.0
 
 func _ready() -> void:
     _cache_nodes()
-    save_manager = SaveManagerClass.new()
-    add_child(save_manager)
+    save_manager = get_node("/root/SaveManager") as SaveManagerClass
     talent_tracker = TalentTrackerClass.new()
     add_child(talent_tracker)
     _prepare_level_data()
@@ -218,8 +217,12 @@ func _apply_variant(v: VariantData) -> void:
             if override.has("hesitation_time"):
                 event_data.hesitation_time = maxf(0.0, float(override["hesitation_time"]))
     _suspicion_gain_mult *= v.suspicion_modifier
-    # TODO: route_overrides / npc_overrides 目前只读入并挂在 active_variant 上供后续使用；
-    # 忍者路线分支与 NPC 起始位置的深层覆盖尚未接入（事件 position 覆盖在 _build_events 内应用）。
+    # route_overrides: {"waypoints": [...]} 替换忍者路线（_prepare_level_data 已深拷贝，可安全改写）
+    if v.route_overrides.has("waypoints") and level_data.ninja_route != null:
+        var wps: Array = v.route_overrides["waypoints"]
+        if wps.size() >= 2:
+            level_data.ninja_route.waypoints = PackedVector2Array(wps)
+    # npc_overrides: {"<event_id>": Vector2}（守卫）或 {"DOG": Vector2}——在 _place_guards_and_dog 应用
 
 # 读图镜头巡游（GDD §2.1）：开场推进到每个主线事件点，再拉回全景；按互动/确认跳过
 var reading_phase := false
@@ -574,6 +577,8 @@ func _place_guards_and_dog() -> void:
                     center = Vector2(350, 320)
                 elif data.event_id == &"L11_E05_GUARD_B":
                     center = Vector2(820, 320)
+            if active_variant != null and active_variant.npc_overrides.has(data.event_id):
+                center = active_variant.npc_overrides[data.event_id]
             if guard.has_method("setup"):
                 guard.call("setup", center)
             guard.visible = true
@@ -581,6 +586,8 @@ func _place_guards_and_dog() -> void:
     for i in range(guard_i, guards.size()):
         if guards[i] != null:
             guards[i].visible = false
+    if dog and active_variant != null and active_variant.npc_overrides.has(&"DOG"):
+        dog.setup(active_variant.npc_overrides[&"DOG"])
     if dog and dog.global_position == Vector2.ZERO:
         if level_data.level_id == &"L05":
             dog.setup(Vector2(540, 490))

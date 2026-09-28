@@ -51,9 +51,8 @@ func start_boss() -> void:
     if prepared_damage > 0:
         hp = max(1, hp - prepared_damage)
         prepared_damage = 0
-        _sync_phase_from_hp()
-    phase_changed.emit(phase)
-    queue_redraw()
+    set_phase(1)
+    _sync_phase_from_hp()
 
 func damage(amount: int, source: StringName) -> void:
     if not active:
@@ -73,6 +72,14 @@ func damage(amount: int, source: StringName) -> void:
     charge_timer = 0.0
     queue_redraw()
 
+func set_phase(new_phase: int) -> void:
+    # Phase 改变只有一个出口（GDD §4.8 / 实现债收口）：任何来源统一走这里 emit
+    if new_phase == phase:
+        return
+    phase = new_phase
+    phase_changed.emit(phase)
+    queue_redraw()
+
 func _sync_phase_from_hp() -> void:
     var new_phase := phase
     if hp <= 30:
@@ -81,10 +88,7 @@ func _sync_phase_from_hp() -> void:
         new_phase = 2
     elif new_phase < 1:
         new_phase = 1
-    if new_phase != phase:
-        phase = new_phase
-        phase_changed.emit(phase)
-        queue_redraw()
+    set_phase(new_phase)
 
 func _process(delta: float) -> void:
     anim_time += delta
@@ -94,14 +98,12 @@ func _process(delta: float) -> void:
         return
     timer += delta
     if phase == 1 and timer >= prepare_time:
-        phase = 2
+        set_phase(2)
         charge_timer = 0.0
-        phase_changed.emit(phase)
     elif phase == 2:
         charge_timer += delta
         if charge_timer >= 5.0:
-            phase = 3
-            phase_changed.emit(phase)
+            set_phase(3)
     elif phase == 3 and timer >= 8.0 and hp > 0:
         if manager and manager.can_boss_finish():
             active = false
