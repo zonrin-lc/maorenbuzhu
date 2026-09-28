@@ -131,6 +131,7 @@ func _ready() -> void:
         dog.arrived_at_target.connect(_on_l10_dog_arrived)
     # L11 uses the dog as a timed diversion, not as an ally state.
     _setup_global_ui()
+    _setup_feedback_director()
     _update_hud()
     queue_redraw()
     _start_reading_tour()
@@ -148,6 +149,18 @@ func _setup_global_ui() -> void:
     ui.bind_ninja(ninja)
     add_child(TouchControls.new())
     _setup_pause(ui)
+
+func _setup_feedback_director() -> void:
+    feedback_director = FeedbackDirector.new()
+    feedback_director.name = "FeedbackDirector"
+    add_child(feedback_director)
+    if ninja != null and ninja.has_signal("damaged"):
+        ninja.damaged.connect(_on_feedback_ninja_damaged)
+
+func _on_feedback_ninja_damaged(hp: int) -> void:
+    GlobalAudioManager.play_event_sfx("damage")
+    if feedback_director != null:
+        feedback_director.show_ninja_damage(hp)
 
 func _setup_pause(ui: UIManager) -> void:
     var pause := PauseController.new()
@@ -196,6 +209,7 @@ var l11_guard_b_urgent := false
 var l11_dog_diverted := false
 var l11_poison_safe := false
 var l11_route_busy_mode: StringName = &"DUAL_THREAD"
+var feedback_director: FeedbackDirector
 
 func _start_reading_tour() -> void:
     reading_phase = true
@@ -517,6 +531,8 @@ func _setup_shortcuts() -> void:
 func _on_shortcut_used() -> void:
     if level_finished or level_failed:
         return
+    if feedback_director != null:
+        feedback_director.show_shortcut()
     shortcut_mastery = true
     if level_data != null and level_data.level_id == &"L07":
         world_state.set_flag(&"L07_SHORTCUT_USED")
@@ -526,7 +542,7 @@ func _on_shortcut_used() -> void:
         if ninja != null:
             ninja.release_event()
     event_log.append_event({"event_id": &"SHORTCUT", "action": &"CAT_SHORTCUT", "success": true, "level_id": level_data.level_id if level_data else &""})
-    GlobalAudioManager.play_event_sfx("success")
+    GlobalAudioManager.play_event_sfx("shortcut")
     _show_toast("捷径成功：猫先到了。" if level_data == null or level_data.level_id != &"L04" else "路线 B：抄近路，直接去处理木桥。")
 
 # 装饰层（GDD §8.2 四级装饰：永不抢玩法反馈）——确定性散布（种子=level_id），非随机地图
@@ -716,6 +732,9 @@ func _apply_l10_route_branch(poison_forced: bool) -> void:
         if poison != null:
             poison.data.route_index = 5
             poison.position = points[5]
+        if feedback_director != null:
+            GlobalAudioManager.play_event_sfx("route_change")
+            feedback_director.show_route_change("守卫仍在岗：忍者被迫走毒雾侧线")
     else:
         var points := [Vector2(110,540), Vector2(270,410), Vector2(590,360), Vector2(680,435), Vector2(740,460), Vector2(860,340), Vector2(980,260)]
         ninja.replace_scripted_route(points, 3)
@@ -727,6 +746,9 @@ func _apply_l10_route_branch(poison_forced: bool) -> void:
         if poison != null:
             poison.data.route_index = 5
             poison.position = points[5]
+        if feedback_director != null:
+            GlobalAudioManager.play_event_sfx("route_change")
+            feedback_director.show_route_change("狗引开后：蒺藜窗口提前")
     event_log.append_event({
         "event_id": &"L10_ROUTE_CHANGE",
         "action": &"ROUTE_SWITCH",
@@ -1250,12 +1272,19 @@ func on_player_action_cancelled(_data: EventPointData) -> void:
     pass
 
 func _on_cat_action_started(action_id: StringName) -> void:
+    if feedback_director != null:
+        feedback_director.show_cat_action(action_id)
+    match action_id:
+        &"BITE", &"PUSH", &"INTERACT", &"PLACE_ANTIDOTE", &"PLACE_CRATE", &"FEED", &"SEND_DOG": GlobalAudioManager.play_event_sfx("interact")
+        _: pass
     if action_id in [&"BITE", &"PUSH"] and _ninja_sees_cat():
         _apply_suspicion(15.0, action_id)
 
 func _on_cat_meow() -> void:
     if level_finished or level_failed:
         return
+    if feedback_director != null:
+        feedback_director.show_cat_action(&"MEOW")
     if level_data != null and level_data.level_id == &"L10":
         var guard_event := _find_event_node(&"L10_E02_GUARD_A")
         if guard_event != null and is_event_active(guard_event.data) and not guard_event.resolved_state and cat != null and cat.global_position.distance_to(guard_event.global_position) <= 150.0:
@@ -1300,6 +1329,8 @@ func _on_cat_meow() -> void:
 func _on_cat_emote() -> void:
     if level_finished or level_failed:
         return
+    if feedback_director != null:
+        feedback_director.show_cat_action(&"EMOTE")
     if ninja == null or cat == null:
         return
     var in_range := ninja.global_position.distance_to(cat.global_position) <= 150.0
@@ -1327,6 +1358,8 @@ func _apply_suspicion(amount: float, source: StringName) -> void:
     max_suspicion = max(max_suspicion, suspicion)
     event_log.append_event({"event_id": &"SUSPICION", "action": source, "success": true, "suspicion_before": before, "suspicion_after": suspicion})
     suspicion_changed.emit(suspicion)
+    if feedback_director != null:
+        feedback_director.show_suspicion(suspicion)
     if suspicion >= 100.0:
         level_failed = true
         event_failed.emit(&"FAIL_SUSPICION")
@@ -1335,6 +1368,8 @@ func _apply_suspicion(amount: float, source: StringName) -> void:
 func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedEventPoint = null) -> void:
     if level_failed or level_finished:
         return
+    if feedback_director != null:
+        feedback_director.show_event_resolved(data.event_type, data.display_name, action_id)
     for flag in data.success_flags:
         world_state.set_flag(flag)
     if level_data != null and level_data.level_id == &"L05":
@@ -1544,7 +1579,7 @@ func event_resolved(data: EventPointData, action_id: StringName, point: UnifiedE
         active_main_event_index += 1
         if ninja and not (level_data != null and level_data.level_id == &"L07" and data.event_id == &"L07_E03_DOG"):
             ninja.release_event()
-    GlobalAudioManager.play_event_sfx("success")
+    GlobalAudioManager.play_event_sfx(GlobalAudioManager.event_sfx_for(data.event_type, action_id))
     if level_data != null and level_data.level_id == &"L04" and world_state.get_flag(&"L04_GUARD_SAFE") and world_state.get_flag(&"L04_TRIPWIRE_SAFE") and not world_state.get_flag(&"L04_CRATE_STOLEN") and not world_state.get_flag(&"L04_SHORTCUT_USED"):
         _show_toast("两处都处理好了：现在选箱子稳走，或抄捷径抢时间。")
     else:
@@ -1742,6 +1777,9 @@ func _apply_l07_route_branch(early: bool) -> void:
         Vector2(1000, 350),
     ]
     ninja.replace_scripted_route(alt_points, 2)
+    if feedback_director != null:
+        GlobalAudioManager.play_event_sfx("route_change")
+        feedback_director.show_route_change("忍者改走毒雾侧线")
     for node in event_nodes:
         if node.data.event_id == &"L07_E04_BRIDGE":
             node.data.route_index = 6
@@ -1759,6 +1797,8 @@ func _apply_l07_route_branch(early: bool) -> void:
 func _on_event_failed(data: EventPointData, code: StringName) -> void:
     if level_failed or level_finished:
         return
+    if feedback_director != null:
+        feedback_director.show_event_failed(code, data.display_name)
     GlobalAudioManager.play_event_sfx("fail")
     event_failed.emit(code)
     for flag in data.failure_flags:
@@ -1929,6 +1969,9 @@ func _start_boss_sequence() -> void:
     event_log.append_event({"event_id": &"BOSS_START", "action": &"START", "success": true, "prep_mechanics": prep, "prepared_damage": 100 - boss.hp})
 
 func _on_boss_phase(phase: int) -> void:
+    GlobalAudioManager.play_event_sfx("boss_phase")
+    if feedback_director != null:
+        feedback_director.show_boss_phase(phase)
     world_state.set_flag(&"boss_phase_%d" % phase)
     if phase >= 1 and phase <= 3:
         GlobalAudioManager.set_music_state("BOSS_PHASE_%d" % phase)
@@ -1942,6 +1985,7 @@ func _on_boss_phase(phase: int) -> void:
 
 func _on_boss_defeated() -> void:
     boss_started = false
+    GlobalAudioManager.play_event_sfx("victory")
     GlobalAudioManager.set_music_state("BOSS_DEFEAT")
     _complete_level(false)
 

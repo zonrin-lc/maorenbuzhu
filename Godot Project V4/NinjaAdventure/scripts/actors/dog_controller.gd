@@ -18,9 +18,14 @@ var facing := Vector2.RIGHT
 var _arrived_emitted := false
 var sprite: Sprite2D
 var anim_time := 0.0
+var anim_driver: AnimationFeedbackDriver
 
 func _ready() -> void:
     sprite = SpriteAnimator.attach_animal(self, load("res://assets/actors/dog/sprite_sheet.png"))
+    anim_driver = AnimationFeedbackDriver.new()
+    anim_driver.name = "AnimationFeedback"
+    add_child(anim_driver)
+    anim_driver.setup(sprite, &"animal")
 
 func setup(start_position: Vector2) -> void:
     position = start_position
@@ -35,11 +40,15 @@ func lure_to(target: Vector2) -> void:
     state = &"LURED"
     lure_timer = lure_duration
     _arrived_emitted = false
+    if anim_driver != null:
+        anim_driver.play(AnimationFeedbackDriver.State.ACTION, 0.45)
     lure_started.emit()
     queue_redraw()
 
 func bark() -> void:
     barked.emit()
+    if anim_driver != null:
+        anim_driver.play(AnimationFeedbackDriver.State.EMOTE, 0.35)
     queue_redraw()
 
 func _process(delta: float) -> void:
@@ -64,6 +73,8 @@ func _process(delta: float) -> void:
             if position.distance_to(home_position) < 2.0:
                 state = &"IDLE"
     anim_time += delta
+    if anim_driver != null:
+        anim_driver.set_base_state(AnimationFeedbackDriver.State.MOVE if moving else AnimationFeedbackDriver.State.IDLE)
     SpriteAnimator.update_animal(sprite, facing, moving, anim_time)
     queue_redraw()
 

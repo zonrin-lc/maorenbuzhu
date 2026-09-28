@@ -17,3 +17,15 @@ func show_result(payload: Dictionary) -> void:
     stats_label.text = "时间 %.1fs   三星 %.0fs（%s）   怀疑峰值 %.0f   %s" % [elapsed, target_time, time_status, max_suspicion, risk_style]
     boast_label.text = boast
     visible = true
+    var card := get_node_or_null("ResultCard") as Control
+    if card != null:
+        card.modulate = Color(1, 1, 1, 0)
+        card.position.y += 18.0
+        var tw := create_tween()
+        tw.tween_property(card, "modulate:a", 1.0, 0.18)
+        tw.parallel().tween_property(card, "position:y", card.position.y - 18.0, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    paw_label.scale = Vector2(0.8, 0.8)
+    var paw_tween := create_tween()
+    paw_tween.tween_interval(0.15)
+    paw_tween.tween_property(paw_label, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    GlobalAudioManager.play_event_sfx("success")

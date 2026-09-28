@@ -25,11 +25,16 @@ var meow_was_down := false
 var emote_was_down := false
 var sprite: Sprite2D
 var anim_time := 0.0
+var anim_driver: AnimationFeedbackDriver
 
 @export var skin := "cat_black"
 
 func _ready() -> void:
     sprite = SpriteAnimator.attach_animal(self, load("res://assets/actors/%s/sprite_sheet.png" % skin))
+    anim_driver = AnimationFeedbackDriver.new()
+    anim_driver.name = "AnimationFeedback"
+    add_child(anim_driver)
+    anim_driver.setup(sprite, &"animal")
 
 func _physics_process(delta: float) -> void:
     var manager = get_parent()
@@ -40,6 +45,8 @@ func _physics_process(delta: float) -> void:
     if action_remaining > 0.0:
         action_remaining = max(0.0, action_remaining - delta)
         velocity = Vector2.ZERO
+        if anim_driver != null:
+            anim_driver.set_base_state(AnimationFeedbackDriver.State.ACTION)
         if action_remaining == 0.0:
             var finished := action_id
             action_id = &""
@@ -61,15 +68,25 @@ func _physics_process(delta: float) -> void:
         facing = input_vec.normalized()
     velocity = input_vec.normalized() * move_speed
     move_and_slide()
+    if anim_driver != null:
+        if velocity.length() > 1.0:
+            anim_driver.set_base_state(AnimationFeedbackDriver.State.CARRY if carry_item != &"" else AnimationFeedbackDriver.State.MOVE)
+        else:
+            anim_driver.set_base_state(AnimationFeedbackDriver.State.CARRY if carry_item != &"" else AnimationFeedbackDriver.State.IDLE)
+
     var meow_down := Input.is_action_pressed("meow")
     if meow_down and not meow_was_down:
         meow_triggered.emit()
+        if anim_driver != null:
+            anim_driver.play(AnimationFeedbackDriver.State.EMOTE, 0.30)
     meow_was_down = meow_down
 
     var emote_down := Input.is_action_pressed("emote")
     if emote_down and not emote_was_down and meow_cooldown <= 0.0:
         meow_cooldown = emote_cooldown
         emote_triggered.emit()
+        if anim_driver != null:
+            anim_driver.play(AnimationFeedbackDriver.State.EMOTE, 0.60)
     emote_was_down = emote_down
     anim_time += delta
     SpriteAnimator.update_animal(sprite, facing, velocity.length() > 1.0, anim_time)
@@ -81,6 +98,8 @@ func start_action(new_action: StringName, duration: float) -> bool:
     action_id = new_action
     action_remaining = duration
     action_started.emit(new_action)
+    if anim_driver != null:
+        anim_driver.play(AnimationFeedbackDriver.State.ACTION, max(duration, 0.18))
     return true
 
 func _draw() -> void:

@@ -13,9 +13,14 @@ var waiting_for_event := false
 var facing := Vector2.RIGHT
 var sprite: Sprite2D
 var anim_time := 0.0
+var anim_driver: AnimationFeedbackDriver
 
 func _ready() -> void:
     sprite = SpriteAnimator.attach_character(self, load("res://assets/actors/ninja_blue/sprite_sheet.png"))
+    anim_driver = AnimationFeedbackDriver.new()
+    anim_driver.name = "AnimationFeedback"
+    add_child(anim_driver)
+    anim_driver.setup(sprite, &"character")
 
 func setup(route_data: RouteData, manager: Node) -> void:
     route = route_data
@@ -26,6 +31,8 @@ func setup(route_data: RouteData, manager: Node) -> void:
 func _physics_process(_delta: float) -> void:
     if route == null or route.waypoints.size() < 2 or waiting_for_event or level_manager.level_finished or level_manager.level_failed or level_manager.reading_phase:
         velocity = Vector2.ZERO
+        if anim_driver != null:
+            anim_driver.set_base_state(AnimationFeedbackDriver.State.ALERT if waiting_for_event else AnimationFeedbackDriver.State.IDLE)
         queue_redraw()
         return
     if level_manager.is_ninja_at_blocking_event(waypoint_index):
@@ -40,11 +47,15 @@ func _physics_process(_delta: float) -> void:
         route_changed.emit(waypoint_index)
         if waypoint_index >= route.waypoints.size() - 1:
             reached_goal.emit()
+            if anim_driver != null:
+                anim_driver.play(AnimationFeedbackDriver.State.VICTORY, 0.90)
             level_manager.ninja_reached_goal()
             velocity = Vector2.ZERO
         return
     facing = delta_pos.normalized()
     velocity = facing * route.move_speed
+    if anim_driver != null:
+        anim_driver.set_base_state(AnimationFeedbackDriver.State.MOVE)
     move_and_slide()
     queue_redraw()
 
@@ -76,6 +87,8 @@ func replace_scripted_route(points: Array, next_route_index: int = -1) -> void:
 
 func take_damage(amount: int = 1) -> void:
     hp = max(0, hp - amount)
+    if anim_driver != null:
+        anim_driver.play(AnimationFeedbackDriver.State.DEATH if hp <= 0 else AnimationFeedbackDriver.State.HIT, 1.0 if hp <= 0 else 0.38)
     damaged.emit(hp)
     if hp <= 0:
         level_manager.on_ninja_dead()

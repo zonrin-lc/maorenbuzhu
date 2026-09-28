@@ -16,9 +16,14 @@ var meow_position := Vector2.ZERO
 var facing := Vector2.RIGHT
 var sprite: Sprite2D
 var anim_time := 0.0
+var anim_driver: AnimationFeedbackDriver
 
 func _ready() -> void:
     sprite = SpriteAnimator.attach_character(self, load("res://assets/actors/samurai_red/sprite_sheet.png"))
+    anim_driver = AnimationFeedbackDriver.new()
+    anim_driver.name = "AnimationFeedback"
+    add_child(anim_driver)
+    anim_driver.setup(sprite, &"character")
 
 func setup(center: Vector2) -> void:
     position = center
@@ -29,6 +34,8 @@ func distract(source_position: Vector2) -> void:
         return
     active = false
     distract_timer = return_delay
+    if anim_driver != null:
+        anim_driver.play(AnimationFeedbackDriver.State.ACTION, 0.40)
     meow_position = source_position
     distracted.emit()
     queue_redraw()
@@ -55,7 +62,9 @@ func _process(delta: float) -> void:
             direction = -1.0
         elif position.x <= left.x:
             direction = 1.0
-    sprite.modulate = Color.WHITE if active else Color(0.6, 0.6, 0.7)
+    if anim_driver != null:
+        anim_driver.set_base_modulate(Color.WHITE if active else Color(0.6, 0.6, 0.7))
+        anim_driver.set_base_state(AnimationFeedbackDriver.State.MOVE if moving else AnimationFeedbackDriver.State.IDLE)
     anim_time += delta
     SpriteAnimator.update_character(sprite, facing, moving, anim_time)
     queue_redraw()

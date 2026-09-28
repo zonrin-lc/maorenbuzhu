@@ -15,10 +15,15 @@ var prepared_damage := 0
 var manager: Node
 var sprite: Sprite2D
 var anim_time := 0.0
+var anim_driver: AnimationFeedbackDriver
 
 func _ready() -> void:
     sprite = SpriteAnimator.attach_boss(self, load("res://assets/actors/boss_giant_blue_samurai/idle.png"))
-    sprite.modulate = Color(0.55, 0.55, 0.6)
+    anim_driver = AnimationFeedbackDriver.new()
+    anim_driver.name = "AnimationFeedback"
+    add_child(anim_driver)
+    anim_driver.setup(sprite, &"boss")
+    anim_driver.set_base_modulate(Color(0.55, 0.55, 0.6))
 
 func setup(owner: Node) -> void:
     manager = owner
@@ -35,7 +40,11 @@ func prepare(amount: int) -> void:
 
 func start_boss() -> void:
     active = true
+    if anim_driver != null:
+        anim_driver.set_base_modulate(Color.WHITE)
     phase = 1
+    if anim_driver != null:
+        anim_driver.play(AnimationFeedbackDriver.State.ACTION, 0.45)
     timer = 0.0
     charge_timer = 0.0
     if prepared_damage > 0:
@@ -49,9 +58,14 @@ func damage(amount: int, source: StringName) -> void:
     if not active:
         return
     hp = max(0, hp - amount)
+    if anim_driver != null:
+        anim_driver.play(AnimationFeedbackDriver.State.DEATH if hp <= 0 else AnimationFeedbackDriver.State.HIT, 1.2 if hp <= 0 else 0.42)
     _sync_phase_from_hp()
     if hp <= 0:
         active = false
+        if anim_driver != null:
+            anim_driver.set_base_modulate(Color(0.55, 0.55, 0.6))
+            anim_driver.play(AnimationFeedbackDriver.State.DEATH, 1.2)
         defeated.emit()
         return
     timer = 0.0
@@ -68,7 +82,6 @@ func _sync_phase_from_hp() -> void:
     phase_changed.emit(phase)
 
 func _process(delta: float) -> void:
-    sprite.modulate = Color.WHITE if active else Color(0.55, 0.55, 0.6)
     anim_time += delta
     SpriteAnimator.update_boss(sprite, anim_time)
     if not active:
@@ -87,6 +100,9 @@ func _process(delta: float) -> void:
     elif phase == 3 and timer >= 8.0 and hp > 0:
         if manager and manager.can_boss_finish():
             active = false
+            if anim_driver != null:
+                anim_driver.set_base_modulate(Color(0.55, 0.55, 0.6))
+                anim_driver.play(AnimationFeedbackDriver.State.VICTORY, 0.80)
             retreat.emit()
         elif timer >= 12.0 and manager and manager.has_method("on_boss_overrun"):
             active = false

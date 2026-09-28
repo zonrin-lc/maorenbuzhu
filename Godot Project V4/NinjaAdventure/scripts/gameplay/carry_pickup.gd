@@ -57,6 +57,7 @@ func _process(_delta: float) -> void:
         })
         level_manager.call("_show_toast", "叼到%s：带到下一处需要它的地方。" % ("鱼肉" if item_id == &"FISH" else "解毒药"))
         picked_up.emit(item_id)
+        GlobalAudioManager.play_event_sfx("pickup")
         if sprite != null:
             var tw := create_tween()
             tw.tween_property(sprite, "scale", Vector2.ZERO, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)

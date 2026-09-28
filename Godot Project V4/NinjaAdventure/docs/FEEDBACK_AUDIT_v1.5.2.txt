@@ -1,0 +1,14 @@
+FEEDBACK AUDIT v1.5.2
+PASS  FeedbackDirector class
+PASS  event success feedback
+PASS  event fail feedback
+PASS  ninja damage feedback
+PASS  route change feedback
+PASS  boss phase feedback
+PASS  feedback director hookup
+PASS  event success hookup
+PASS  event fail hookup
+PASS  ninja damage hookup
+PASS  route change hookup
+PASS  result audio feedback
+Errors: 0

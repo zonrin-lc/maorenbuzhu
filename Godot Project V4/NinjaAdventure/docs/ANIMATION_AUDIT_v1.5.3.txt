@@ -1,0 +1,13 @@
+《猫忍不住》v1.5.3 动画静态审计
+
+[PASS] animation_feedback_driver.gd exists
+[PASS] priority order covers IDLE/MOVE/CARRY/ALERT/EMOTE/ACTION/HIT/VICTORY/DEATH
+[PASS] victory resets sprite position from base_position
+[PASS] hit flash is applied inside animation state update
+[PASS] cat_controller.gd uses AnimationFeedbackDriver
+[PASS] ninja_controller.gd uses AnimationFeedbackDriver
+[PASS] guard_controller.gd uses AnimationFeedbackDriver
+[PASS] dog_controller.gd uses AnimationFeedbackDriver
+[PASS] boss_controller.gd uses AnimationFeedbackDriver
+[PASS] no Gameplay state values changed by animation driver
+[PASS] no external assets added

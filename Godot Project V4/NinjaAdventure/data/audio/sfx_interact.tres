@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AudioData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/audio/audio_data.gd" id="1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/success1.wav" id="2"]
+
+[resource]
+script = ExtResource("1")
+audio_id = "SFX_INTERACT"
+stream = ExtResource("2")
+bus = "SFX"
+volume_db = -7.0
+loop = false
+priority = 55
+pitch = 1.08

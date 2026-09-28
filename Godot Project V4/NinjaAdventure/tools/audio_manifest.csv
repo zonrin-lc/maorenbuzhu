@@ -10,3 +10,11 @@ SFX_SUCCESS,UI,UI,Audio/Jingles/Success1~4.wav,Yes,Ready
 SFX_MEOW,Action,SFX,External Original Meow,Yes,Missing
 SFX_THUNDER,Environment,Ambient,FX/Elemental/Thunder,Yes,Ready
 SFX_RAIN,Environment,Ambient,FX/Particle/Rain.png,Yes,Visual-Only
+SFX_INTERACT,Action,SFX,Existing success cue reused,Yes,Ready-Local-Reuse
+SFX_PICKUP,Action,SFX,Existing emote cue reused,Yes,Ready-Local-Reuse
+SFX_PLACE,Action,SFX,Existing success cue pitched,Yes,Ready-Local-Reuse
+SFX_ROUTE_CHANGE,UI,UI,Existing read-map cue pitched,Yes,Ready-Local-Reuse
+SFX_DAMAGE,Event,SFX,Existing fail cue pitched,Yes,Ready-Local-Reuse
+SFX_BOSS_PHASE,Event,SFX,Existing read-map cue pitched,Yes,Ready-Local-Reuse
+SFX_SHORTCUT,Action,UI,Existing read-map cue pitched,Yes,Ready-Local-Reuse
+SFX_VICTORY,UI,UI,Existing success cue pitched,Yes,Ready-Local-Reuse
