@@ -107,7 +107,7 @@ static func level_meta(level_id: String) -> Dictionary:
     return LEVELS.get(level_id, {})
 
 static func chapter(level_id: String) -> String:
-    return String(get_meta(level_id).get("chapter", ""))
+    return String(level_meta(level_id).get("chapter", ""))
 
 static func scene_path(level_id: String) -> String:
     return String(get_meta(level_id).get("scene", ""))
