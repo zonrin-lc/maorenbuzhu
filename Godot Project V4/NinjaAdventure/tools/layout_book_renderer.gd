@@ -141,6 +141,7 @@ var event_points: Array = []
 var actor_names: Array = []
 var scene_layer_counts := {}
 var page_root: Node2D
+var page_view: SubViewport
 var cjk_font: Font
 
 func _ready() -> void:
@@ -192,7 +193,7 @@ func _render() -> void:
     await get_tree().process_frame
     await get_tree().process_frame
 
-    var image := get_viewport().get_texture().get_image()
+    var image := page_view.get_texture().get_image()
     image.convert(Image.FORMAT_RGBA8)
 
     DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
@@ -247,6 +248,9 @@ func _collect_scene_structure() -> void:
             actor_names.append(n)
             scene_layer_counts["角色 / Actors"] += 1
 
+        if child is CanvasLayer or child is Control or n.to_lower().find("touch") >= 0 or n.to_lower().find("pause") >= 0:
+            child.visible = false
+
     # 这是生产文档中的建议分层，而非对运行时节点结构做修改。
     scene_layer_counts["交互 / 机关"] = PROP_ITEMS.get(level_id, []).size()
     scene_layer_counts["标注 / Design"] = 1
@@ -263,12 +267,22 @@ func _hide_gameplay_overlays() -> void:
     for child in level_root.get_children():
         if child is CharacterBody2D or child.name in ["Cat", "Ninja", "Dog", "GuardA", "GuardB"]:
             child.visible = false
+        if child is CanvasLayer or child is Control or child.name.to_lower().find("touch") >= 0 or child.name.to_lower().find("pause") >= 0:
+            child.visible = false
 
 func _build_page() -> void:
+    page_view = SubViewport.new()
+    page_view.name = "BiblePageViewport"
+    page_view.size = Vector2i(W, H)
+    page_view.transparent_bg = false
+    page_view.render_target_update_mode = SubViewport.UPDATE_ONCE
+    page_view.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+    add_child(page_view)
+
     page_root = Node2D.new()
     page_root.name = "LevelDesignBiblePage"
-    add_child(page_root)
     page_root.z_index = 1000
+    page_view.add_child(page_root)
 
     _draw_page_background()
     _draw_header()
@@ -390,25 +404,27 @@ func _draw_right_panel() -> void:
 
     var items: Array = PROP_ITEMS.get(level_id, [])
     var y := 194.0
-    var row_h := 62.0
-    for i in range(mini(items.size(), 5)):
+    var row_h := 52.0
+    for i in range(mini(items.size(), 4)):
         var item: Array = items[i]
-        _prop_row(Vector2(1262, y), Vector2(298, 54), i + 1, item)
+        _prop_row(Vector2(1262, y), Vector2(298, 48), i + 1, item)
         y += row_h
 
-    _rule(Vector2(1262, 514), Vector2(1558, 514))
-    _label("事件链 / EVENT CHAIN", Vector2(1262, 538), 12, NAVY_2, true)
+    _rule(Vector2(1262, 412), Vector2(1558, 412))
+    _label("事件链 / EVENT CHAIN", Vector2(1262, 434), 12, NAVY_2, true)
 
-    y = 562
-    for i in range(mini(event_points.size(), 5)):
+    y = 458
+    for i in range(mini(event_points.size(), 3)):
         var e: Dictionary = event_points[i]
         _event_chip(Vector2(1262, y), Vector2(298, 25), i + 1, e)
         y += 28
+    if event_points.size() > 3:
+        _label("+ %d 个事件见地图编号" % (event_points.size() - 3), Vector2(1262, 544), 9, MUTED)
 
-    _label("垂直分层 / Z-LAYER", Vector2(1262, 711), 12, NAVY_2, true)
+    _label("垂直分层 / Z-LAYER", Vector2(1262, 568), 12, NAVY_2, true)
     var layer := VerticalLayer.new()
-    layer.position = Vector2(1262, 730)
-    layer.size = Vector2(298, 214)
+    layer.position = Vector2(1262, 588)
+    layer.size = Vector2(298, 112)
     layer.counts = scene_layer_counts
     layer.font = cjk_font
     page_root.add_child(layer)
@@ -486,6 +502,28 @@ func _prop_row(pos: Vector2, size: Vector2, idx: int, item: Array) -> void:
     _label(String(item[0]), pos + Vector2(75, 6), 13, INK, true)
     _badge(pos + Vector2(75, 28), Vector2(50, 18), String(item[1]), ORANGE, WHITE)
     _label(String(item[2]), pos + Vector2(135, 31), 9, MUTED)
+
+func _prop_icon(pos: Vector2, item: Array) -> void:
+    var bg := ColorRect.new()
+    bg.position = pos
+    bg.size = Vector2(38, 38)
+    bg.color = Color("#ece5d6")
+    page_root.add_child(bg)
+    var glyph := "物"
+    if String(item[1]) == "地标":
+        glyph = "地"
+    elif String(item[1]) == "机关":
+        glyph = "机"
+    elif String(item[1]) == "任务物":
+        glyph = "任"
+    var l := Label.new()
+    l.position = pos + Vector2(9, 5)
+    l.text = glyph
+    l.add_theme_font_size_override("font_size", 22)
+    l.add_theme_color_override("font_color", ORANGE)
+    if cjk_font:
+        l.add_theme_font_override("font", cjk_font)
+    page_root.add_child(l)
 
 func _event_chip(pos: Vector2, size: Vector2, idx: int, e: Dictionary) -> void:
     var color := RED if bool(e.get("high_risk", false)) else NAVY_2
@@ -681,12 +719,12 @@ class VerticalLayer extends Control:
         ]
         var y := 0.0
         for i in range(labels.size()):
-            var row_h := 31.0
+            var row_h := 20.0
             var fill := Color(labels[i][1])
             draw_rect(Rect2(0, y, size.x, row_h - 2), Color(fill.r, fill.g, fill.b, 0.16))
             draw_rect(Rect2(0, y, 6, row_h - 2), fill)
             if font:
-                draw_string(font, Vector2(14, y + 20), labels[i][0], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, INK)
+                draw_string(font, Vector2(14, y + 14), labels[i][0], HORIZONTAL_ALIGNMENT_LEFT, -1, 9, INK)
             y += row_h
 
         var hint := "实际节点：%d / %d / %d / %d" % [
@@ -696,5 +734,5 @@ class VerticalLayer extends Control:
             int(counts.get("角色 / Actors", 0))
         ]
         if font:
-            draw_string(font, Vector2(0, y + 12), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, MUTED)
+            draw_string(font, Vector2(0, y + 8), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, MUTED)
 
