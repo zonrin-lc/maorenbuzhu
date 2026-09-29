@@ -3,6 +3,9 @@ extends Area2D
 
 signal picked_up(item_id: StringName)
 
+# 世界空间绘制的中文（"Q 叼取"）必须用项目 CJK 字体，无中文字形的是引擎内置 fallback。
+const UI_FONT := preload("res://theme/ui_font.tres")
+
 @export var item_id: StringName = &"FISH"
 @export var pickup_radius := 42.0
 @export var pickup_hint := "Q 叼取"
@@ -73,5 +76,5 @@ func _draw() -> void:
     ring.a = 0.75 if near else 0.4
     draw_arc(Vector2.ZERO, 18.0, 0.0, TAU, 24, ring, 2.0)
     if near:
-        var font := ThemeDB.fallback_font
+        var font := UI_FONT
         draw_string(font, Vector2(-42, -26), pickup_hint, HORIZONTAL_ALIGNMENT_CENTER, 84, 12, Color("#f8fafc"))

@@ -4,6 +4,9 @@ extends Area2D
 signal resolved(data: EventPointData, action_id: StringName)
 signal failed(data: EventPointData, fail_code: StringName)
 
+# 世界空间绘制的中文必须用项目 CJK 字体；ThemeDB.fallback_font 是引擎内置拉丁字体，无中文字形。
+const UI_FONT := preload("res://theme/ui_font.tres")
+
 const PROP_TEXTURES := {
     &"TRIPWIRE": "res://assets/props/fish_net.png",
     &"WATERGAP": "res://assets/props/crate.png",
@@ -218,7 +221,7 @@ func _draw() -> void:
     if active and not resolved_state:
         draw_circle(Vector2.ZERO, data.trigger_radius, Color(1, 1, 1, 0.07))
         draw_arc(Vector2.ZERO, data.trigger_radius, 0.0, TAU, 48, Color(1, 1, 1, 0.18), 1.5)
-    var font := ThemeDB.fallback_font
+    var font := UI_FONT
     draw_string(font, Vector2(-64, -24), String(data.display_name), HORIZONTAL_ALIGNMENT_CENTER, 128, 14, Color("#f8fafc"))
     if interacting:
         draw_arc(Vector2.ZERO, 22.0, -PI * 0.5, -PI * 0.5 + TAU * clamp(interaction_progress / max(0.01, data.interaction_time), 0.0, 1.0), 24, Color("#fbbf24"), 4.0)

@@ -1,6 +1,9 @@
 class_name LayoutDesign
 extends Node2D
 
+# 分区标签是世界空间中文绘制，走项目 CJK 字体。
+const UI_FONT := preload("res://theme/ui_font.tres")
+
 # Runtime whitebox-to-production guide layer based on the approved layout diagrams.
 # It is intentionally subtle and sits behind gameplay actors and event feedback.
 
@@ -21,7 +24,7 @@ func _draw() -> void:
         draw_rect(rect, Color(1, 1, 1, 0.025), true)
         draw_rect(rect, Color(1, 1, 1, 0.10), false, 1.0)
         var label := String(zone[0])
-        draw_string(ThemeDB.fallback_font, rect.position + Vector2(8, 18), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.42))
+        draw_string(UI_FONT, rect.position + Vector2(8, 18), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.42))
 
     if route_points.size() >= 2:
         for i in range(route_points.size() - 1):

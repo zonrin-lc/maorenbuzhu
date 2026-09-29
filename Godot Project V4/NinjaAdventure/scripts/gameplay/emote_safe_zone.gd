@@ -1,6 +1,9 @@
 class_name EmoteSafeZone
 extends Node2D
 
+# 世界空间绘制的中文（"卖萌安全区"）必须用项目 CJK 字体。
+const UI_FONT := preload("res://theme/ui_font.tres")
+
 @export var radius := 54.0
 
 func _process(delta: float) -> void:
@@ -14,5 +17,5 @@ func _draw() -> void:
     draw_circle(Vector2.ZERO, radius, Color(0.35, 0.85, 0.62, pulse))
     draw_arc(Vector2.ZERO, radius, 0.0, TAU, 36, Color(0.45, 0.95, 0.72, 0.55), 2.0)
     draw_arc(Vector2.ZERO, radius * 0.72, 0.0, TAU, 36, Color(0.45, 0.95, 0.72, 0.22), 1.0)
-    var font := ThemeDB.fallback_font
+    var font := UI_FONT
     draw_string(font, Vector2(-42, -radius - 10), "卖萌安全位", HORIZONTAL_ALIGNMENT_CENTER, 84, 13, Color(0.82, 1.0, 0.88, 0.85))

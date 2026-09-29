@@ -241,7 +241,14 @@ func _setup_l11_busy_gate() -> void:
 
     show_toast.call("L11：左右两条线程会同时变忙。炸药先处理；A 离岗后，B 的补位倒计时启动。")
 
+# 游戏时钟来源（由 ULM 注入 = level_clock）。L05/L07 的 8 秒换岗等窗口逻辑
+# 必须跟随 Gameplay Clock 而不是墙钟：暂停时 ULM._process 停止，clock 冻结，
+# 于是「暂停 10 秒再继续」不会让 B 换岗提前触发。未注入时回退墙钟（仅调试用）。
+var game_clock: Callable
+
 func now() -> float:
+    if game_clock.is_valid():
+        return float(game_clock.call())
     return Time.get_ticks_msec() / 1000.0
 
 # 每帧更新：保持 ULM 原 _process 中的调用顺序（L05 -> L07 -> L10 -> L11）。

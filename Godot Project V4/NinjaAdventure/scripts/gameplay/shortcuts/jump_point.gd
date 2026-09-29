@@ -3,6 +3,9 @@ extends Area2D
 
 signal used
 
+# 捷径提示是世界空间中文绘制，走项目 CJK 字体。
+const UI_FONT := preload("res://theme/ui_font.tres")
+
 @export var entry_point := Vector2.ZERO
 @export var exit_point := Vector2.ZERO
 @export var travel_time := 0.24
@@ -79,5 +82,5 @@ func _draw() -> void:
     draw_arc(Vector2.ZERO, 28.0, 0.0, TAU, 28, Color(0.96, 0.77, 0.28, 0.65), 2.0)
     draw_arc(Vector2.ZERO, 20.0, PI, TAU, 20, Color(0.40, 0.76, 0.54, 0.45), 2.0)
     if _cat != null and not _busy:
-        var font := ThemeDB.fallback_font
+        var font := UI_FONT
         draw_string(font, Vector2(-45, 45), label_text, HORIZONTAL_ALIGNMENT_CENTER, 90, 12, Color(0.96, 0.90, 0.70, 0.85))

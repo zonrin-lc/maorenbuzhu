@@ -1,6 +1,9 @@
 class_name LayoutPresentation
 extends Node2D
 
+# 分区标签是世界空间中文绘制，走项目 CJK 字体。
+const UI_FONT := preload("res://theme/ui_font.tres")
+
 # v1.5.7：把白盒布局层变成“读图演出层”。
 # 开局读图时清晰显示分区与路线；读图结束后淡到极低存在感，避免像开发调试网格。
 
@@ -46,7 +49,7 @@ func _draw() -> void:
         draw_rect(rect, Color(1, 1, 1, 0.025 * presentation_alpha), true)
         draw_rect(rect, Color(1, 1, 1, 0.10 * presentation_alpha), false, 1.0)
         var label := String(zone[0])
-        draw_string(ThemeDB.fallback_font, rect.position + Vector2(8, 18), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.42 * presentation_alpha))
+        draw_string(UI_FONT, rect.position + Vector2(8, 18), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.42 * presentation_alpha))
 
     if route_points.size() >= 2:
         for i in range(route_points.size() - 1):

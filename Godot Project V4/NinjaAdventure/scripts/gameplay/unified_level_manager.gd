@@ -34,13 +34,19 @@ var event_nodes: Array[UnifiedEventPoint] = []
 var active_main_event_index := 0
 var level_finished := false
 var level_failed := false
-var start_time := 0.0
 var suspicion := 0.0
 var max_suspicion := 0.0
 var high_risk_rescue := 0
 var chain_rescue := 0
 var shortcut_mastery := false
 var previous_event_id: StringName = &""
+
+# Gameplay Clock：只按 delta 累加，且只在「读图结束 + 未暂停 + 未结束」时累加。
+# 之前关卡用时与 L05/L07 的 8 秒换岗都走 Time.get_ticks_msec() 墙钟，于是
+# 「暂停 = 完全冻结 Gameplay」在视觉上成立、计时上却不成立：暂停 15 秒后
+# 忍者换岗会立刻到点、三星时间也会凭空多出 15 秒。ULM 自身是
+# PROCESS_MODE_INHERIT(PAUSABLE)，暂停时 _process 不跑，故本值天然冻结。
+var level_clock := 0.0
 
 # Boss integration（Boss 领域状态与流程已抽出到 BossDirector，见 scripts/gameplay/boss_director.gd）
 var boss_director: BossDirector
@@ -272,7 +278,7 @@ func _end_reading_tour() -> void:
         _cam = null
     if layout_presentation != null:
         layout_presentation.set_reading_mode(false)
-    start_time = Time.get_ticks_msec() / 1000.0
+    # 无需在此重置计时：level_clock 自 0 起累加，且读图阶段（reading_phase）本就不累加。
     if not specials.on_reading_tour_ended():
         _show_toast("他开始走了。轮到你了。")
 
@@ -328,6 +334,7 @@ func _setup_specials() -> void:
     specials.show_toast = Callable(self, "_show_toast")
     specials.find_event_node = Callable(self, "_find_event_node")
     specials.host_is_event_active = Callable(self, "is_event_active")
+    specials.game_clock = func() -> float: return level_clock
     specials.get_active_main_event_index = func() -> int: return active_main_event_index
     specials.is_reading_phase = func() -> bool: return reading_phase
     specials.is_level_failed = func() -> bool: return level_failed
@@ -669,13 +676,17 @@ func _l12_boss_event_active(data: EventPointData) -> bool:
             return boss != null and boss_director.boss_started and boss.phase == 2 and not boss_director.l12_event_done(&"L12_E04_BOSS_CALTROP")
     return false
 
+# 纯表现层：只弹提示，绝不改 Gameplay State。
+# l12_gate_open 只能由 E01 结算时的 success_flags 写入（见 event_resolved 的
+# `for flag in data.success_flags: world_state.set_flag(flag)`）。此前在这里
+# 额外 set_flag，等于把「E01 可以被处理」误当成「E01 已处理完」，导致玩家还没
+# 引爆炸药 E02/E03 就开放，且新进关卡 world_state 即被污染。
 func _announce_l12_event(data: EventPointData) -> void:
     if _l12_announced.has(data.event_id):
         return
     _l12_announced[data.event_id] = true
     match data.event_id:
         &"L12_E01_DYNAMITE":
-            world_state.set_flag(&"l12_gate_open")
             _show_toast("外门清空：吊车和酒葫芦准备现在都可以做。")
         &"L12_E02_BOSS_CRANE":
             _show_toast("吊车机关已准备：Boss 开场会先吃掉 40% 血。")
@@ -1038,7 +1049,8 @@ func _complete_level(emergency: bool) -> void:
     if level_finished:
         return
     level_finished = true
-    var elapsed := Time.get_ticks_msec() / 1000.0 - start_time
+    # 用 Gameplay Clock（不含读图与暂停），保证三星时间与墙钟无关。
+    var elapsed := level_clock
     var paws := 1
     if not emergency:
         var boss_mechanics := boss_director.boss_mechanics_success if boss_director != null else 0
@@ -1091,16 +1103,18 @@ func on_ninja_dead() -> void:
     event_failed.emit(&"FAIL_NINJA_DEATH")
     _set_label(status_label, "任务失败：忍者倒下了（3 心耗尽）    R 重开")
 
-func _process(_delta: float) -> void:
-    specials.update(_delta)
+func _process(delta: float) -> void:
+    specials.update(delta)
     if reading_phase:
         if Input.is_action_just_pressed("interact") or Input.is_action_just_pressed("confirm"):
             _end_reading_tour()
         return
     if not level_finished and not level_failed:
+        # Gameplay Clock 累加点：读图阶段不计时；本节点 PAUSABLE，暂停时本行不执行。
+        level_clock += delta
         if boss_director != null:
             boss_director.try_emergency()
-        var elapsed := Time.get_ticks_msec() / 1000.0 - start_time
+        var elapsed := level_clock
         _set_label(timer_label, "时间 %.1fs / %.0fs · %s" % [elapsed, balance_director.target_time, balance_director.status_text(elapsed)])
         var balance_warning := balance_director.next_warning(elapsed)
         if not balance_warning.is_empty():
