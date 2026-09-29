@@ -156,7 +156,9 @@ func _draw_map_panel() -> void:
     var crop := TextureRect.new()
     crop.position = MAP_RECT.position
     crop.size = MAP_RECT.size
+    page_root.visible = false
     crop.texture = await _capture_level_art()
+    page_root.visible = true
     crop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     crop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
     page_root.add_child(crop)
