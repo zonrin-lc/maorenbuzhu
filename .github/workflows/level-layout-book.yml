@@ -71,5 +71,6 @@ jobs:
             echo "No generated-page changes."
           else
             git commit -m "docs: regenerate 12 level scene layout pages [skip layout-book]"
+            git pull --rebase origin main
             git push
           fi
