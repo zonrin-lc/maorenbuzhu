@@ -63,7 +63,11 @@ func _process(delta: float) -> void:
     if not data.non_blocking and data.event_group == &"MAIN":
         var ninja_in_range := global_position.distance_to(ninja.global_position) <= data.trigger_radius
         timer = timer + delta if ninja_in_range else 0.0
-        if ninja_in_range and data.timeout > 0.0 and timer >= data.timeout:
+        # hesitation_time = 事件总窗口的前段（GDD §6.1「犹豫时间」：忍者触发后先犹豫
+        # N 秒，这段时间内不判失败）。此前该字段只写不读，策划调它完全没有效果；
+        # 这里把它作为失败计时前的宽限期消费，失败点 = hesitation + timeout。
+        var grace := maxf(0.0, data.hesitation_time)
+        if ninja_in_range and data.timeout > 0.0 and timer >= grace + data.timeout:
             fail(data.fail_code)
             return
 

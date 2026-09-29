@@ -6,7 +6,7 @@ required = [
     "scripts/flow/settings_data.gd",
     "scripts/flow/settings_manager.gd",
     "scripts/flow/settings_menu.gd",
-    "scenes/settings/settings_menu.tscn",
+    "scenes/flow/settings_menu.tscn",
     "data/settings/settings_data.tres.template",
     "docs/v1_2_19_Settings_Spec.md",
 ]
@@ -25,7 +25,10 @@ for key in actions:
     if not re.search(rf"var {re.escape(key)}\b", text):
         errors.append(f"MISSING_PROPERTY:{key}")
 
-menu = (ROOT / "scenes/settings/settings_menu.tscn").read_text(encoding="utf-8")
+# 必须审计「实际被加载」的那份场景。此前这里指向 scenes/settings/settings_menu.tscn，
+# 而 main_menu.gd 加载的是 scenes/flow/settings_menu.tscn —— 两份场景逐字节相同，
+# 于是「返回按钮没接线」这类缺陷能一直绿灯通过审计。
+menu = (ROOT / "scenes/flow/settings_menu.tscn").read_text(encoding="utf-8")
 for label in ["输入", "音频", "辅助功能", "显示", "数据管理", "恢复设置默认", "返回"]:
     if label not in menu:
         errors.append(f"MISSING_UI:{label}")

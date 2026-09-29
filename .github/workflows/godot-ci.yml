@@ -46,6 +46,20 @@ jobs:
           fi
           echo "Smoke test passed"
 
+      - name: Contract audits (Python, data/asset consistency)
+        working-directory: Godot Project V4/NinjaAdventure
+        shell: bash
+        run: |
+          # 只接入当前能通过的契约审计，让 CI 对数据/音频/设置漂移有真实防护。
+          # 其余审计（audit_release_v15 / audit_feedback_v152 / audit_audio_*_v154 /
+          # validate_settlement_pack / validate_ui_pack / audit_input）仍在引用已删除的
+          # result_flow.gd 或旧代码布局，属于门禁自身过期，需单独排期清理后再接。
+          set -e
+          for a in audit_settings.py audit_events.py audit_debug_qa.py audit_audio.py audit_balance_v15_1.py audit_cat_meow_v158.py count_events.py; do
+            echo "== $a =="
+            python "tools/$a"
+          done
+
       - name: 12-level regression (each level 90 frames, zero script errors)
         working-directory: Godot Project V4/NinjaAdventure
         shell: bash
@@ -66,7 +80,8 @@ jobs:
           "
           FAILED=0
           for level in $LEVELS; do
-            godot --headless --path . "$level" --quit-after 90 > level.log 2>&1
+            # 场景参数必须是 res:// 资源路径；裸相对路径不是合法的场景定位方式。
+            godot --headless --path . "res://$level" --quit-after 90 > level.log 2>&1
             if grep -iE "SCRIPT ERROR|Parse Error" level.log; then
               echo "LEVEL FAIL: $level"
               FAILED=1
@@ -84,7 +99,7 @@ jobs:
         working-directory: Godot Project V4/NinjaAdventure
         shell: bash
         run: |
-          godot --headless --fixed-fps 60 --path . tools/gameplay_regression.tscn 2>&1 | tee gameplay.log
+          godot --headless --fixed-fps 60 --path . res://tools/gameplay_regression.tscn 2>&1 | tee gameplay.log
           if grep -iE "SCRIPT ERROR" gameplay.log; then
             echo "Runtime script errors found"
             exit 1

@@ -50,6 +50,8 @@ var specials: LevelSpecialsDirector
 # Hard Mode / Variant B（GDD §5.3）：修饰只作用于 _prepare_level_data() 深拷贝出的运行时副本，
 # 磁盘上的 LevelData/RouteData/EventPointData .tres 永不被改写。
 var active_variant: VariantData = null
+# 本局是否以困难模式进行（决定结算写档的 difficulty 键）。
+var _hard_mode_active := false
 var active_modifier: LevelModifier = null
 var _suspicion_gain_mult := 1.0
 
@@ -169,6 +171,9 @@ func _prepare_level_data() -> void:
     if level_data.variant != null and bool(GlobalFlowMemory.variant_b_selected.get(String(level_data.level_id), false)):
         want_variant = true
     var want_hard := save_manager.data.hard_mode_unlocked and save_manager.data.hard_mode_enabled
+    # 记录本局是否困难模式：结算写档时要用它选 difficulty 键，否则困难成绩会
+    # 覆盖到 NORMAL:Lxx 记录上（并连带影响基于该记录的解锁判定）。
+    _hard_mode_active = want_hard
     if not want_variant and not want_hard:
         return
     level_data = level_data.duplicate(true)
@@ -184,10 +189,9 @@ func _apply_level_modifier(mod: LevelModifier) -> void:
     if level_data.ninja_route != null:
         level_data.ninja_route.move_speed *= mod.ninja_speed_mult
     for event_data in level_data.events:
+        # hesitation 现在真正被 UnifiedEventPoint 当作失败计时前的宽限期消费，
+        # 因此缩短它本身就等价于收紧总窗口，无需再补偿性地改 timeout（否则会双倍收紧）。
         event_data.hesitation_time = maxf(0.0, event_data.hesitation_time + mod.hesitation_delta)
-        # hesitation 是事件总窗口的前段：犹豫缩短 = 总窗口同步缩短（hard 更紧）。
-        if mod.hesitation_delta < 0.0 and event_data.timeout > 0.0:
-            event_data.timeout = maxf(0.5, event_data.timeout + mod.hesitation_delta)
         if event_data.timeout > 0.0:
             event_data.timeout = maxf(0.5, event_data.timeout * mod.event_timeout_mult)
     _suspicion_gain_mult *= mod.suspicion_gain_mult
@@ -632,15 +636,20 @@ func _place_guards_and_dog() -> void:
             dog.setup(Vector2(560, 380))
         else:
             dog.setup(Vector2(520, 465))
+# is_event_active 每帧被调用（UnifiedEventPoint._process/_draw），故 L12 播报必须去重，
+# 否则 toast 会每帧刷屏。
+var _l12_announced: Dictionary = {}
+
 func is_event_active(data: EventPointData) -> bool:
     if level_data != null and level_data.level_id == &"L12":
+        # 四个 Boss 前置事件有专用激活规则；此前它们在下方统一 return，导致配套的
+        # flag/toast 播报分支永远不可达（Boss 关四条关键提示从未出现过）。
         match data.event_id:
-            &"L12_E01_DYNAMITE":
-                return not boss_director.l12_event_done(&"L12_E01_DYNAMITE")
-            &"L12_E02_BOSS_CRANE", &"L12_E03_BOSS_GOURD":
-                return world_state.get_flag(&"l12_gate_open") and not boss_director.boss_started and not boss_director.l12_event_done(data.event_id)
-            &"L12_E04_BOSS_CALTROP":
-                return boss != null and boss_director.boss_started and boss.phase == 2 and not boss_director.l12_event_done(&"L12_E04_BOSS_CALTROP")
+            &"L12_E01_DYNAMITE", &"L12_E02_BOSS_CRANE", &"L12_E03_BOSS_GOURD", &"L12_E04_BOSS_CALTROP":
+                var active := _l12_boss_event_active(data)
+                if active:
+                    _announce_l12_event(data)
+                return active
     if data.activation_flag != &"" and not world_state.get_flag(data.activation_flag):
         return false
     if data.activation_phase != 0:
@@ -648,18 +657,32 @@ func is_event_active(data: EventPointData) -> bool:
             return false
     if data.event_group == &"BOSS_COMBAT":
         return boss != null and boss_director.boss_started
-    if level_data != null and level_data.level_id == &"L12":
-        match data.event_id:
-            &"L12_E01_DYNAMITE":
-                world_state.set_flag(&"l12_gate_open")
-                _show_toast("外门清空：吊车和酒葫芦准备现在都可以做。")
-            &"L12_E02_BOSS_CRANE":
-                _show_toast("吊车机关已准备：Boss 开场会先吃掉 40% 血。")
-            &"L12_E03_BOSS_GOURD":
-                _show_toast("酒葫芦已经动过手脚：Boss 开场再掉 30% 血。")
-            &"L12_E04_BOSS_CALTROP":
-                _show_toast("蒺藜命中！Boss 最后一段血量被清空。")
     return specials.is_event_active(data)
+
+func _l12_boss_event_active(data: EventPointData) -> bool:
+    match data.event_id:
+        &"L12_E01_DYNAMITE":
+            return not boss_director.l12_event_done(&"L12_E01_DYNAMITE")
+        &"L12_E02_BOSS_CRANE", &"L12_E03_BOSS_GOURD":
+            return world_state.get_flag(&"l12_gate_open") and not boss_director.boss_started and not boss_director.l12_event_done(data.event_id)
+        &"L12_E04_BOSS_CALTROP":
+            return boss != null and boss_director.boss_started and boss.phase == 2 and not boss_director.l12_event_done(&"L12_E04_BOSS_CALTROP")
+    return false
+
+func _announce_l12_event(data: EventPointData) -> void:
+    if _l12_announced.has(data.event_id):
+        return
+    _l12_announced[data.event_id] = true
+    match data.event_id:
+        &"L12_E01_DYNAMITE":
+            world_state.set_flag(&"l12_gate_open")
+            _show_toast("外门清空：吊车和酒葫芦准备现在都可以做。")
+        &"L12_E02_BOSS_CRANE":
+            _show_toast("吊车机关已准备：Boss 开场会先吃掉 40% 血。")
+        &"L12_E03_BOSS_GOURD":
+            _show_toast("酒葫芦已经动过手脚：Boss 开场再掉 30% 血。")
+        &"L12_E04_BOSS_CALTROP":
+            _show_toast("蒺藜命中！Boss 最后一段血量被清空。")
 
 func is_ninja_at_blocking_event(route_index: int) -> bool:
     # 对外 API 保留（NinjaController 调用），实现已迁移到 LevelSpecialsDirector。
@@ -766,6 +789,8 @@ func _on_cat_emote() -> void:
         _drop_carry_item()
     var before := suspicion
     suspicion = 0.0
+    # 直接赋值不会发信号，怀疑度指示/计量会停留在卖萌前的值，直到下次怀疑变化才刷新。
+    suspicion_changed.emit(suspicion)
     event_log.append_event({"event_id": &"CAT_EMOTE", "action": &"EMOTE", "success": true, "suspicion_before": before, "suspicion_after": suspicion})
     var current := specials.current_main_event()
     if current != null and current.data.event_type == &"EMOTE_CHECK":
@@ -908,14 +933,24 @@ func _clear_carry_visual() -> void:
 func _drop_carry_item() -> void:
     if cat == null or cat.carry_item == &"":
         return
+    var dropped_id := cat.carry_item
+    var at := cat.global_position + Vector2(10, 12)
     if carry_visual != null and is_instance_valid(carry_visual):
         var dropped := carry_visual.duplicate() as Sprite2D
         dropped.top_level = true
-        dropped.global_position = cat.global_position + Vector2(10, 12)
+        dropped.global_position = at
         add_child(dropped)
         var tw := create_tween()
         tw.tween_property(dropped, "modulate:a", 0.0, 0.35)
         tw.tween_callback(dropped.queue_free)
+    # 掉一件真正可再捡的道具。此前只生成 0.35s 淡出残影，注释写「道具掉落原地」，
+    # 实际等于永久销毁——若叼着的是本关唯一的解毒药，卖萌一次该关就不可通关。
+    # 仅 FISH / ANTIDOTE 有可拾取形态；CRATE 等没有对应 CarryPickup 表现，保留原行为。
+    if dropped_id == &"FISH" or dropped_id == &"ANTIDOTE":
+        var pickup := CarryPickup.new()
+        pickup.global_position = at
+        add_child(pickup)
+        pickup.setup(dropped_id, self)
     cat.set_carry_item(&"")
     _clear_carry_visual()
 
@@ -1014,7 +1049,7 @@ func _complete_level(emergency: bool) -> void:
     event_log.append_event({"event_id": &"GOAL", "event_type": &"GOAL", "action": &"COMPLETE", "success": true, "paws": paws, "emergency": emergency})
     var level_id := String(level_data.level_id)
     var first_clear := not save_manager.data.completed_levels.has(level_id)
-    save_manager.mark_level_complete(level_id, paws, int(elapsed * 1000.0), int(max_suspicion))
+    save_manager.mark_level_complete(level_id, paws, int(elapsed * 1000.0), int(max_suspicion), "HARD" if _hard_mode_active else "NORMAL")
     # 猫技艺计数（GDD §11.3）：事件级 + 关级摘要
     var unlocked: Array[String] = []
     for e in event_log.entries:
@@ -1098,12 +1133,12 @@ func _show_toast(message: String) -> void:
     _set_label(toast_label, message)
 
 func _set_label(label: Label, value: String) -> void:
-    if label != null:
+    if label != null and label.text != value:
         label.text = value
 
 func _update_hud() -> void:
     if paw_label != null and not level_finished:
-        paw_label.text = "猫爪：— / 3"
+        _set_label(paw_label, "猫爪：— / 3")
     if state_label != null:
         var boss_state_text := "未启动"
         var boss_mechanics := 0

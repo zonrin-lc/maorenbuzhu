@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/settlement.ogg-e6cb7f08168a971a13c97af9982b90
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0

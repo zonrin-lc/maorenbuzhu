@@ -66,13 +66,17 @@ func set_music_state(state: String) -> void:
     if not STATES.has(state):
         push_warning("Unknown audio state: %s" % state)
         return
-    if state == current_state:
+    # 同一状态只有「正在播放」时才忽略。此前无条件早退，导致音乐播完后无法重播
+    # （唯一补救手段被自己堵死），30~60s 后全场静音。
+    if state == current_state and _music_player.playing:
         return
-    current_state = state
     var audio: AudioData = load(STATES[state])
     if audio == null or audio.stream == null:
+        # 校验通过后再提交 current_state，否则一次加载失败会让该状态整个会话永久短路。
         push_warning("AudioData missing stream: %s" % state)
         return
+    current_state = state
+    _force_loop(audio.stream)
     var same_stream := _music_player.playing and _music_player.stream != null and _music_player.stream.resource_path == audio.stream.resource_path
     _music_player.bus = audio.bus if AudioServer.get_bus_index(audio.bus) >= 0 else &"Master"
     _music_player.volume_db = audio.volume_db
@@ -81,6 +85,24 @@ func set_music_state(state: String) -> void:
         _music_player.stream = audio.stream
         _music_player.play()
     music_state_changed.emit(state)
+
+# 音乐必须循环。导入侧 loop 参数此前全是 false，这里在运行时强制兜底，
+# 避免任何人重新导入音频后静音回归。
+func _force_loop(stream: AudioStream) -> void:
+    if stream is AudioStreamOggVorbis:
+        (stream as AudioStreamOggVorbis).loop = true
+    elif stream is AudioStreamWAV:
+        var wav := stream as AudioStreamWAV
+        wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+        wav.loop_begin = 0
+        wav.loop_end = int(wav.get_length() * wav.mix_rate)
+
+# 菜单/章节过场没有专属音乐状态，此前结算音乐会一直漏到主菜单和章节结算页。
+# 进入这些场景时显式停掉。
+func stop_music() -> void:
+    current_state = ""
+    if _music_player.playing:
+        _music_player.stop()
 
 func play_event_sfx(event_key: String) -> void:
     if not SFX.has(event_key):
@@ -150,6 +172,8 @@ func play_ninja_voice(tag: String) -> void:
             p.stream = stream
             # Voice 走 Voice 总线（GDD §9.1），音量与普通 SFX 对齐
             p.bus = "Voice" if AudioServer.get_bus_index("Voice") >= 0 else (&"SFX" if AudioServer.get_bus_index("SFX") >= 0 else &"Master")
+            # 必须显式重置：共享 4 通道池，若不设会继承上一个喵叫的 -2.5 dB。
+            p.volume_db = 0.0
             p.pitch_scale = 1.0 + _meow_rng.randf_range(-0.05, 0.05)
             p.play()
             return

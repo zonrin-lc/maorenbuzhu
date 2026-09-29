@@ -35,7 +35,32 @@ func apply_all() -> void:
     DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if data.fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
     if DisplayServer.window_get_vsync_mode() != (DisplayServer.VSYNC_ENABLED if data.vsync else DisplayServer.VSYNC_DISABLED):
         DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if data.vsync else DisplayServer.VSYNC_DISABLED)
+    _apply_audio()
     settings_changed.emit(data)
+
+# 各音量滑块 -> AudioServer 总线。settings_data 里的字段此前只写进 cfg 从未被应用，
+# 玩家调音量完全无效；这里在每次 apply_all() 时真正下发到总线。
+const BUS_MAP := {
+    &"master_volume": [&"Master"],
+    &"music_volume": [&"Music"],
+    &"sfx_volume": [&"SFX", &"Sound"],
+    &"voice_volume": [&"Voice"],
+    &"ui_volume": [&"UI"],
+    &"ambient_volume": [&"Ambient"],
+}
+
+func _apply_audio() -> void:
+    for field_name in BUS_MAP:
+        var buses: Array = BUS_MAP[field_name]
+        var linear: float = clampf(float(data.get(field_name)), 0.0, 1.0)
+        for bus_name in buses:
+            var idx := AudioServer.get_bus_index(bus_name)
+            if idx < 0:
+                continue
+            AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(linear, 0.0001)))
+    var master_idx := AudioServer.get_bus_index(&"Master")
+    if master_idx >= 0:
+        AudioServer.set_bus_mute(master_idx, data.mute_all)
 
 func set_option(key: StringName, value: Variant, persist := true) -> bool:
     if not data.get_property_list().any(func(p): return p.name == key):

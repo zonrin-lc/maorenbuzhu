@@ -1,0 +1,23 @@
+[gd_resource type="SystemFont" format=3]
+
+; 《猫忍不住》全局 UI 字体。
+;
+; 背景：原 theme/font_normal.ttf（模板自带的 NinjaAdventure Regular）只有 150 个
+; 字形，cmap 最大码位 U+201D，CJK 覆盖为 0 —— 而全游戏的界面文字都是中文。
+; 之前完全依赖 allow_system_fallback 碰操作系统字体，属于「作者机器上看正常、
+; 玩家机器上可能是豆腐块」的未定义行为。
+;
+; 这里改用 SystemFont + 显式的 CJK 字体名链，Windows / macOS / Linux 三大平台
+; 都有兜底，且不引入字体再分发授权问题。
+;
+; 如果要追求跨机器像素级一致，可把一份 Noto Sans SC 子集（仅本作用到的 ~500 字形）
+; 放进 res:// 并在此改为 FontFile 引用；在此之前 SystemFont 是最稳的选择。
+; 注意：替换时务必确认子集包含 ★ ☆ 🐾 👁 ✓ ○ ◐ 等符号字形，
+; 见 izakaya_settlement.gd / feedback_director.gd / result_panel.gd 的用法。
+
+[resource]
+font_names = PackedStringArray("Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", "Source Han Sans CN", "WenQuanYi Micro Hei", "SimHei", "Arial Unicode MS", "Sans-Serif")
+allow_system_fallback = true
+antialiasing = 1
+hinting = 1
+subpixel_positioning = 1

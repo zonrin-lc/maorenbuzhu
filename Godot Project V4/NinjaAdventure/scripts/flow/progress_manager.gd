@@ -5,7 +5,11 @@ const LEVEL_ORDER := ["L01","L02","L03","L04","L05","L06","L07","L08","L09","L10
 
 func is_level_unlocked(level_id: String, save: SaveData) -> bool:
     var idx := LEVEL_ORDER.find(level_id)
-    if idx <= 0:
+    # 未知关卡 ID 必须 fail-closed：find() 返回 -1，而 -1 <= 0 原本会判为「已解锁」，
+    # 于是被手改坏的存档（last_level_id = "L99"）会让「继续游戏」永久卡死在不存在的场景。
+    if idx < 0:
+        return false
+    if idx == 0:
         return true
     return save.completed_levels.has(LEVEL_ORDER[idx - 1])
 

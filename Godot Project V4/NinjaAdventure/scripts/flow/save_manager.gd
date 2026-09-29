@@ -13,6 +13,11 @@ func _ready() -> void:
 
 func load_game() -> bool:
     if not FileAccess.file_exists(SAVE_PATH):
+        # 主存档缺失：先尝试读备份。断电/崩溃可能正好停在「SAVE→BACKUP」与
+        # 「TEMP→SAVE」两次 rename 之间，此时备份是唯一幸存的进度。此前直接
+        # 新建空档再 save_game()，会把那份备份删掉 = 永久丢档。
+        if FileAccess.file_exists(BACKUP_PATH) and _load_backup_or_reset(false):
+            return true
         data = SaveData.new()
         return save_game()
     var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
@@ -31,6 +36,13 @@ func load_game() -> bool:
     _migrate(data)
     return true
 
+# 载入时校验 last_level_id：它直接决定「继续游戏」跳哪个场景，且完全来自磁盘。
+# 非法值（手改存档 / 版本漂移）会让按钮永久失效。
+func _sanitize_last_level(target: SaveData) -> void:
+    if target.last_level_id in ProgressManagerClass.LEVEL_ORDER:
+        return
+    target.last_level_id = "L01"
+
 func save_game() -> bool:
     if data == null:
         data = SaveData.new()
@@ -40,7 +52,14 @@ func save_game() -> bool:
         return false
     file.store_string(JSON.stringify(data.to_dict()))
     file.flush()
+    # 写盘失败（磁盘满/IO 错误）时 store_string 只留下截断内容。必须在动备份
+    # 之前检测，否则会把截断的临时档提升成正式档，反过来毁掉好存档。
+    var write_err := file.get_error()
     file.close()
+    if write_err != OK:
+        DirAccess.remove_absolute(TEMP_PATH)
+        push_warning("SaveManager: 写入失败（错误 %d），保留原存档。" % write_err)
+        return false
     if FileAccess.file_exists(BACKUP_PATH):
         DirAccess.remove_absolute(BACKUP_PATH)
     if FileAccess.file_exists(SAVE_PATH):
@@ -121,6 +140,7 @@ func _migrate(target: SaveData) -> void:
     if target.unlocked_skins.is_empty():
         target.unlocked_skins = ["BLACK"]
     target.schema_version = CURRENT_SCHEMA
+    _sanitize_last_level(target)
 
 func _load_backup_or_reset(reset: bool = true) -> bool:
     if FileAccess.file_exists(BACKUP_PATH):
@@ -130,6 +150,7 @@ func _load_backup_or_reset(reset: bool = true) -> bool:
             backup.close()
             if typeof(parsed) == TYPE_DICTIONARY:
                 data = SaveData.from_dict(parsed)
+                _sanitize_last_level(data)
                 return true
     data = SaveData.new()
     if reset:

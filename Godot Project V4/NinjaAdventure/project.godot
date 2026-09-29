@@ -12,7 +12,7 @@ config_version=5
 
 config/name="猫忍不住"
 run/main_scene="res://scenes/flow/main_menu.tscn"
-config/features=PackedStringArray("4.7", "Forward Plus")
+config/features=PackedStringArray("4.7", "GL Compatibility")
 run/max_fps=60
 config/icon="res://icon.png"
 
@@ -42,6 +42,12 @@ folder_colors={
 "res://system/": "blue",
 "res://theme/": "pink"
 }
+
+[gui]
+
+; 全局默认字体。必须指向带 CJK 字形的资源，否则全中文界面会渲染成豆腐块。
+; 原 theme/font_normal.ttf 是模板自带的拉丁字体，CJK 覆盖为 0。
+theme/custom_font="res://theme/ui_font.tres"
 
 [input]
 
@@ -156,7 +162,7 @@ pointing/emulate_touch_from_mouse=true
 
 2d_physics/layer_1="Wall"
 2d_physics/layer_2="Character"
-2d_physics/layer_4="Hitbox"
+2d_physics/layer_3="Hitbox"
 2d_physics/layer_5="Player"
 
 [physics]
@@ -165,5 +171,9 @@ pointing/emulate_touch_from_mouse=true
 
 [rendering]
 
+; 2D 像素游戏用 GL Compatibility：硬件/驱动覆盖面最广，且 headless/xvfb CI
+; 不需要 Vulkan（Forward+ 在无 GPU 的 CI runner 上会起不来）。
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
 textures/canvas_textures/default_texture_filter=0
 2d/snap/snap_2d_transforms_to_pixel=true

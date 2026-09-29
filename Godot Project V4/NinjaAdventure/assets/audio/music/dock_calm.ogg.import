@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/dock_calm.ogg-123f198183e7d0cc2b5d7611128eafa
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0

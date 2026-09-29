@@ -37,6 +37,10 @@ func _register_defaults() -> void:
     }
 
 func execute(line: String) -> String:
+    # enabled 此前只写不读：release 里任何触达 execute() 的路径仍可执行命令
+    # （含 pause_sim 改 get_tree().paused）。这里真正拦截。
+    if not enabled:
+        return "ERR debug_console_disabled"
     line = line.strip_edges()
     if line.is_empty():
         return ""

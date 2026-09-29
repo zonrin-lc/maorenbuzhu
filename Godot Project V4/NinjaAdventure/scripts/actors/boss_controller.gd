@@ -43,7 +43,6 @@ func start_boss() -> void:
     active = true
     if anim_driver != null:
         anim_driver.set_base_modulate(Color.WHITE)
-    phase = 1
     if anim_driver != null:
         anim_driver.play(AnimationFeedbackDriver.State.ACTION, 0.45)
     timer = 0.0
@@ -51,6 +50,9 @@ func start_boss() -> void:
     if prepared_damage > 0:
         hp = max(1, hp - prepared_damage)
         prepared_damage = 0
+    # 阶段只经 set_phase 单一出口变更。此前这里先直接 `phase = 1`，再调 set_phase(1)
+    # 会被其守卫挡掉，导致 phase_changed(1) 永不 emit：Boss 开场音乐停在 PREPARE、
+    # world_state 也拿不到 boss_phase_1。
     set_phase(1)
     # 注意：不在此处按 HP 同步阶段——阶段推进由时间线驱动（P1→P2→P3），
     # 预伤害只降血量，不得跳过 Phase 2（战中蒺藜窗口），见 GDD §6.3。
@@ -70,7 +72,9 @@ func damage(amount: int, source: StringName) -> void:
         defeated.emit()
         return
     timer = 0.0
-    charge_timer = 0.0
+    # charge_timer 驱动 Phase 2→3；Phase 2 期间被伤害不应重置它，否则 Boss 永远卡在 P2。
+    if phase < 2:
+        charge_timer = 0.0
     queue_redraw()
 
 func set_phase(new_phase: int) -> void:

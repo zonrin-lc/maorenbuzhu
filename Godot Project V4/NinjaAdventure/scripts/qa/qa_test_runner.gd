@@ -13,17 +13,27 @@ const FAIL_CODES := [
 const LEVEL_COUNT := 12
 const EVENTS_DIR := "res://data/events"
 
+# Release 隔离（GDD Release Gate）：正式构建中让 QA Runner 完全惰性。
+# 此前用 queue_free() 释放 autoload 节点 —— 这是不受支持的用法：autoload 的单例
+# 登记在 ProjectSettings / SceneTree 里，运行期释放会留下「已注册但已释放」的
+# 悬空单例，退出时报 orphan/泄漏警告。正确做法是保留节点但禁用行为。
+var enabled := true
+
 func _ready() -> void:
-    # Release 隔离（GDD Release Gate）：正式构建中移除 QA Runner 单例。
     if not OS.has_feature("editor") and not OS.has_feature("debug"):
-        queue_free()
+        enabled = false
+        set_process(false)
 
 func run_quick_validation(level_id: String) -> String:
+    if not enabled:
+        return "ERR qa_disabled_in_release"
     if not _valid_level(level_id):
         return "ERR invalid level_id"
     return "OK quick_validation=" + level_id + " core_state=inspectable"
 
 func run_static_contract_suite(events_seen: int, levels_seen: int) -> Dictionary:
+    if not enabled:
+        return {"errors": ["qa_disabled_in_release"] as Array[String], "passed": false}
     var errors: Array[String] = []
     if levels_seen != LEVEL_COUNT:
         errors.append("expected 12 levels, got %d" % levels_seen)

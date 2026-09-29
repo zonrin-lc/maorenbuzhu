@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/village_tension.ogg-c275a8918aa3b06f025af2c40
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0

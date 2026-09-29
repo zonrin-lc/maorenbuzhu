@@ -5,6 +5,8 @@ extends Control
 @onready var status: Label = $Margin/VBox/ProgressPanel/Status
 
 func _ready() -> void:
+    # 结算音乐会漏到主菜单（结算页切回菜单时没人重置音乐状态）。
+    GlobalAudioManager.stop_music()
     var save := app.save_data()
     continue_button.text = "继续游戏 · %s" % app.continue_level()
     var paws_total := app.progress_manager.paws_total(save)

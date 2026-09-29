@@ -954,6 +954,10 @@ func on_l10_dog_arrived(_target: Vector2) -> void:
         l10_caltrop_cleared = false
         l10_caltrop_deadline = -1.0
         world_state.set_flag(&"L10_CALTROP_WINDOW_EARLY")
+        # 此前这里只改 flag 和弹提示，从未真正改线：_apply_l10_route_branch(false)
+        # 全项目无调用点，于是「狗已改线」在 Guard A 已离岗时是假的——忍者仍走原路线、
+        # 蒺藜/毒雾也没被重新摆位。
+        _apply_l10_route_branch(false)
         show_toast.call("狗已改线：蒺藜窗口提前，先清蒺藜再处理毒雾。")
     if ninja != null:
         ninja.release_event()
