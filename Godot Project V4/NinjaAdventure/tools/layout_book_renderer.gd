@@ -11,6 +11,8 @@ class_name LayoutBookRenderer
 #
 # The same renderer can be used in the editor by instantiating this node.
 
+const Manifest = preload("res://tools/layout_book_manifest.gd")
+
 const OUT_DIR := "res://art/layout_book/rendered"
 const W := 1600
 const H := 1000
@@ -42,7 +44,7 @@ func _ready() -> void:
     call_deferred("_render")
 
 func _render() -> void:
-    var meta := LayoutBookManifest.get_meta(level_id)
+    var meta := Manifest.get_meta(level_id)
     var scene_path := LayoutBookManifest.scene_path(level_id)
     if scene_path.is_empty():
         push_error("Unknown level: " + level_id)
