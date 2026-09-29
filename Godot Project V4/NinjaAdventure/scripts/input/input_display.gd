@@ -95,18 +95,20 @@ static func _event_to_label(event: InputEvent) -> String:
     return "Custom"
 
 static func _joypad_button_label(index: int) -> String:
+    # SDL 手柄枚举（与 project.godot 的 button_index 对齐）：0=A 1=B 2=X 3=Y
+    # 4=BACK 5=GUIDE 6=START 7=LS 8=RS 9=LB 10=RB 11-14=D-pad
     match index:
         0: return "A"
         1: return "B"
         2: return "X"
         3: return "Y"
-        4: return "LB"
-        5: return "RB"
-        6: return "BACK"
-        7: return "START"
-        8: return "LS"
-        9: return "RS"
-        10: return "L3"
+        4: return "BACK"
+        5: return "GUIDE"
+        6: return "START"
+        7: return "LS"
+        8: return "RS"
+        9: return "LB"
+        10: return "RB"
         11: return "D↑"
         12: return "D↓"
         13: return "D←"

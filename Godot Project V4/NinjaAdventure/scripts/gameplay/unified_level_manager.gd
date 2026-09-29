@@ -195,6 +195,9 @@ func _apply_level_modifier(mod: LevelModifier) -> void:
         boss.prepare_time = maxf(0.5, boss.prepare_time + mod.boss_prepare_delta)
 
 func _apply_variant(v: VariantData) -> void:
+    if not v.validate():
+        push_error("VariantData %s 校验失败，已跳过该变体（保持 A 剧本行为）" % v.variant_id)
+        return
     active_variant = v
     # timer_overrides: "target_time"（绝对值）或 "target_time_mult"；"event_timeout_mult" 作用于全部事件窗口。
     if v.timer_overrides.has("target_time"):

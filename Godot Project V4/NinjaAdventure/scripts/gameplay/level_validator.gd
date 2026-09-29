@@ -25,7 +25,7 @@ func validate_level(level_data: LevelData) -> Array[String]:
     if level_data.score_rules == null:
         errors.append("SCORE_RULES_MISSING")
 
-    # 6 场景文件与 ResultFlow 出口
+    # 6 场景文件与结算出口
     if level_data.scene_path.is_empty():
         errors.append("SCENE_PATH_EMPTY")
     elif not FileAccess.file_exists(level_data.scene_path):

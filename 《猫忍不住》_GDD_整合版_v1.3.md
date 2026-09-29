@@ -1,4 +1,4 @@
-# 《猫忍不住》游戏设计文档 · 整合版 v1.5.1
+# 《猫忍不住》游戏设计文档 · 整合版 v1.5.2
 
 > **副标题：忍者在明处，猫在幕后。**
 >
@@ -65,6 +65,8 @@
 > v1.5.0 修订（2026-09-28）：实现债 ⑧ 完成——ULM 拆分三步走完（SceneArtBuilder + BossDirector + LevelSpecialsDirector），2279→1105 行；12 关场景直跑冒烟全绿；§15.3 实现债 11 项全部落地。
 >
 > v1.5.1 修订（2026-09-29）：v1.6.1 Release Hardening 收口——L12 Boss 评分入 ScoreSystem（A–E+G 数据驱动）、QA 事件计数以实数 56 为唯一事实源、Debug/QA 双组件 Release 隔离、结算触控出口、结算音乐独立 SETTLEMENT 状态、手柄键位按裁定映射修正等 14 项；详见《猫忍不住》_v1.6.1_ReleaseHardening_收口记录.md。
+>
+> v1.5.2 修订（2026-09-29）：第三轮审查修复——L02 Variant 类型错误（键名+占位字典双错）、L12 Boss 阶段与血量解耦（P2 蒺藜窗口恢复可达）、L07 语义修复、旧 Result 栈删除、改键 UI 闭环、Godot 元数据 4.7；新增工程债登记（§15.3 续）。详见《猫忍不住》_v1.6.2_审查与修复记录.md。
 
 ---
 
@@ -1485,6 +1487,8 @@ Experience [ ] 玩家能解释失败 [ ] 无无意义等待 [ ] 猫始终有下�
 11. **[已落地]** GitHub Actions + Godot smoke test（发布前必须；静态通过 ≠ 运行通过）（.github/workflows/godot-ci.yml：导入+编译检查+30 帧冒烟）
 
 > 第二轮审查（Release Hardening）14 项已全部收口，记录见《猫忍不住》_v1.6.1_ReleaseHardening_收口记录.md；剩余工程项：Android/iOS/Web 导出预设、结算 F 条件展示 UI、rebind 面板信号接入、input_action_manifest 文档同步。
+
+> 第三轮审查（v1.6.2）新增工程债：① CI 升级为玩法级回归（超越启动冒烟）；② L05/L09/L12 猫捷径白盒未接入 gameplay；③ 16×16 网格约束未落地（LayoutValidator 加 % 16 校验）；④ Variant B 内容深度不足（应至少改 2–3 个维度，非纯数值压力）；⑤ L05 current_main_event 语义统一；⑥ 移动端触控暂停/重开 + Safe Area；⑦ input_action_manifest 由 InputMap 自动生成；⑧ Android/iOS/Web 导出链；⑨ Rebind 遗留（改键清另一端绑定/不持久化/不支持改轴）。
 
 ---
 

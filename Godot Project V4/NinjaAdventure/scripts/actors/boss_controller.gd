@@ -52,7 +52,8 @@ func start_boss() -> void:
         hp = max(1, hp - prepared_damage)
         prepared_damage = 0
     set_phase(1)
-    _sync_phase_from_hp()
+    # 注意：不在此处按 HP 同步阶段——阶段推进由时间线驱动（P1→P2→P3），
+    # 预伤害只降血量，不得跳过 Phase 2（战中蒺藜窗口），见 GDD §6.3。
 
 func damage(amount: int, source: StringName) -> void:
     if not active:
@@ -88,6 +89,9 @@ func _sync_phase_from_hp() -> void:
         new_phase = 2
     elif new_phase < 1:
         new_phase = 1
+    # 血量只许把阶段往前推一格，不允许跨级跳阶段（保护 Phase 2 战中蒺藜窗口）。
+    if new_phase > phase + 1:
+        new_phase = phase + 1
     set_phase(new_phase)
 
 func _process(delta: float) -> void:

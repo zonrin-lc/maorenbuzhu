@@ -426,7 +426,7 @@ func is_event_active(data: EventPointData) -> bool:
     if level_id == &"L07":
         match data.event_id:
             &"L07_E01_GUARD_A": return not event_done(&"L07_E01_GUARD_A")
-            &"L07_E02_GUARD_B": return event_done(&"L07_E01_GUARD_A") or not event_done(&"L07_E02_GUARD_B")
+            &"L07_E02_GUARD_B": return event_done(&"L07_E01_GUARD_A") and not event_done(&"L07_E02_GUARD_B")
             &"L07_E03_DOG": return event_done(&"L07_E01_GUARD_A") and not event_done(&"L07_E03_DOG")
             &"L07_E04_BRIDGE":
                 if l07_b_was_early:

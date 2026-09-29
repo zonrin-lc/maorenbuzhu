@@ -56,6 +56,26 @@ func restore_defaults(default_event_map: Dictionary) -> void:
         for event in default_event_map[action]:
             InputMap.action_add_event(action, event.duplicate())
 
+# 会话级默认绑定快照：首个实例创建时从 InputMap 捕获（此时早于任何重绑），
+# 供“恢复默认”使用。绑定目前不持久化，每次启动即为 project.godot 默认值。
+static var _session_default_events: Dictionary = {}
+
+func _init() -> void:
+    snapshot_session_defaults()
+
+static func snapshot_session_defaults() -> void:
+    if not _session_default_events.is_empty():
+        return
+    for action in CONFLICT_AUDIT_ACTIONS:
+        var events: Array = []
+        for event in InputMap.action_get_events(action):
+            events.append(event.duplicate())
+        _session_default_events[action] = events
+
+func restore_session_defaults() -> void:
+    snapshot_session_defaults()
+    restore_defaults(_session_default_events)
+
 func _would_break_required_actions(action: String, event: InputEvent) -> bool:
     if action == "pause" and event == null:
         return true
