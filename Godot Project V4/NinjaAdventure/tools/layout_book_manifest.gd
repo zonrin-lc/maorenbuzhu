@@ -103,7 +103,7 @@ const SHORTCUTS := {
     "L12": [[Vector2(520,500), Vector2(700,380)]]
 }
 
-static func get_meta(level_id: String) -> Dictionary:
+static func level_meta(level_id: String) -> Dictionary:
     return LEVELS.get(level_id, {})
 
 static func chapter(level_id: String) -> String:
