@@ -60,6 +60,26 @@ func _safe_insets() -> Vector4:
 # 触控端的暂停 / 重开。PauseController 与 ULM 的 retry 都在 _unhandled_input 里
 # 监听「事件」，因此这里必须注入真实 InputEventAction（Input.action_press 只改
 # 动作状态，不会产生事件流），否则按钮按了没反应。
+#
+# 必须成对发送 press + release：retry 在 ULM 里除了 _unhandled_input 收事件外，
+# 还用 Input.is_action_pressed("retry") 轮询。只发 pressed=true 会让该 action 永久
+# 停在按下态，跨场景残留——下次进关卡完成/失败时又被当作「正按着重开」。
+# release 延后一帧，确保 press 先被消费。
+func _pulse_action(action: StringName) -> void:
+    _set_device_touch()
+    var down := InputEventAction.new()
+    down.action = action
+    down.pressed = true
+    Input.parse_input_event(down)
+    # release 延后一帧，确保 press 先被消费
+    _release_action.call_deferred(action)
+
+func _release_action(action: StringName) -> void:
+    var up := InputEventAction.new()
+    up.action = action
+    up.pressed = false
+    Input.parse_input_event(up)
+
 func _build_sys_buttons() -> void:
     _sys_row = HBoxContainer.new()
     _sys_row.name = "SystemButtons"
@@ -72,13 +92,7 @@ func _build_sys_buttons() -> void:
         b.focus_mode = Control.FOCUS_NONE
         b.mouse_filter = Control.MOUSE_FILTER_STOP
         var action: StringName = spec.action
-        b.pressed.connect(func():
-            _set_device_touch()
-            var ev := InputEventAction.new()
-            ev.action = action
-            ev.pressed = true
-            Input.parse_input_event(ev)
-        )
+        b.pressed.connect(_pulse_action.bind(action))
         _sys_row.add_child(b)
 
 func _build_stick() -> void:

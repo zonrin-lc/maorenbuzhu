@@ -493,27 +493,34 @@ func _setup_fish_collectibles() -> void:
     var nav := get_node_or_null("Navigation")
     if nav == null:
         return
-    var spots: Array[Vector2] = []
+    # 用「节点稳定名」而非「遍历顺序」决定存档槽位：GDD §11.1 规定每关 3 条用
+    # 3 位 bitmask 存档，槽位 0..2 是长期存档身份。若按 get_children() 顺序编号，
+    # 以后在场景里插入/调整一个 CatTunnel 就会整体错位，已收集的存档对不上位置。
+    # 节点名（CatTunnel_L05_01 等）由关卡脚本显式命名且稳定，排序后取前 3 个，
+    # 使槽位与场景树顺序解耦。
+    var entries: Array = []  # [stable_name, position]
     for path in ["CatTunnel", "JumpPoints"]:
         var group := nav.get_node_or_null(path)
         if group == null:
             continue
         for child in group.get_children():
             if child is CatTunnel:
-                spots.append((child as CatTunnel).exit_point)
+                entries.append([String((child as CatTunnel).name), (child as CatTunnel).exit_point])
             elif child is JumpPoint:
-                spots.append((child as JumpPoint).exit_point)
-    if spots.is_empty():
+                entries.append([String((child as JumpPoint).name), (child as JumpPoint).exit_point])
+    if entries.is_empty():
         return
+    entries.sort_custom(func(a, b): return String(a[0]) < String(b[0]))
     var root := Node2D.new()
     root.name = "FishCollectibles"
     nav.add_child(root)
     var index := 0
-    for spot in spots:
+    for entry in entries:
         if index >= 3:  # GDD §11.1：每关 3 条；bitmask 按 3 位设计
             break
+        var spot: Vector2 = entry[1]
         var fish := FishCollectible.new()
-        fish.name = "Fish_%02d" % index
+        fish.name = "Fish_%02d_%s" % [index, String(entry[0])]
         fish.position = spot + Vector2(0, -6)
         root.add_child(fish)
         fish.setup(self, level_data.level_id, index)

@@ -8,17 +8,67 @@ extends Node
 # 通过 = 打印 RUNTIME: PASS；否则打印具体失败项并以非 0 退出。
 
 const USER_CFG := "user://settings.cfg"
+const USER_SAVE := "user://save.cfg"
+const USER_SAVE_BACKUP := "user://save.backup.cfg"
+const USER_SAVE_TEMP := "user://save.tmp"
 
 var _errors: Array[String] = []
+# 开发者本地跑这个测试时不能破坏真实存档/改键：用内存快照 + 文件备份包裹整个测试，
+# 结束时逐字节还原。CI 临时 profile 同样受益（不会污染后续步骤）。
+var _snap_cfg := ""
+var _snap_save := ""
+var _snap_backup := ""
+var _had_cfg := false
+var _had_save := false
+var _had_backup := false
+
+func _read(path: String) -> String:
+    if not FileAccess.file_exists(path):
+        return ""
+    var f := FileAccess.open(path, FileAccess.READ)
+    if f == null:
+        return ""
+    var t := f.get_as_text()
+    f.close()
+    return t
+
+func _write(path: String, content: String) -> void:
+    var f := FileAccess.open(path, FileAccess.WRITE)
+    if f == null:
+        return
+    f.store_string(content)
+    f.close()
+
+func _backup_env() -> void:
+    _had_cfg = FileAccess.file_exists(USER_CFG)
+    _snap_cfg = _read(USER_CFG)
+    _had_save = FileAccess.file_exists(USER_SAVE)
+    _snap_save = _read(USER_SAVE)
+    _had_backup = FileAccess.file_exists(USER_SAVE_BACKUP)
+    _snap_backup = _read(USER_SAVE_BACKUP)
+
+func _restore_env() -> void:
+    for path in [USER_CFG, USER_SAVE, USER_SAVE_BACKUP, USER_SAVE_TEMP]:
+        if FileAccess.file_exists(path):
+            DirAccess.remove_absolute(path)
+    if _had_cfg:
+        _write(USER_CFG, _snap_cfg)
+    if _had_save:
+        _write(USER_SAVE, _snap_save)
+    if _had_backup:
+        _write(USER_SAVE_BACKUP, _snap_backup)
 
 func _ready() -> void:
     _run.call_deferred()
 
 func _run() -> void:
+    _backup_env()
     _test_device_scoped_rebind()
     _test_persistence_roundtrip()
     _test_restore_factory()
     _test_fish_collect_writes_save()
+    _test_reset_clears_backup()
+    _restore_env()
     if _errors.is_empty():
         print("RUNTIME: PASS")
         get_tree().quit(0)
@@ -119,9 +169,7 @@ func _test_fish_collect_writes_save() -> void:
     # 必须用真实关卡 ID：ProgressManager.fish_total() 只统计 LEVEL_ORDER 里的关卡，
     # 用假 ID 会导致总数恒为 0（这是测试自身的坑，不是游戏缺陷）。
     var level_id := ProgressManagerClass.LEVEL_ORDER[0]
-    var save := SaveManager.get_data()
-    var had_prior := int(save.fish_collected.get(level_id, 0))
-    save.fish_collected.erase(level_id)
+    SaveManager.get_data().fish_collected.erase(level_id)
     SaveManager.collect_fish(level_id, 0)
     SaveManager.collect_fish(level_id, 2)
     SaveManager.collect_fish(level_id, 0)  # 重复应幂等
@@ -132,8 +180,14 @@ func _test_fish_collect_writes_save() -> void:
     if pm.fish_total(SaveManager.get_data()) < 2:
         _errors.append("fish: fish_total 未累计")
     pm.free()
-    # 还原测试前的存档状态，不污染真实进度
-    SaveManager.get_data().fish_collected.erase(level_id)
-    if had_prior != 0:
-        SaveManager.get_data().fish_collected[level_id] = had_prior
-    SaveManager.save_game()
+    # 存档整体还原由 _restore_env() 负责
+
+# 5) 「清除全部进度」必须连 backup 一起清掉（不可逆删除）
+func _test_reset_clears_backup() -> void:
+    SaveManager.get_data().completed_levels.append("L01")
+    SaveManager.save_game()  # 写出一份带 backup 的状态
+    # 人为造出 backup
+    _write("user://save.backup.cfg", '{"schema_version":1,"completed_levels":["L01"]}')
+    SaveManager.reset_save()
+    if FileAccess.file_exists("user://save.backup.cfg"):
+        _errors.append("reset: reset_save() 后 backup 仍存在（旧进度可被恢复）")

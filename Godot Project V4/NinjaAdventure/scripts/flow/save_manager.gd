@@ -76,9 +76,19 @@ func get_data() -> SaveData:
         data = SaveData.new()
     return data
 
+# 「清除全部进度」是用户的显式、不可逆删除请求，必须连 backup 一起清掉。
+# 否则 save_game() 的轮转会把「删除前」的旧档留在 save.backup.cfg；日后主档损坏/
+# 丢失时启动会从 backup 恢复出「已删除」的旧进度，与用户意图相悖。
+# 注意顺序：save_game() 内部会先写新档、再把旧主档轮转成 backup，所以必须在
+# save_game() 之后再删 backup，否则刚删掉又会被旧主档轮转回来。
 func reset_save() -> bool:
     data = SaveData.new()
-    return save_game()
+    var ok := save_game()
+    if FileAccess.file_exists(BACKUP_PATH):
+        DirAccess.remove_absolute(BACKUP_PATH)
+    if FileAccess.file_exists(TEMP_PATH):
+        DirAccess.remove_absolute(TEMP_PATH)
+    return ok
 
 func mark_level_complete(level_id: String, paws: int, time_ms: int, max_suspicion: int, difficulty: String = "NORMAL") -> void:
     if not data.completed_levels.has(level_id):
