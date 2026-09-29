@@ -40,7 +40,7 @@
 >
 > **素材约束：美术与音频严格限于 Ninja Adventure Asset Pack——素材零缺口（v1.5.8 起，猫叫见 §9.3）。**
 >
-> v1.3.1 修订（2026-09-24）：按《GDD_v1.3_审查报告》修复 P0×3 / P1×5 / P2×4，详见审查报告与 §15.2。
+> v1.3.1 修订（2026-09-24）：按《猫忍不住》_GDD_v1.3_审查报告.md（已归档至 docs/archive/）修复 P0×3 / P1×5 / P2×4，详见审查报告与 §15.2。
 >
 > v1.4 修订（2026-09-26）：整合 v1.2.9–v1.2.26 全部新文档与实现包——第二/三章连续集成、统一事件架构、数据驱动事件 Authoring、关卡生产管线、GlobalUI、Meta 进度、居酒屋结算管线、音频系统、输入系统、设置系统、主流程、结果流、Debug/QA 合同、试玩平衡体系（Matrix/Balance Sheet/三路线/采集管线）。修订 §2/§5/§7/§8/§9/§11/§12/§13，新增冲突仲裁见 §15.2。
 >
@@ -54,7 +54,7 @@
 >
 > v1.4.5 修订（2026-09-28）：融合 v1.6.0 美术资产替换与场景精修版——项目进入正式美术层（§10 素材映射后新增美术状态段）。
 >
-> v1.4.6 修订（2026-09-28）：实现审查裁定落地——chain_rescue 定义收紧（§7.4）、L11 Cliff→Gate（§6.3）、L10 事件 ID 去重（§15.2）、新增实现债登记（§15.3）。详见《猫忍不住》_v1.6.0_实现审查记录.md。
+> v1.4.6 修订（2026-09-28）：实现审查裁定落地——chain_rescue 定义收紧（§7.4）、L11 Cliff→Gate（§6.3）、L10 事件 ID 去重（§15.2）、新增实现债登记（§15.3）。详见docs/archive/《猫忍不住》_v1.6.0_实现审查记录.md。
 >
 > v1.4.7 修订（2026-09-28）：开发迁移至本机（Godot 4.7.2）；实现债 ①⑤⑨⑩ 修复落地，⑥⑦ 部分落地（§15.3）；顺带修复 input_manager.gd 的 InputEventMouseWheel 不存在类引用与 class_name/autoload 同名冲突两个历史编译错误。
 >
@@ -64,7 +64,7 @@
 >
 > v1.5.0 修订（2026-09-28）：实现债 ⑧ 完成——ULM 拆分三步走完（SceneArtBuilder + BossDirector + LevelSpecialsDirector），2279→1105 行；12 关场景直跑冒烟全绿；§15.3 实现债 11 项全部落地。
 >
-> v1.5.1 修订（2026-09-29）：v1.6.1 Release Hardening 收口——L12 Boss 评分入 ScoreSystem（A–E+G 数据驱动）、QA 事件计数以实数 56 为唯一事实源、Debug/QA 双组件 Release 隔离、结算触控出口、结算音乐独立 SETTLEMENT 状态、手柄键位按裁定映射修正等 14 项；详见《猫忍不住》_v1.6.1_ReleaseHardening_收口记录.md。
+> v1.5.1 修订（2026-09-29）：v1.6.1 Release Hardening 收口——L12 Boss 评分入 ScoreSystem（A–E+G 数据驱动）、QA 事件计数以实数 56 为唯一事实源、Debug/QA 双组件 Release 隔离、结算触控出口、结算音乐独立 SETTLEMENT 状态、手柄键位按裁定映射修正等 14 项；详见docs/archive/《猫忍不住》_v1.6.1_ReleaseHardening_收口记录.md。
 >
 > v1.5.2 修订（2026-09-29）：第三轮审查修复——L02 Variant 类型错误（键名+占位字典双错）、L12 Boss 阶段与血量解耦（P2 蒺藜窗口恢复可达）、L07 语义修复、旧 Result 栈删除、改键 UI 闭环、Godot 元数据 4.7；新增工程债登记（§15.3 续）。详见《猫忍不住》_v1.6.2_审查与修复记录.md。
 >
@@ -1474,7 +1474,7 @@ Experience [ ] 玩家能解释失败 [ ] 无无意义等待 [ ] 猫始终有下�
 
 ## 15.3 实现债登记（v1.4.6 起）
 
-设计合同与实现的偏差在此登记，按处理优先级排序（详情见《猫忍不住》_v1.6.0_实现审查记录.md）：
+设计合同与实现的偏差在此登记，按处理优先级排序（详情见docs/archive/《猫忍不住》_v1.6.0_实现审查记录.md）：
 
 1. **[已落地]** chain_rescue 判定改为沿 caused_event_id 链（§7.4）（沿 caused_event_id 链判定，unified_level_manager.gd）
 2. **[已落地]** L11 Gate 裁定在数据层落地（§6.3）（`L11_E07_GATE.tres` 已在数据层，GDD §6.3 已同步裁定）
@@ -1488,7 +1488,7 @@ Experience [ ] 玩家能解释失败 [ ] 无无意义等待 [ ] 猫始终有下�
 10. **[已落地]** export_presets 版本号跟随实现版本（当前滞留 0.1.0）（已升 1.6.0）
 11. **[已落地]** GitHub Actions + Godot smoke test（发布前必须；静态通过 ≠ 运行通过）（.github/workflows/godot-ci.yml：导入+编译检查+30 帧冒烟）
 
-> 第二轮审查（Release Hardening）14 项已全部收口，记录见《猫忍不住》_v1.6.1_ReleaseHardening_收口记录.md；剩余工程项：Android/iOS/Web 导出预设、结算 F 条件展示 UI、rebind 面板信号接入、input_action_manifest 文档同步。
+> 第二轮审查（Release Hardening）14 项已全部收口，记录见docs/archive/《猫忍不住》_v1.6.1_ReleaseHardening_收口记录.md；剩余工程项：Android/iOS/Web 导出预设、结算 F 条件展示 UI、rebind 面板信号接入、input_action_manifest 文档同步。
 
 > 第三轮审查（v1.6.2）新增工程债：① **✅已落地** CI 升级为玩法级回归（超越启动冒烟；`tools/gameplay_regression.tscn` 每关 PASS+FAIL 双路径断言，12/12，CI 已接线）；② **✅已落地** L05/L09/L12 猫捷径白盒未接入 gameplay（三关 CatTunnel 接入 _setup_shortcuts）；③ **⏳部分** 16×16 网格约束未落地（LevelValidator.check_grid_alignment + QA WARN 聚合已落地；内容对齐是后续关卡工作）；④ Variant B 内容深度不足（应至少改 2–3 个维度，非纯数值压力）；⑤ L05 current_main_event 语义统一；⑥ 移动端触控暂停/重开 + Safe Area；⑦ **✅已落地** input_action_manifest 由 InputMap 自动生成（`tools/generate_input_manifest.gd`，InputMap 直出）；⑧ Android/iOS/Web 导出链；⑨ Rebind 遗留（改键清另一端绑定/不持久化/不支持改轴）。
 
