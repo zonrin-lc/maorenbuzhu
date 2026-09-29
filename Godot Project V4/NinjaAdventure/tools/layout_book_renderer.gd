@@ -192,7 +192,7 @@ func _capture_level_art() -> Texture2D:
 
 func _draw_left_panel() -> void:
     _panel(Rect2(24, 142, 245, 550), "1. 关卡概览")
-    var meta := Manifest.LEVELS.get(level_id, {})
+    var meta: Dictionary = Manifest.LEVELS.get(level_id, {})
     _body([
         "南侧起点，北侧终点。",
         "主线负责安全且明确的",
