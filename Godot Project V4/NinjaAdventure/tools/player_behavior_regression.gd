@@ -83,8 +83,11 @@ func _check_move(ulm: UnifiedLevelManager) -> bool:
     var moved := ulm.cat.global_position.distance_to(start)
     return moved > 4.0
 
-# 找一个能用「按住 interact」完成的活动事件（排除喵叫/卖萌教学/被动/需搬运的）
-func _find_interact_event(ulm: UnifiedLevelManager) -> UnifiedEventPoint:
+# 找一个可用「单个输入键按住」完成的活动事件，并返回该按哪个键。
+# 返回空数组表示该候选不存在。
+# 键位来自 UnifiedEventPoint._action_pressed：STEAL_CRATE 走 carry，其余走 interact。
+# 排除喵叫/卖萌教学/被动/需搬运（猫身上没有对应道具，按了也不会 resolve）。
+func _find_interact_event(ulm: UnifiedLevelManager) -> Array:
     for node in ulm.event_nodes:
         if node.resolved_state or not ulm.is_event_active(node.data):
             continue
@@ -93,15 +96,18 @@ func _find_interact_event(ulm: UnifiedLevelManager) -> UnifiedEventPoint:
             continue
         if node.data.consume_carry_item != &"":
             continue
-        return node
-    return null
+        var key := "carry" if required == &"STEAL_CRATE" else "interact"
+        return [node, key]
+    return []
 
-# CHECK 2：真实按住 interact → 事件经信号解决
+# CHECK 2：真实按住对应键 → 事件经信号解决
 func _check_action(ulm: UnifiedLevelManager) -> bool:
-    var node := _find_interact_event(ulm)
-    if node == null:
-        # 该关没有「普通互动」类活动事件（例如全是喵叫/被动），不强求。
+    var picked := _find_interact_event(ulm)
+    if picked.is_empty():
+        # 该关没有「单键可完成」的活动事件（例如全是喵叫/被动），不强求。
         return true
+    var node: UnifiedEventPoint = picked[0]
+    var key: String = picked[1]
     if ulm.cat == null:
         return false
     var resolved := false
@@ -110,12 +116,12 @@ func _check_action(ulm: UnifiedLevelManager) -> bool:
     ulm.cat.global_position = node.global_position + Vector2(0, -20)
     await get_tree().physics_frame
     await get_tree().physics_frame
-    Input.action_press("interact")
+    Input.action_press(key)
     for i in ACTION_BUDGET_FRAMES:
         await get_tree().process_frame
         if resolved or node.resolved_state:
             break
-    Input.action_release("interact")
+    Input.action_release(key)
     return resolved or node.resolved_state
 
 func _run_level(lid: String, scene_path: String) -> void:

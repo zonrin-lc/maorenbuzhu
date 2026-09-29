@@ -101,6 +101,18 @@ jobs:
           fi
           echo "12-level regression passed"
 
+      - name: Runtime behavior test (rebind persistence / device scoping / fish save)
+        working-directory: Godot Project V4/NinjaAdventure
+        shell: bash
+        run: |
+          godot --headless --path . res://tools/runtime_behavior_test.tscn 2>&1 | tee runtime.log
+          if grep -iE "SCRIPT ERROR|Parse Error" runtime.log; then
+            echo "Runtime script errors found"; exit 1
+          fi
+          grep -q "RUNTIME: PASS" runtime.log || {
+            echo "Runtime behavior assertions failed"; grep -A20 "RUNTIME: FAIL" runtime.log; exit 1; }
+          echo "Runtime behavior test passed"
+
       - name: Player-behavior regression (real input: move/interact, 12 levels)
         working-directory: Godot Project V4/NinjaAdventure
         shell: bash
