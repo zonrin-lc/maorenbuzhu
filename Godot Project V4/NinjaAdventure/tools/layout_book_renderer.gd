@@ -141,7 +141,6 @@ var event_points: Array = []
 var actor_names: Array = []
 var scene_layer_counts := {}
 var page_root: Node2D
-var page_view: SubViewport
 var cjk_font: Font
 
 func _ready() -> void:
@@ -193,7 +192,7 @@ func _render() -> void:
     await get_tree().process_frame
     await get_tree().process_frame
 
-    var image := page_view.get_texture().get_image()
+    var image := get_viewport().get_texture().get_image()
     image.convert(Image.FORMAT_RGBA8)
 
     DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
@@ -271,18 +270,10 @@ func _hide_gameplay_overlays() -> void:
             child.visible = false
 
 func _build_page() -> void:
-    page_view = SubViewport.new()
-    page_view.name = "BiblePageViewport"
-    page_view.size = Vector2i(W, H)
-    page_view.transparent_bg = false
-    page_view.render_target_update_mode = SubViewport.UPDATE_ONCE
-    page_view.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
-    add_child(page_view)
-
     page_root = Node2D.new()
     page_root.name = "LevelDesignBiblePage"
     page_root.z_index = 1000
-    page_view.add_child(page_root)
+    add_child(page_root)
 
     _draw_page_background()
     _draw_header()
