@@ -62,9 +62,6 @@ jobs:
             echo "== $a =="
             python "tools/$a"
           done
-            echo "== $a =="
-            python "tools/$a"
-          done
 
       - name: 12-level regression (each level 90 frames, zero script errors)
         working-directory: Godot Project V4/NinjaAdventure
