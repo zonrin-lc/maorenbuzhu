@@ -35,7 +35,6 @@ var main_route := PackedVector2Array()
 var backup_route := PackedVector2Array()
 var shortcut_pairs: Array = []
 var event_points: Array = []
-var render_view: SubViewport
 var page_root: Node2D
 
 func _ready() -> void:
@@ -174,22 +173,14 @@ func _draw_map_panel() -> void:
     page_root.add_child(overlay)
 
 func _capture_level_art() -> Texture2D:
-    # Capture the live scene from a dedicated 1100x680 SubViewport.
-    render_view = SubViewport.new()
-    render_view.size = Vector2i(1100, 680)
-    render_view.transparent_bg = false
-    render_view.render_target_update_mode = SubViewport.UPDATE_ONCE
-    render_view.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
-    add_child(render_view)
-    var art_root := Node2D.new()
-    render_view.add_child(art_root)
-    level_root.reparent(art_root)
-    level_root.position = Vector2.ZERO
+    # Capture the actual gameplay viewport after loading the real level scene.
+    # This avoids reparenting the live scene into a second viewport, which can
+    # deadlock scenes that own cameras/process loops in headless mode.
     await get_tree().process_frame
-    var tex := render_view.get_texture()
-    level_root.reparent(self)
-    render_view.queue_free()
-    return tex
+    await get_tree().process_frame
+    var image := get_viewport().get_texture().get_image()
+    image.convert(Image.FORMAT_RGBA8)
+    return ImageTexture.create_from_image(image)
 
 func _draw_left_panel() -> void:
     _panel(Rect2(24, 142, 245, 550), "1. 关卡概览")
