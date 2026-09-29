@@ -50,14 +50,18 @@ jobs:
         working-directory: Godot Project V4/NinjaAdventure
         shell: bash
         run: |
-          # 只接入当前能通过的契约审计，让 CI 对数据/音频/设置/输入漂移有真实防护。
-          # audit_input 已升级为交叉校验 project.godot [input] ↔ manifest CSV ↔
-          # default_bindings.json，并核对 RebindManager 的可重绑列表，能抓到 InputMap 漂移。
-          # 其余审计（audit_release_v15 / audit_feedback_v152 / audit_audio_*_v154 /
-          # validate_settlement_pack / validate_ui_pack）仍在引用已删除的 result_flow.gd
-          # 或旧代码布局，属于门禁自身过期，需单独排期清理后再接。
+          # 契约审计：过期门禁已在本轮删除或重写为「跟随代码当前位置」的版本
+          # （audit_release_v15 / audit_feedback_v152 / audit_audio_*_v154 已删；
+          #  audit_feedback_audio / validate_settlement_pack / validate_ui_pack 为重写版）。
+          # audit_art_pass_v16 需要 Pillow，未纳入门禁。
           set -e
-          for a in audit_settings.py audit_events.py audit_debug_qa.py audit_audio.py audit_balance_v15_1.py audit_cat_meow_v158.py audit_input.py count_events.py; do
+          for a in audit_settings.py audit_events.py audit_debug_qa.py audit_audio.py \
+                   audit_balance_v15_1.py audit_cat_meow_v158.py audit_input.py \
+                   audit_grid_alignment.py audit_feedback_audio.py \
+                   validate_settlement_pack.py validate_ui_pack.py count_events.py; do
+            echo "== $a =="
+            python "tools/$a"
+          done
             echo "== $a =="
             python "tools/$a"
           done
@@ -96,6 +100,23 @@ jobs:
             exit 1
           fi
           echo "12-level regression passed"
+
+      - name: Player-behavior regression (real input: move/interact, 12 levels)
+        working-directory: Godot Project V4/NinjaAdventure
+        shell: bash
+        run: |
+          godot --headless --fixed-fps 60 --path . res://tools/player_behavior_regression.tscn 2>&1 | tee player.log
+          if grep -iE "SCRIPT ERROR" player.log; then
+            echo "Runtime script errors found"
+            exit 1
+          fi
+          if grep -q "PLAYER_BEHAVIOR: .* FAIL" player.log; then
+            echo "Player-behavior regression failed"
+            exit 1
+          fi
+          grep -q "PLAYER_BEHAVIOR: move=12/12 action=12/12" player.log || {
+            echo "Player-behavior summary mismatch"; exit 1; }
+          echo "Player-behavior regression passed"
 
       - name: 12-level gameplay regression (auto-play, zero script errors)
         working-directory: Godot Project V4/NinjaAdventure

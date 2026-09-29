@@ -16,6 +16,7 @@ const BUTTONS := [
 var _stick_base: Control
 var _stick_nub: Control
 var _button_grid: GridContainer
+var _sys_row: HBoxContainer
 var _stick_center := Vector2.ZERO
 var _stick_radius := 82.0
 var _stick_touch := -1
@@ -29,6 +30,7 @@ func _ready() -> void:
         or (OS.has_feature("editor") and ProjectSettings.get_setting("input_devices/pointing/emulate_touch_from_mouse", false))
     _build_stick()
     _build_buttons()
+    _build_sys_buttons()
     var input_manager := get_node_or_null("/root/GameInputManager")
     if input_manager != null and not input_manager.device_changed.is_connected(_on_device_changed):
         input_manager.device_changed.connect(_on_device_changed)
@@ -38,6 +40,46 @@ func _ready() -> void:
 func _notification(what: int) -> void:
     if what == NOTIFICATION_WM_SIZE_CHANGED:
         _layout()
+
+# 系统安全区（刘海 / Home Indicator / 浏览器工具栏）inset，换算到 canvas 像素。
+# 桌面与普通浏览器里 safe area == 窗口，结果为 0，因此可安全地普遍套用。
+func _safe_insets() -> Vector4:
+    var win := DisplayServer.window_get_size()
+    if win.x <= 0 or win.y <= 0:
+        return Vector4.ZERO
+    var safe := DisplayServer.get_display_safe_area()
+    var vis := get_viewport().get_visible_rect().size
+    var sx := vis.x / float(win.x)
+    var sy := vis.y / float(win.y)
+    var left := maxf(0.0, float(safe.position.x)) * sx
+    var top := maxf(0.0, float(safe.position.y)) * sy
+    var right := maxf(0.0, float(win.x - (safe.position.x + safe.size.x))) * sx
+    var bottom := maxf(0.0, float(win.y - (safe.position.y + safe.size.y))) * sy
+    return Vector4(left, top, right, bottom)
+
+# 触控端的暂停 / 重开。PauseController 与 ULM 的 retry 都在 _unhandled_input 里
+# 监听「事件」，因此这里必须注入真实 InputEventAction（Input.action_press 只改
+# 动作状态，不会产生事件流），否则按钮按了没反应。
+func _build_sys_buttons() -> void:
+    _sys_row = HBoxContainer.new()
+    _sys_row.name = "SystemButtons"
+    _sys_row.add_theme_constant_override("separation", 10)
+    add_child(_sys_row)
+    for spec in [{"action": "pause", "label": "暂停"}, {"action": "retry", "label": "重开"}]:
+        var b := Button.new()
+        b.name = str(spec.action).capitalize()
+        b.text = spec.label
+        b.focus_mode = Control.FOCUS_NONE
+        b.mouse_filter = Control.MOUSE_FILTER_STOP
+        var action: StringName = spec.action
+        b.pressed.connect(func():
+            _set_device_touch()
+            var ev := InputEventAction.new()
+            ev.action = action
+            ev.pressed = true
+            Input.parse_input_event(ev)
+        )
+        _sys_row.add_child(b)
 
 func _build_stick() -> void:
     _stick_base = Control.new()
@@ -95,20 +137,34 @@ func _build_buttons() -> void:
 func _layout() -> void:
     var size := get_viewport().get_visible_rect().size
     var short_side := minf(size.x, size.y)
+    var insets := _safe_insets()
+    var margin := 24.0
+    var left_m := margin + insets.x
+    var right_m := margin + insets.z
+    var top_m := margin + insets.y
+    var bottom_m := margin + insets.w
     _stick_radius = clampf(short_side * 0.105, 64.0, 94.0)
     _set_stick_geometry()
     if _stick_base:
-        _stick_base.position = Vector2(24.0, size.y - _stick_base.size.y - 24.0)
+        _stick_base.position = Vector2(left_m, size.y - _stick_base.size.y - bottom_m)
     if _stick_nub:
         _stick_nub.position = _stick_center - _stick_nub.size * 0.5
     if _button_grid:
         var cell := clampf(short_side * 0.095, 58.0, 82.0)
-        _button_grid.position = Vector2(size.x - cell * 2.0 - 28.0, size.y - cell * 3.0 - 28.0)
+        _button_grid.position = Vector2(size.x - cell * 2.0 - right_m, size.y - cell * 3.0 - bottom_m)
         _button_grid.size = Vector2(cell * 2.0, cell * 3.0)
         for child in _button_grid.get_children():
             if child is Button:
                 child.custom_minimum_size = Vector2(cell, cell)
                 child.size = Vector2(cell, cell)
+    if _sys_row:
+        # 暂停/重开固定在安全区内的右上角。
+        var sys_cell := clampf(short_side * 0.07, 44.0, 60.0)
+        for child in _sys_row.get_children():
+            if child is Button:
+                child.custom_minimum_size = Vector2(sys_cell * 1.6, sys_cell)
+                child.size = Vector2(sys_cell * 1.6, sys_cell)
+        _sys_row.position = Vector2(size.x - _sys_row.size.x - right_m, top_m)
 
 func _input(event: InputEvent) -> void:
     if event is InputEventScreenTouch or event is InputEventScreenDrag:
