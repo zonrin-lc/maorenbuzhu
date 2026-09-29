@@ -45,7 +45,7 @@ func _ready() -> void:
 
 func _render() -> void:
     var meta := Manifest.get_meta(level_id)
-    var scene_path := LayoutBookManifest.scene_path(level_id)
+    var scene_path := String(Manifest.LEVELS.get(level_id, {}).get("scene", ""))
     if scene_path.is_empty():
         push_error("Unknown level: " + level_id)
         get_tree().quit(1)
@@ -69,8 +69,8 @@ func _render() -> void:
     level_data = level_root.get("level_data") as LevelData
     if level_data != null and level_data.ninja_route != null:
         main_route = PackedVector2Array(level_data.ninja_route.waypoints)
-    backup_route = PackedVector2Array(LayoutBookManifest.backup(level_id))
-    shortcut_pairs = LayoutBookManifest.shortcuts(level_id)
+    backup_route = PackedVector2Array(Manifest.BACKUP_ROUTES.get(level_id, []))
+    shortcut_pairs = Manifest.SHORTCUTS.get(level_id, [])
     _collect_events()
 
     # Remove live gameplay UI and developer overlays from the art crop.
@@ -139,7 +139,7 @@ func _draw_header() -> void:
     bar.color = NAVY
     page_root.add_child(bar)
     _label("猫忍不住", Vector2(30, 18), 34, Color.WHITE, true)
-    var meta := LayoutBookManifest.get_meta(level_id)
+    var meta := Manifest.LEVELS.get(level_id, {})
     _label(String(meta.get("chapter_title", "")), Vector2(315, 20), 26, Color.WHITE, true)
     _label(String(meta.get("display_name", "")), Vector2(315, 58), 15, Color("#a9bed3"))
     _label(level_id, Vector2(1160, 20), 32, Color.WHITE, true)
@@ -192,7 +192,7 @@ func _capture_level_art() -> Texture2D:
 
 func _draw_left_panel() -> void:
     _panel(Rect2(24, 142, 245, 550), "1. 关卡概览")
-    var meta := LayoutBookManifest.get_meta(level_id)
+    var meta := Manifest.LEVELS.get(level_id, {})
     _body([
         "南侧起点，北侧终点。",
         "主线负责安全且明确的",
@@ -243,7 +243,7 @@ func _draw_bottom_panel() -> void:
     _mini_route(Vector2(735, 760), Vector2(360, 175), "猫捷径", GREEN, shortcut, "猫专属；节省路程但暴露风险更高")
     _panel(Rect2(1110, 750, 445, 195), "4. 关卡生产信息")
     var notes := [
-        "目标时长：" + String(LayoutBookManifest.get_meta(level_id).get("target_time", "")),
+        "目标时长：" + String(Manifest.LEVELS.get(level_id, {}).get("target_time", "")),
         "事件数量：" + str(event_points.size()),
         "实际 Ninja Route 点：" + str(main_route.size()),
         "猫捷径：" + str(shortcut_pairs.size()) + " 条",
