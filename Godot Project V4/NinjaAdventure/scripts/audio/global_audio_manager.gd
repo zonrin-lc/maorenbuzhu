@@ -14,6 +14,7 @@ const STATES := {
     "BOSS_PHASE_2": "res://data/audio/music_boss_phase_2.tres",
     "BOSS_PHASE_3": "res://data/audio/music_boss_phase_3.tres",
     "BOSS_DEFEAT": "res://data/audio/music_boss_defeat.tres",
+    "SETTLEMENT": "res://data/audio/music_settlement.tres",
 }
 
 const SFX := {

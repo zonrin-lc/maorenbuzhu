@@ -13,6 +13,12 @@ var suspicion := 0
 var world_state: Dictionary = {}
 
 func _ready() -> void:
+    # Release 隔离（GDD Release Gate）：仅编辑器/调试构建启用 Console。
+    if not OS.has_feature("editor") and not OS.has_feature("debug"):
+        enabled = false
+        set_process(false)
+        set_process_input(false)
+        return
     process_mode = Node.PROCESS_MODE_ALWAYS
     _register_defaults()
 

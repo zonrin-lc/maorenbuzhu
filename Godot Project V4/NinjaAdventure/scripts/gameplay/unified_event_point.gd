@@ -194,7 +194,8 @@ func _draw() -> void:
     var active := level_manager != null and level_manager.is_event_active(data)
     if prop_sprite != null:
         if resolved_state:
-            prop_sprite.modulate = Color(0.5, 1.0, 0.6)
+            # 状态色只写色相，透明度归 _animate_resolved 的 Tween 管，避免每帧覆盖动画。
+            prop_sprite.modulate = Color(0.5, 1.0, 0.6, prop_sprite.modulate.a)
         elif not active:
             prop_sprite.modulate = Color(0.55, 0.55, 0.6)
         else:

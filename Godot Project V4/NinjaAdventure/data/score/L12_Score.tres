@@ -8,3 +8,6 @@ target_time = 150.0
 ninja_hp_min_for_paw3 = 2
 max_suspicion_for_paw2 = 80.0
 max_suspicion_for_paw3 = 50.0
+boss_condition_ids = Array[String](["A", "B", "C", "D", "E", "G"])
+paw3_boss_required_count = 4
+boss_mechanics_min_for_g = 2

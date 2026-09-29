@@ -979,7 +979,8 @@ func _complete_level(emergency: bool) -> void:
     var elapsed := Time.get_ticks_msec() / 1000.0 - start_time
     var paws := 1
     if not emergency:
-        paws = score_system.evaluate(true, ninja.hp, max_suspicion, elapsed, high_risk_rescue, chain_rescue, shortcut_mastery, level_data.score_rules)
+        var boss_mechanics := boss_director.boss_mechanics_success if boss_director != null else 0
+        paws = score_system.evaluate(true, ninja.hp, max_suspicion, elapsed, high_risk_rescue, chain_rescue, shortcut_mastery, level_data.score_rules, boss_mechanics)
     _set_label(paw_label, "猫爪：%d / 3" % paws)
     _set_label(status_label, "任务完成！忍者：‘果然是我实力超群。’")
     _show_toast("结算中……")

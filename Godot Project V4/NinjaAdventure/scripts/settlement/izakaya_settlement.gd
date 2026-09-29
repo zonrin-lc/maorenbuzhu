@@ -21,21 +21,29 @@ var _locked_input_timer := 1.2
 @onready var _boast: Label = $UI/CenterCard/Boast
 @onready var _cat_label: Label = $UI/CenterCard/CatLabel
 @onready var _paws: Label = $UI/ResultCard/Paws
-@onready var _hint: Label = $UI/Bottom/Hint
+@onready var _hint: Label = $UI/Bottom/VBox/Hint
 @onready var _ninja: Sprite2D = $Characters/Ninja
 @onready var _cat: Sprite2D = $Characters/Cat
 @onready var _boast_panel: Panel = $UI/CenterCard
 @onready var _result_card: Panel = $UI/ResultCard
-@onready var _next_button: Button = $UI/Bottom/Next
-@onready var _retry_button: Button = $UI/Bottom/Retry
-@onready var _menu_button: Button = $UI/Bottom/Menu
+@onready var _button_row: HBoxContainer = $UI/Bottom/VBox/ButtonRow
+@onready var _next_button: Button = $UI/Bottom/VBox/ButtonRow/Next
+@onready var _retry_button: Button = $UI/Bottom/VBox/ButtonRow/Retry
+@onready var _menu_button: Button = $UI/Bottom/VBox/ButtonRow/Menu
 
 func _ready() -> void:
-    GlobalAudioManager.set_music_state("BOSS_DEFEAT")
+    GlobalAudioManager.set_music_state("SETTLEMENT")
     if not SettlementContext.has_pending():
         get_tree().call_deferred("change_scene_to_file", "res://scenes/flow/main_menu.tscn")
         return
     _build_banter()
+    _next_button.pressed.connect(_on_next_pressed)
+    _retry_button.pressed.connect(_on_retry_pressed)
+    _menu_button.pressed.connect(_on_menu_pressed)
+    var input_manager := get_node_or_null("/root/GameInputManager")
+    if input_manager != null and not input_manager.device_changed.is_connected(_on_device_changed):
+        input_manager.device_changed.connect(_on_device_changed)
+    _refresh_input_affordances()
     _status.text = "任务完成"
     _level_title.text = "%s  ·  %s" % [String(SettlementContext.result.get("level_id", "L01")), _level_name(String(SettlementContext.result.get("level_id", "L01")))]
     _boast.text = ""
@@ -145,27 +153,71 @@ func _reveal_paws() -> void:
         _paws.text += "\n新猫技艺：%s" % "、".join(unlocked)
     if SettlementContext.result.get("emergency", false):
         _paws.text += "\n应急救场 · 本局固定 1 爪"
-    _hint.text = "Enter  下一关      R  重玩本关      Esc  主菜单"
-    GlobalAudioManager.play_event_sfx("success")
     _step = 1
+    _refresh_input_affordances()
+    GlobalAudioManager.play_event_sfx("success")
 
 func _process(delta: float) -> void:
     _locked_input_timer = max(0.0, _locked_input_timer - delta)
+
+func _on_device_changed(_device: String) -> void:
+    _refresh_input_affordances()
+
+func _refresh_input_affordances() -> void:
+    var input_manager := get_node_or_null("/root/GameInputManager")
+    var device: String = input_manager.last_device if input_manager != null else GameInputManager.DEVICE_KEYBOARD_MOUSE
+    _button_row.visible = device == GameInputManager.DEVICE_TOUCH
+    if _step < 1:
+        return
+    if device == GameInputManager.DEVICE_TOUCH:
+        _hint.text = "点按下方按钮继续"
+    elif device == GameInputManager.DEVICE_GAMEPAD:
+        _hint.text = "%s  下一关      %s  重玩本关      %s  主菜单" % [
+            InputDisplay.get_device_binding_label(&"confirm", device),
+            InputDisplay.get_device_binding_label(&"retry", device),
+            InputDisplay.get_device_binding_label(&"cancel", device),
+        ]
+    else:
+        _hint.text = "Enter  下一关      R  重玩本关      Esc  主菜单"
+
+func _on_next_pressed() -> void:
+    if not SettlementContext.has_pending():
+        return
+    _go_next()
+
+func _on_retry_pressed() -> void:
+    if not SettlementContext.has_pending():
+        return
+    _retry_level()
+
+func _on_menu_pressed() -> void:
+    if not SettlementContext.has_pending():
+        return
+    _go_menu()
+
+func _go_next() -> void:
+    var next := SettlementContext.next_scene_path
+    SettlementContext.clear()
+    if not next.is_empty():
+        get_tree().change_scene_to_file(next)
+    else:
+        get_tree().change_scene_to_file("res://scenes/flow/main_menu.tscn")
+
+func _retry_level() -> void:
+    var current := SettlementContext.current_scene_path
+    SettlementContext.clear()
+    get_tree().change_scene_to_file(current)
+
+func _go_menu() -> void:
+    SettlementContext.clear()
+    get_tree().change_scene_to_file("res://scenes/flow/main_menu.tscn")
 
 func _unhandled_input(_event: InputEvent) -> void:
     if _locked_input_timer > 0.0 or not SettlementContext.has_pending():
         return
     if Input.is_action_just_pressed("confirm") or Input.is_action_just_pressed("jump"):
-        var next := SettlementContext.next_scene_path
-        SettlementContext.clear()
-        if not next.is_empty():
-            get_tree().change_scene_to_file(next)
-        else:
-            get_tree().change_scene_to_file("res://scenes/flow/main_menu.tscn")
+        _go_next()
     elif Input.is_action_just_pressed("retry"):
-        var current := SettlementContext.current_scene_path
-        SettlementContext.clear()
-        get_tree().change_scene_to_file(current)
+        _retry_level()
     elif Input.is_action_just_pressed("cancel"):
-        SettlementContext.clear()
-        get_tree().change_scene_to_file("res://scenes/flow/main_menu.tscn")
+        _go_menu()

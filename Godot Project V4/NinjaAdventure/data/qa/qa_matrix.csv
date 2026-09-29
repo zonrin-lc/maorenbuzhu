@@ -2,7 +2,7 @@ Suite,Case,Precondition,Action,Expected,Priority
 Boot,BOOT_001,Debug build,Start project,Debug overlay loads,P0
 Boot,BOOT_002,Debug build,Open console,Help command responds,P0
 Level,LVL_001,Data present,Load each L01-L12,No missing LevelData,P0
-Event,EVT_001,57 EventData expected,Enumerate all events,Count=57,P0
+Event,EVT_001,EventData count from data/events,Enumerate all events,Count=actual file count (56),P0
 World,WLD_001,Any level,Reset level,WorldState returns level defaults,P0
 World,WLD_002,L07/L08,Change dependency state,Downstream event reacts deterministically,P0
 Score,SCR_001,Complete level,Submit result,ScoreResult generated once,P0

@@ -168,11 +168,10 @@ func _set_device_touch() -> void:
     if input_manager != null:
         input_manager.set_last_device(GameInputManager.DEVICE_TOUCH)
 
-func _on_device_changed(device: String) -> void:
-    if device == GameInputManager.DEVICE_TOUCH:
-        visible = true
-    elif not _touch_capable:
-        visible = false
+# 显隐统一收口到 _update_visibility：只有“硬件支持触控 且 当前输入设备是触控”
+# 才显示虚拟按键；触控设备上改用手柄/键鼠时立即隐藏。
+func _on_device_changed(_device: String) -> void:
+    _update_visibility()
 
 func _update_visibility() -> void:
     var input_manager := get_node_or_null("/root/GameInputManager")

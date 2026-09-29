@@ -1,4 +1,4 @@
-# 《猫忍不住》游戏设计文档 · 整合版 v1.5.0
+# 《猫忍不住》游戏设计文档 · 整合版 v1.5.1
 
 > **副标题：忍者在明处，猫在幕后。**
 >
@@ -63,6 +63,8 @@
 > v1.4.9 修订（2026-09-28）：实现债 ⑥ Legacy 旧栈删除（6 个死文件）、⑧ ULM 拆分启动（SceneArt 抽出为 SceneArtBuilder，2279→2130 行）（§15.3）。
 >
 > v1.5.0 修订（2026-09-28）：实现债 ⑧ 完成——ULM 拆分三步走完（SceneArtBuilder + BossDirector + LevelSpecialsDirector），2279→1105 行；12 关场景直跑冒烟全绿；§15.3 实现债 11 项全部落地。
+>
+> v1.5.1 修订（2026-09-29）：v1.6.1 Release Hardening 收口——L12 Boss 评分入 ScoreSystem（A–E+G 数据驱动）、QA 事件计数以实数 56 为唯一事实源、Debug/QA 双组件 Release 隔离、结算触控出口、结算音乐独立 SETTLEMENT 状态、手柄键位按裁定映射修正等 14 项；详见《猫忍不住》_v1.6.1_ReleaseHardening_收口记录.md。
 
 ---
 
@@ -1481,6 +1483,8 @@ Experience [ ] 玩家能解释失败 [ ] 无无意义等待 [ ] 猫始终有下�
 9. **[已落地]** 接入 Ninja Voice（Voice1~10.wav，`play_ninja_voice()` 当前为 pass）（Voice1~10 已接入 play_ninja_voice，hurt/confused/proud/scared 四组轮换 + 600ms 冷却 + 音高随机）
 10. **[已落地]** export_presets 版本号跟随实现版本（当前滞留 0.1.0）（已升 1.6.0）
 11. **[已落地]** GitHub Actions + Godot smoke test（发布前必须；静态通过 ≠ 运行通过）（.github/workflows/godot-ci.yml：导入+编译检查+30 帧冒烟）
+
+> 第二轮审查（Release Hardening）14 项已全部收口，记录见《猫忍不住》_v1.6.1_ReleaseHardening_收口记录.md；剩余工程项：Android/iOS/Web 导出预设、结算 F 条件展示 UI、rebind 面板信号接入、input_action_manifest 文档同步。
 
 ---
 
