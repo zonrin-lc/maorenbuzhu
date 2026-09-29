@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'Godot Project V4/NinjaAdventure/tools/layout_book_*.gd'
+      - 'Godot Project V4/NinjaAdventure/tools/layout_book_manifest.gd'
       - 'Godot Project V4/NinjaAdventure/data/routes/**'
       - 'Godot Project V4/NinjaAdventure/data/events/**'
       - 'Godot Project V4/NinjaAdventure/scenes/levels/**'
