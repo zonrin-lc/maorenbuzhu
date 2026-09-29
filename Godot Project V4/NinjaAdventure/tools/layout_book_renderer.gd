@@ -141,6 +141,7 @@ var event_points: Array = []
 var actor_names: Array = []
 var scene_layer_counts := {}
 var page_root: Node2D
+var page_layer: CanvasLayer
 var cjk_font: Font
 
 func _ready() -> void:
@@ -272,10 +273,14 @@ func _hide_gameplay_overlays() -> void:
             child.visible = false
 
 func _build_page() -> void:
+    page_layer = CanvasLayer.new()
+    page_layer.name = "BiblePageLayer"
+    page_layer.layer = 100
+    add_child(page_layer)
+
     page_root = Node2D.new()
     page_root.name = "LevelDesignBiblePage"
-    page_root.z_index = 1000
-    add_child(page_root)
+    page_layer.add_child(page_root)
 
     _draw_page_background()
     _draw_header()
@@ -332,9 +337,9 @@ func _draw_map_panel() -> void:
     var crop := TextureRect.new()
     crop.position = MAP_RECT.position + Vector2(8, 48)
     crop.size = Vector2(MAP_RECT.size.x - 16, MAP_RECT.size.y - 56)
-    page_root.visible = false
+    page_layer.visible = false
     crop.texture = await _capture_level_art()
-    page_root.visible = true
+    page_layer.visible = true
     crop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     crop.stretch_mode = TextureRect.STRETCH_SCALE
     page_root.add_child(crop)
