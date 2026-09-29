@@ -91,7 +91,7 @@ func _render() -> void:
         if child is CharacterBody2D or child.name in ["Cat", "Ninja", "Dog", "GuardA", "GuardB"]:
             child.visible = false
 
-    _build_page()
+    await _build_page()
     await get_tree().process_frame
     await get_tree().process_frame
 
@@ -118,7 +118,7 @@ func _build_page() -> void:
     page_root.z_index = 1000
     _draw_page_background()
     _draw_header()
-    _draw_map_panel()
+    await _draw_map_panel()
     _draw_left_panel()
     _draw_right_panel()
     _draw_bottom_panel()
@@ -154,7 +154,7 @@ func _draw_map_panel() -> void:
     var crop := TextureRect.new()
     crop.position = MAP_RECT.position
     crop.size = MAP_RECT.size
-    crop.texture = _capture_level_art()
+    crop.texture = await _capture_level_art()
     crop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     crop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
     page_root.add_child(crop)
