@@ -144,6 +144,8 @@ var page_root: Node2D
 var cjk_font: Font
 
 func _ready() -> void:
+    get_viewport().size = Vector2i(W, H)
+    get_window().size = Vector2i(W, H)
     _setup_font()
     var args := OS.get_cmdline_user_args()
     if args.size() > 0:
