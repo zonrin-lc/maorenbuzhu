@@ -53,12 +53,21 @@ func _build_rows() -> void:
         _row_buttons[action] = bind_button
 
 func _binding_text(action: String) -> String:
-    var pad_label := "左摇杆" if action.begins_with("move_") \
-        else InputDisplay.get_device_binding_label(action, GameInputManager.DEVICE_GAMEPAD)
+    # 两端都读真实 InputMap，不再硬编码。move_* 的手柄端只有在该 action 确实仍保有
+    # 模拟摇杆轴时才显示「左摇杆」——否则显示实际绑定，杜绝「显示 A 却按不了」。
+    var pad_label := InputDisplay.get_device_binding_label(action, GameInputManager.DEVICE_GAMEPAD)
+    if action.begins_with("move_") and _has_analog_axis(action):
+        pad_label = "左摇杆"
     return "%s  /  %s" % [
         InputDisplay.get_device_binding_label(action, GameInputManager.DEVICE_KEYBOARD_MOUSE),
         pad_label,
     ]
+
+func _has_analog_axis(action: String) -> bool:
+    for event in InputMap.action_get_events(action):
+        if event is InputEventJoypadMotion:
+            return true
+    return false
 
 func _on_row_pressed(action: String) -> void:
     _end_capture()

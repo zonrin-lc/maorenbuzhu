@@ -66,7 +66,11 @@ static func get_device_binding_label(action: StringName, device: String) -> Stri
                     return _joypad_button_label(event.button_index)
                 if event is InputEventJoypadMotion:
                     return _joypad_motion_label(event.axis, event.axis_value)
-            return str(GAMEPAD_FALLBACKS.get(action_key, "—"))
+            # 没有真实手柄绑定就如实显示「—」。旧实现在这里回退到硬编码的
+            # GAMEPAD_FALLBACKS（interact→A 等），于是重绑清掉手柄绑定后，
+            # UI 仍显示「A」而实际按不动。现在改键按设备保留绑定后基本不会走到这里，
+            # 但保留诚实回退以防用户显式移除某个手柄绑定。
+            return "—"
         _:
             for event in InputMap.action_get_events(action):
                 if event is InputEventKey or event is InputEventMouseButton:

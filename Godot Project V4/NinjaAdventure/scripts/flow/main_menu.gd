@@ -11,7 +11,7 @@ func _ready() -> void:
     continue_button.text = "继续游戏 · %s" % app.continue_level()
     var paws_total := app.progress_manager.paws_total(save)
     var fish_total := app.progress_manager.fish_total(save)
-    status.text = "进度：%d / 12 关  ·  猫爪 %d / 36  ·  鱼 %d" % [save.completed_levels.size(), paws_total, fish_total]
+    status.text = "进度：%d / 12 关  ·  猫爪 %d / 36  ·  鱼干 %d" % [save.completed_levels.size(), paws_total, fish_total]
     continue_button.pressed.connect(_on_continue)
     $Margin/VBox/Chapters.pressed.connect(_on_chapters)
     $Margin/VBox/Settings.pressed.connect(_on_settings)

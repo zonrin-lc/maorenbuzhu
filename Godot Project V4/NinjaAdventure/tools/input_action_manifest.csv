@@ -1,10 +1,16 @@
-action,keyboard,gamepad,note
-# 本文件由 tools/generate_input_manifest.gd 自动生成，请勿手改
+action,keyboard_default,gamepad_default,note
+# 本文件由 tools/generate_input_manifest.gd 自动生成，请勿手改。
+move_up,"Up - Physical; W - Physical","button_11; axis_1-",auto-generated
+move_down,"Down - Physical; S - Physical","button_12; axis_1+",auto-generated
+move_left,"Left - Physical; A - Physical","button_13; axis_0-",auto-generated
+move_right,"Right - Physical; D - Physical","button_14; axis_0+",auto-generated
+sprint,"Shift - Physical","button_10",auto-generated
 interact,"E - Physical","button_0",auto-generated
 carry,"Q - Physical","button_2",auto-generated
 meow,"F - Physical","button_1",auto-generated
-emote,"Ctrl","button_3",auto-generated
+emote,"Ctrl - Physical","button_3",auto-generated
 jump,"Space - Physical","button_9",auto-generated
-sprint,"Shift","button_10",auto-generated
-pause,"Escape","button_6",auto-generated
+pause,"Escape - Physical","button_6",auto-generated
 retry,"R - Physical","button_7",auto-generated
+confirm,"Enter - Physical","button_0",auto-generated
+cancel,"Escape - Physical","button_1",auto-generated

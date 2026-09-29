@@ -9,6 +9,10 @@ var data: SettingsData = SettingsData.new()
 func _ready() -> void:
     load_settings()
     apply_all()
+    # 顺序关键：先在「未被任何持久化绑定污染」的 InputMap 上捕获出厂默认值，
+    # 再套用用户上次改的键。否则「恢复默认」会把用户自定义当成出厂值。
+    RebindManager.snapshot_factory_defaults()
+    RebindManager.apply_persisted_bindings()
 
 func load_settings() -> void:
     var cfg := ConfigFile.new()

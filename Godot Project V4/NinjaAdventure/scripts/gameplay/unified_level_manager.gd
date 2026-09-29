@@ -477,6 +477,51 @@ func _setup_shortcuts() -> void:
             tunnel_root.add_child(l12_tunnel)
             l12_tunnel.setup(Vector2(l12_rect.position.x + 18.0, l12_rect.get_center().y), Vector2(l12_rect.end.x - 18.0, l12_rect.get_center().y), Vector2(minf(l12_rect.size.x, 150.0), maxf(28.0, l12_rect.size.y)))
             l12_tunnel.used.connect(_on_shortcut_used)
+    _setup_fish_collectibles()
+
+# GDD §11.1 收集品「小鱼干」：藏在只有猫能钻的洞里。因此就地放在本关的
+# 猫专用通行节点出口（CatTunnel / JumpPoint）——不硬编码任何坐标，
+# 捷径怎么改，收藏品就跟着怎么改；且两者的 exit_point 都只有猫能到达。
+#
+# 注意：GDD 目标是「每关 3 条 / 共 36 条」，但当前 12 关的导航节点数量少于
+# 3（布局数据每关仅 1 条 tunnel rect）。因此本函数按实际可用节点生成，
+# 上限 3；距离 36 条的差额属于关卡内容补齐（需关卡设计 + 试玩确认可藏性），
+# 不在此处臆造坐标。
+func _setup_fish_collectibles() -> void:
+    if level_data == null:
+        return
+    var nav := get_node_or_null("Navigation")
+    if nav == null:
+        return
+    var spots: Array[Vector2] = []
+    for path in ["CatTunnel", "JumpPoints"]:
+        var group := nav.get_node_or_null(path)
+        if group == null:
+            continue
+        for child in group.get_children():
+            if child is CatTunnel:
+                spots.append((child as CatTunnel).exit_point)
+            elif child is JumpPoint:
+                spots.append((child as JumpPoint).exit_point)
+    if spots.is_empty():
+        return
+    var root := Node2D.new()
+    root.name = "FishCollectibles"
+    nav.add_child(root)
+    var index := 0
+    for spot in spots:
+        if index >= 3:  # GDD §11.1：每关 3 条；bitmask 按 3 位设计
+            break
+        var fish := FishCollectible.new()
+        fish.name = "Fish_%02d" % index
+        fish.position = spot + Vector2(0, -6)
+        root.add_child(fish)
+        fish.setup(self, level_data.level_id, index)
+        index += 1
+
+func show_collected_fish(_index: int) -> void:
+    _show_toast("收集到小鱼干（纯收藏，不影响通关）。")
+
 func _on_shortcut_used() -> void:
     if level_finished or level_failed:
         return
