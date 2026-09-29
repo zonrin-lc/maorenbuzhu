@@ -44,7 +44,7 @@ func _ready() -> void:
     call_deferred("_render")
 
 func _render() -> void:
-    var meta := Manifest.get_meta(level_id)
+    var meta: Dictionary = Manifest.LEVELS.get(level_id, {})
     var scene_path := String(Manifest.LEVELS.get(level_id, {}).get("scene", ""))
     if scene_path.is_empty():
         push_error("Unknown level: " + level_id)
@@ -139,7 +139,7 @@ func _draw_header() -> void:
     bar.color = NAVY
     page_root.add_child(bar)
     _label("猫忍不住", Vector2(30, 18), 34, Color.WHITE, true)
-    var meta := Manifest.LEVELS.get(level_id, {})
+    var meta: Dictionary = Manifest.LEVELS.get(level_id, {})
     _label(String(meta.get("chapter_title", "")), Vector2(315, 20), 26, Color.WHITE, true)
     _label(String(meta.get("display_name", "")), Vector2(315, 58), 15, Color("#a9bed3"))
     _label(level_id, Vector2(1160, 20), 32, Color.WHITE, true)
