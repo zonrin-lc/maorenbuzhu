@@ -10,9 +10,19 @@ jobs:
   godot-smoke:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      # 第一个 step：校验所有工作流 YAML 本身可解析。
+      # 背景：曾因某个 step name 含未加引号的 ": "（YAML 解析成嵌套 mapping），
+      # 导致整个工作流在解析期被拒、job 从未被创建（0 job failure，无任何日志）。
+      # 此守卫把「工作流坏掉」变成一个可读的门禁失败，而不是静默的红色 0。
+      - name: Validate workflow YAML
+        uses: actions/checkout@v4
         with:
           lfs: false
+      - name: Workflow YAML lint
+        run: |
+          python -m pip install --quiet --disable-pip-version-check pyyaml
+          python tools/audit_workflows.py
+        working-directory: Godot Project V4/NinjaAdventure
 
       - name: Setup Godot 4.7.2
         uses: chickensoft-games/setup-godot@v2
@@ -110,7 +120,7 @@ jobs:
             echo "Runtime behavior assertions failed"; grep -A20 "RUNTIME: FAIL" runtime.log; exit 1; }
           echo "Runtime behavior test passed"
 
-      - name: Player-behavior regression (real input: move/interact, 12 levels)
+      - name: Player-behavior regression (real input move and interact, 12 levels)
         working-directory: Godot Project V4/NinjaAdventure
         shell: bash
         run: |
