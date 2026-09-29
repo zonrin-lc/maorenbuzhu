@@ -2,6 +2,7 @@ extends Node2D
 class_name LayoutBookRenderer
 
 # Editor/headless tool for producing the scene-layout reference pages.
+# Production renderer: real level scene + route/event overlays.
 # It loads the actual level scene, hides gameplay UI, adds a visual-only route
 # overlay and a page frame. It never mutates LevelData/RouteData/EventData.
 #
