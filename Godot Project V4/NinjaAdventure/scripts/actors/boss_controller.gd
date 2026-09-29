@@ -11,7 +11,9 @@ var active := false
 var timer := 0.0
 var charge_timer := 0.0
 var charge_window := 2.0
-var prepare_time := 3.0 # Phase 1 战前准备窗口；Hard Mode 通过 LevelModifier.boss_prepare_delta 调整
+var prepare_time := 8.0 # Phase 1 战前准备窗口（GDD §数值表 BOSS_PREPARE_TIME = 8 s）；
+                        # Hard Mode 通过 LevelModifier.boss_prepare_delta 收紧（-2.0 → 6 s）。
+                        # 注：此前实现误为 3.0，已按 GDD 裁定回正。
 var prepared_damage := 0
 var manager: Node
 var sprite: Sprite2D
