@@ -40,6 +40,14 @@ func distract(source_position: Vector2) -> void:
     distracted.emit()
     queue_redraw()
 
+# 玩法回归发现：事件结算脚本长期以 depart(pos, duration) 调用守卫，但此方法不存在
+# （调用只会报错且守卫原地不动）。语义与 distract 一致：走向目标点，离场 duration 秒后返岗。
+func depart(source_position: Vector2, duration: float = 6.0) -> void:
+    var old_delay := return_delay
+    return_delay = duration
+    distract(source_position)
+    return_delay = old_delay
+
 func _process(delta: float) -> void:
     var moving := false
     if not active:

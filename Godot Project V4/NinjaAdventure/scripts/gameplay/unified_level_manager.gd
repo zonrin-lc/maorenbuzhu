@@ -346,7 +346,7 @@ func _setup_shortcuts() -> void:
     nav.add_child(jump_root)
 
     var lid := String(level_data.level_id)
-    if lid in ["L01", "L02", "L03", "L04", "L06", "L07", "L08", "L10", "L11"]:
+    if lid in ["L01", "L02", "L03", "L04", "L05", "L06", "L07", "L08", "L09", "L10", "L11", "L12"]:
         var layout_id := StringName(lid)
         var layout: Dictionary = LayoutGeometry.LEVEL_LAYOUTS.get(layout_id, {})
         if lid == "L01":
@@ -442,6 +442,30 @@ func _setup_shortcuts() -> void:
             tunnel_root.add_child(tunnel)
             tunnel.setup(Vector2(470, 500), Vector2(760, 350), Vector2(190, 34))
             tunnel.used.connect(_on_shortcut_used)
+        elif lid == "L05":
+            # L05 码头鱼场下层猫洞（白盒 LayoutGeometry 已有矩形，本条目负责接入 gameplay）。
+            var l05_rect: Rect2 = layout.get("tunnels", [])[0]
+            var l05_tunnel := CatTunnel.new()
+            l05_tunnel.name = "CatTunnel_L05_01"
+            tunnel_root.add_child(l05_tunnel)
+            l05_tunnel.setup(Vector2(l05_rect.position.x + 18.0, l05_rect.get_center().y), Vector2(l05_rect.end.x - 18.0, l05_rect.get_center().y), Vector2(minf(l05_rect.size.x, 150.0), maxf(28.0, l05_rect.size.y)))
+            l05_tunnel.used.connect(_on_shortcut_used)
+        elif lid == "L09":
+            # L09 雷雨夜雨棚下方猫洞（白盒已有矩形）。
+            var l09_rect: Rect2 = layout.get("tunnels", [])[0]
+            var l09_tunnel := CatTunnel.new()
+            l09_tunnel.name = "CatTunnel_L09_01"
+            tunnel_root.add_child(l09_tunnel)
+            l09_tunnel.setup(Vector2(l09_rect.position.x + 18.0, l09_rect.get_center().y), Vector2(l09_rect.end.x - 18.0, l09_rect.get_center().y), Vector2(minf(l09_rect.size.x, 150.0), maxf(28.0, l09_rect.size.y)))
+            l09_tunnel.used.connect(_on_shortcut_used)
+        elif lid == "L12":
+            # L12 Boss 场猫洞（白盒已有矩形）：只缩短猫的机关间移动，不改变 Boss 流程。
+            var l12_rect: Rect2 = layout.get("tunnels", [])[0]
+            var l12_tunnel := CatTunnel.new()
+            l12_tunnel.name = "CatTunnel_L12_01"
+            tunnel_root.add_child(l12_tunnel)
+            l12_tunnel.setup(Vector2(l12_rect.position.x + 18.0, l12_rect.get_center().y), Vector2(l12_rect.end.x - 18.0, l12_rect.get_center().y), Vector2(minf(l12_rect.size.x, 150.0), maxf(28.0, l12_rect.size.y)))
+            l12_tunnel.used.connect(_on_shortcut_used)
 func _on_shortcut_used() -> void:
     if level_finished or level_failed:
         return

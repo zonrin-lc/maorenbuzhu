@@ -79,3 +79,18 @@ jobs:
             exit 1
           fi
           echo "12-level regression passed"
+
+      - name: 12-level gameplay regression (auto-play, zero script errors)
+        working-directory: Godot Project V4/NinjaAdventure
+        shell: bash
+        run: |
+          godot --headless --fixed-fps 60 --path . tools/gameplay_regression.tscn 2>&1 | tee gameplay.log
+          if grep -iE "SCRIPT ERROR" gameplay.log; then
+            echo "Runtime script errors found"
+            exit 1
+          fi
+          if ! grep -q "REGRESSION: 12/12" gameplay.log; then
+            echo "Gameplay regression failed"
+            exit 1
+          fi
+          echo "Gameplay regression passed"

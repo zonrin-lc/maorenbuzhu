@@ -94,3 +94,15 @@ func validate_level(level_data: LevelData) -> Array[String]:
         if not has_boss_combat:
             errors.append("BOSS_COMBAT_GROUP_MISSING")
     return errors
+
+# 16×16 网格规范（GDD 工程债）：核心墙体/捷径/桥/水面应对齐 16px 网格。
+# 当前为 WARN 级（返回未对齐清单，不阻断关卡）；内容层对齐后可升级为错误。
+static func check_grid_alignment(level_id: StringName) -> Array[String]:
+    var warnings: Array[String] = []
+    var layout: Dictionary = LayoutGeometry.LEVEL_LAYOUTS.get(level_id, {})
+    for key in ["walls", "tunnels", "shortcuts", "bridges", "water"]:
+        for r in layout.get(key, []):
+            var rect: Rect2 = r
+            if int(rect.position.x) % 16 != 0 or int(rect.position.y) % 16 != 0 or int(rect.size.x) % 16 != 0 or int(rect.size.y) % 16 != 0:
+                warnings.append("%s %s %s" % [level_id, key, rect])
+    return warnings

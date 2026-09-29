@@ -53,3 +53,10 @@ static func count_event_resources() -> int:
 func _valid_level(value: String) -> bool:
     var n := int(value.trim_prefix("L"))
     return value.begins_with("L") and n >= 1 and n <= 12
+
+# 16×16 网格 WARN 检查：聚合 12 关未对齐元素数量，附在合同套件结果中（不判负）。
+static func grid_alignment_warnings() -> Array[String]:
+    var out: Array[String] = []
+    for i in range(1, LEVEL_COUNT + 1):
+        out.append_array(LevelValidator.check_grid_alignment(StringName("L%02d" % i)))
+    return out

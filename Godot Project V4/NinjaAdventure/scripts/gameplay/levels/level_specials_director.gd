@@ -884,6 +884,14 @@ func on_l07_dog_arrived(_target: Vector2) -> void:
         ninja.release_event()
     show_toast.call("狗已经到位：桥口窗口打开。")
 
+# 事件 data 是共享 .tres 资源：改 route_index 前先复制到节点私有副本，
+# 避免污染资源缓存（玩法回归发现：此前会改写共享 tres，重开/二次加载时 validator 会拿到改过的数据）。
+func _reposition_event(node: UnifiedEventPoint, new_route_index: int, new_position: Vector2) -> void:
+    var d := node.data.duplicate() as EventPointData
+    d.route_index = new_route_index
+    node.data = d
+    node.position = new_position
+
 func _apply_l07_route_branch(early: bool) -> void:
     if not early or ninja == null:
         return
@@ -903,11 +911,9 @@ func _apply_l07_route_branch(early: bool) -> void:
         feedback_director.show_route_change("忍者改走毒雾侧线")
     for node in event_nodes:
         if node.data.event_id == &"L07_E04_BRIDGE":
-            node.data.route_index = 6
-            node.position = alt_points[6]
+            _reposition_event(node, 6, alt_points[6])
         elif node.data.event_id == &"L07_E05_POISON":
-            node.data.route_index = 5
-            node.position = alt_points[5]
+            _reposition_event(node, 5, alt_points[5])
     event_log.append_event({
         "event_id": &"L07_ROUTE_BRANCH",
         "action": &"NINJA_SWITCH_TO_POISON_FIRST",
@@ -960,8 +966,7 @@ func _apply_l10_route_branch(poison_forced: bool) -> void:
         ninja.replace_scripted_route(points, 3)
         var poison := find_event_node.call(&"L10_E05_POISON") as UnifiedEventPoint
         if poison != null:
-            poison.data.route_index = 5
-            poison.position = points[5]
+            _reposition_event(poison, 5, points[5])
         if feedback_director != null:
             GlobalAudioManager.play_event_sfx("route_change")
             feedback_director.show_route_change("守卫仍在岗：忍者被迫走毒雾侧线")
@@ -971,11 +976,9 @@ func _apply_l10_route_branch(poison_forced: bool) -> void:
         var caltrop := find_event_node.call(&"L10_E04_CALTROP") as UnifiedEventPoint
         var poison := find_event_node.call(&"L10_E05_POISON") as UnifiedEventPoint
         if caltrop != null:
-            caltrop.data.route_index = 4
-            caltrop.position = points[4]
+            _reposition_event(caltrop, 4, points[4])
         if poison != null:
-            poison.data.route_index = 5
-            poison.position = points[5]
+            _reposition_event(poison, 5, points[5])
         if feedback_director != null:
             GlobalAudioManager.play_event_sfx("route_change")
             feedback_director.show_route_change("狗引开后：蒺藜窗口提前")

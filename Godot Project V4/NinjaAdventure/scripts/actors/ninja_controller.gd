@@ -35,6 +35,12 @@ func _physics_process(_delta: float) -> void:
             anim_driver.set_base_state(AnimationFeedbackDriver.State.ALERT if waiting_for_event else AnimationFeedbackDriver.State.IDLE)
         queue_redraw()
         return
+    # 玩法回归发现：已到终点后不再取下一个路点（此前每帧越界访问 waypoints[size]，
+    # L12 Boss 战期间关卡未结束会持续报错）。
+    if waypoint_index >= route.waypoints.size() - 1:
+        velocity = Vector2.ZERO
+        queue_redraw()
+        return
     if level_manager.is_ninja_at_blocking_event(waypoint_index):
         waiting_for_event = true
         velocity = Vector2.ZERO
@@ -69,7 +75,12 @@ func release_event() -> void:
 func replace_scripted_route(points: Array, next_route_index: int = -1) -> void:
     if route == null or points.is_empty():
         return
-    route.waypoints = points
+    # 玩法回归发现两处问题：直接给共享 .tres 的 typed Array[Vector2] 赋未类型化 Array 会报错
+    # 且污染资源缓存（重开关卡后 validator 会拿到改过的数据）。先复制再赋值。
+    route = route.duplicate()
+    var typed_points: Array[Vector2] = []
+    typed_points.assign(points)
+    route.waypoints = typed_points
     if next_route_index >= 0:
         waypoint_index = clampi(next_route_index, 0, max(0, route.waypoints.size() - 2))
     else:

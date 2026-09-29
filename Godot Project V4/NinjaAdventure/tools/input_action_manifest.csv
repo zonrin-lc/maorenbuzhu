@@ -1,15 +1,10 @@
-action,category,rebindable,keyboard_default,gamepad_default,ui_label
-move_up,move,true,W,Left Stick Up,Move Up
-move_down,move,true,S,Left Stick Down,Move Down
-move_left,move,true,A,Left Stick Left,Move Left
-move_right,move,true,D,Left Stick Right,Move Right
-sprint,gameplay,true,Shift,Right Trigger,Sprint
-interact,gameplay,true,E,South / A,Interact
-carry,gameplay,true,Q,West / X,Carry
-meow,gameplay,true,F,East / B,Meow
-emote,gameplay,true,Ctrl,North / Y,Emote
-jump,gameplay,true,Space,Left Shoulder,Jump
-pause,system,true,Esc,Start,Pause
-retry,system,true,R,Select / Back,Retry
-confirm,ui,false,Enter,South / A,Confirm
-cancel,ui,false,Esc,East / B,Cancel
+action,keyboard,gamepad,note
+# 本文件由 tools/generate_input_manifest.gd 自动生成，请勿手改
+interact,"E - Physical","button_0",auto-generated
+carry,"Q - Physical","button_2",auto-generated
+meow,"F - Physical","button_1",auto-generated
+emote,"Ctrl","button_3",auto-generated
+jump,"Space - Physical","button_9",auto-generated
+sprint,"Shift","button_10",auto-generated
+pause,"Escape","button_6",auto-generated
+retry,"R - Physical","button_7",auto-generated
